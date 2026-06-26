@@ -1,0 +1,38 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Lora } from "next/font/google";
+import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "The Domain Name  | US & World News, Analysis & Opinion",
+  description: "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-zinc-200">{children}</body>
+    </html>
+  );
+}
