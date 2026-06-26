@@ -34,8 +34,8 @@ export default function NewsGrid({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 select-none">
         <div className="border-b border-zinc-950 pb-2 mb-6 flex justify-between items-end">
           <h2 className="text-xl font-editorial-title font-bold text-zinc-900 uppercase tracking-wide">
-            {showBookmarksOnly 
-              ? "Your Reading List" 
+            {showBookmarksOnly
+              ? "Your Reading List"
               : `Search Results: "${searchQuery}"`}
           </h2>
           <span className="text-xs text-zinc-400 font-mono font-semibold">{articles.length} Articles</span>
@@ -96,12 +96,12 @@ export default function NewsGrid({
   const entertainmentArticles = getSectionArticles("Entertainment", 3);
   const marketingArticles = getSectionArticles("Marketing", 3);
   const prnewsArticles = getSectionArticles("PR News", 3);
-  
+
   // opinionArticles: select a few US or World news articles that are not the lead and not in the first 3
   const opinionArticles = articles
     .filter(a => (a.category === "US" || a.category === "World") && !a.isLead)
     .slice(3, 6);
-  
+
   // Trending Panel: top 5 trending articles
   const trendingArticles = articles.filter(a => a.isTrending).slice(0, 5);
 
@@ -123,7 +123,7 @@ export default function NewsGrid({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-10 select-none">
-      
+
       {/* Section 1: U.S. News & Finance (Multi-column list) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 border-b border-zinc-200 pb-8">
         {/* U.S. News */}
@@ -133,8 +133,8 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4">
             {usArticles.map((article, idx) => (
-              <div 
-                key={article.id} 
+              <div
+                key={article.id}
                 className="group cursor-pointer flex gap-4 items-start py-1"
                 onClick={() => onSelectArticle(article.id)}
               >
@@ -163,8 +163,8 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4">
             {financeArticles.map((article, idx) => (
-              <div 
-                key={article.id} 
+              <div
+                key={article.id}
                 className="group cursor-pointer flex gap-4 items-start py-1"
                 onClick={() => onSelectArticle(article.id)}
               >
@@ -191,12 +191,12 @@ export default function NewsGrid({
       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm">
         <div className="border-b border-zinc-800 pb-1.5 mb-6 text-center">
           <h2 className="text-xs font-black uppercase tracking-widest text-zinc-900">Opinion & Columns</h2>
-          <p className="text-[10px] text-zinc-400 mt-0.5">Letters, Ideas, and Analytical Commentary</p>
+          {/* <p className="text-[10px] text-zinc-400 mt-0.5">Letters, Ideas, and Analytical Commentary</p> */}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divider-y md:divider-y-0 md:divider-x divider-zinc-200">
           {opinionArticles.map((article, idx) => (
-            <div 
-              key={article.id} 
+            <div
+              key={article.id}
               className="group cursor-pointer flex flex-col justify-between py-2 md:py-0 md:px-3 first:pl-0 last:pr-0"
               onClick={() => onSelectArticle(article.id)}
             >
@@ -224,10 +224,10 @@ export default function NewsGrid({
 
       {/* Section 3: Tech & Science (Split Layout with Sidebar Trending) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8">
-        
+
         {/* Left Side: Tech and Science (Takes 8/12) */}
         <div className="lg:col-span-8 space-y-8">
-          
+
           {/* Technology */}
           <div className="space-y-4">
             <div className="border-print-thick pt-1.5">
@@ -235,7 +235,7 @@ export default function NewsGrid({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {techArticles.map((article) => (
-                <div 
+                <div
                   key={article.id}
                   onClick={() => onSelectArticle(article.id)}
                   className="group cursor-pointer space-y-2"
@@ -260,7 +260,7 @@ export default function NewsGrid({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {worldArticles.map((article) => (
-                <div 
+                <div
                   key={article.id}
                   onClick={() => onSelectArticle(article.id)}
                   className="group cursor-pointer space-y-2"
@@ -287,7 +287,7 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4 divide-y divide-zinc-100">
             {trendingArticles.map((article, idx) => (
-              <div 
+              <div
                 key={article.id}
                 onClick={() => onSelectArticle(article.id)}
                 className="group cursor-pointer flex gap-4 items-start pt-3 first:pt-0"
@@ -318,7 +318,7 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4">
             {entertainmentArticles.map((article) => (
-              <div 
+              <div
                 key={article.id}
                 onClick={() => onSelectArticle(article.id)}
                 className="group cursor-pointer flex gap-3 items-center py-0.5"
@@ -344,7 +344,7 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4">
             {marketingArticles.map((article) => (
-              <div 
+              <div
                 key={article.id}
                 onClick={() => onSelectArticle(article.id)}
                 className="group cursor-pointer flex gap-3 items-center py-0.5"
@@ -370,7 +370,7 @@ export default function NewsGrid({
           </div>
           <div className="space-y-4">
             {prnewsArticles.map((article) => (
-              <div 
+              <div
                 key={article.id}
                 onClick={() => onSelectArticle(article.id)}
                 className="group cursor-pointer flex gap-3 items-center py-0.5"
@@ -398,7 +398,7 @@ export default function NewsGrid({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* LEFT SIDE: Real-time timeline feed (Takes 7/12 cols, no scrolling) */}
           <div className="lg:col-span-7 space-y-4">
             <div className="border-b border-zinc-200 pb-1.5 flex justify-between items-center bg-white">
@@ -406,7 +406,7 @@ export default function NewsGrid({
                 <span className="w-2 h-2 rounded-full bg-red-650 animate-ping" />
                 LIVE UPDATES
               </h3>
-              <span className="text-[10px] text-zinc-400 font-mono font-semibold">Latest updates ({remainingArticles.slice(2, 17).length})</span>
+
             </div>
 
             <div className="space-y-3.5">
