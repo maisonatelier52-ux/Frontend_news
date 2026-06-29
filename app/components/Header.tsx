@@ -70,7 +70,7 @@ export default function Header({
       </div>
 
       {/* Main Branding Logo — smaller on mobile */}
-      <div className="w-full flex flex-col items-center justify-center py-4 md:py-8 border-b border-zinc-200 px-4">
+      <div className="w-full flex flex-col items-center justify-center pt-2 pb-4 md:pt-4 md:pb-8 border-b border-zinc-200 px-4">
         <h1
           className="font-editorial-title text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-black cursor-pointer text-center"
           onClick={() => {
