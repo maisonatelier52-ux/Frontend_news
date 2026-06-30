@@ -1,16 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Author {
-  id: number
+  _id: string
   name: string
   slug: string
   gender: string
-  country: string
+  role: string
   email: string
   category: string
-  websiteUrl?: string
   bio: string
   profileImage?: string
   socialLinks: {
@@ -18,92 +17,10 @@ interface Author {
     quora?: string
     reddit?: string
     medium?: string
+    substack?: string
   }
   articlesCount: number
 }
-
-const initialAuthors: Author[] = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    slug: 'sarah-johnson',
-    gender: 'Female',
-    country: 'United States',
-    email: 'sarah@newssite.com',
-    category: 'Politics',
-    websiteUrl: 'https://sarahj.com',
-    bio: 'Senior political correspondent with over a decade of experience covering Washington and international relations.',
-    profileImage: '/authors/sarah-johnson.webp',
-    socialLinks: {
-      twitter: 'https://x.com/sarah_johnson',
-      quora: 'https://quora.com/profile/Sarah-Johnson',
-      medium: 'https://medium.com/@sarah_j'
-    },
-    articlesCount: 312
-  },
-  {
-    id: 2,
-    name: 'Michael Chen',
-    slug: 'michael-chen',
-    gender: 'Male',
-    country: 'Canada',
-    email: 'michael@newssite.com',
-    category: 'Technology',
-    websiteUrl: 'https://chentech.io',
-    bio: 'Tech analyst, developer, and former software engineering lead covering artificial intelligence, Silicon Valley, and consumer tech.',
-    profileImage: '/authors/michael-chen.webp',
-    socialLinks: {
-      twitter: 'https://x.com/mike_chen',
-      reddit: 'https://reddit.com/user/mike_chen_tech'
-    },
-    articlesCount: 245
-  },
-  {
-    id: 3,
-    name: 'Emily Davis',
-    slug: 'emily-davis',
-    gender: 'Female',
-    country: 'United Kingdom',
-    email: 'emily@newssite.com',
-    category: 'Business',
-    websiteUrl: 'https://emilydavis.co.uk',
-    bio: 'Financial journalist reporting on corporate earnings, global markets, monetary policies, and entrepreneurship.',
-    profileImage: '/authors/emily-davis.webp',
-    socialLinks: {
-      twitter: 'https://x.com/emily_davis_biz',
-      medium: 'https://medium.com/@emily_davis'
-    },
-    articlesCount: 198
-  },
-  {
-    id: 4,
-    name: 'Lisa Park',
-    slug: 'lisa-park',
-    gender: 'Female',
-    country: 'South Korea',
-    email: 'lisa@newssite.com',
-    category: 'Sports',
-    websiteUrl: '',
-    bio: 'Sports reporter and former college athlete covering major leagues, tournament championships, and athlete profiles.',
-    profileImage: '/authors/lisa-park.webp',
-    socialLinks: {
-      twitter: 'https://x.com/lisa_park_sports',
-      quora: 'https://quora.com/profile/Lisa-Park'
-    },
-    articlesCount: 143
-  }
-]
-
-const categoriesList = [
-  'Politics',
-  'Technology',
-  'Business',
-  'World',
-  'Sports',
-  'Entertainment',
-  'Science',
-  'Health'
-]
 
 const categoryColors: Record<string, string> = {
   Politics: '#3b82f6', // blue
@@ -117,44 +34,62 @@ const categoryColors: Record<string, string> = {
 }
 
 export default function AuthorsPage() {
-  const [authors, setAuthors] = useState<Author[]>(initialAuthors)
+  const [authors, setAuthors] = useState<Author[]>([])
+  const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   
-  const [editingAuthorId, setEditingAuthorId] = useState<number | null>(null)
+  const [editingAuthorId, setEditingAuthorId] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState('')
-  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({})
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   // Form State
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
-  const [gender, setGender] = useState('Male')
-  const [country, setCountry] = useState('')
+  const [gender, setGender] = useState('Not Chosen')
+  const [role, setRole] = useState('')
   const [email, setEmail] = useState('')
   const [category, setCategory] = useState('')
-  const [websiteUrl, setWebsiteUrl] = useState('')
   const [bio, setBio] = useState('')
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
-  const [selectedFileName, setSelectedFileName] = useState('')
+  const [profileImage, setProfileImage] = useState('')
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [existingImageWarning, setExistingImageWarning] = useState<{ url: string; filename: string } | null>(null)
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [isUploadingOnSave, setIsUploadingOnSave] = useState(false)
 
   // Social Links state
   const [twitter, setTwitter] = useState('')
   const [quora, setQuora] = useState('')
   const [reddit, setReddit] = useState('')
   const [medium, setMedium] = useState('')
+  const [substack, setSubstack] = useState('')
 
-  // Sync slug generation when name changes (only if not editing, or manually overridden)
+  // Fetch Authors and Categories
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const authorsRes = await fetch('/api/authors')
+        if (authorsRes.ok) {
+          const data = await authorsRes.json()
+          setAuthors(data)
+        }
+
+        const categoriesRes = await fetch('/api/categories')
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json()
+          setCategoriesList(data.map((c: any) => c.name))
+        }
+      } catch (err) {
+        console.error('Failed to load author data:', err)
+      }
+    }
+    loadData()
+  }, [])
+
   const handleNameChange = (val: string) => {
     setName(val)
-    if (!editingAuthorId) {
-      setSlug(
-        val
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-      )
-    }
   }
 
   // Handle slug change manually to enforce hyphens and lowercase
@@ -162,11 +97,66 @@ export default function AuthorsPage() {
     setSlug(val.toLowerCase().replace(/[^a-z0-9-]/g, ''))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setProfileImageFile(file)
-      setSelectedFileName(file.name)
+  // Verification/Checking of duplicate image on server
+  async function handleImageSelect(file: File) {
+    setUploading(true)
+    setExistingImageWarning(null)
+    setPendingUploadFile(null)
+
+    const filename = file.name.replace(/\s+/g, '-').toLowerCase()
+    const fileUrl = `/authors/${filename}`
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('folder', 'authors')
+    formData.append('checkOnly', 'true')
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.exists) {
+          setExistingImageWarning({ url: fileUrl, filename: file.name })
+          setPendingUploadFile(file)
+        } else {
+          setPendingUploadFile(file)
+          const objectUrl = URL.createObjectURL(file)
+          setImagePreview(objectUrl)
+          setProfileImage(fileUrl)
+        }
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Failed to check image file')
+      }
+    } catch (e) {
+      console.error('Check image error:', e)
+      alert('Error verifying image existence.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function acceptExistingImage() {
+    if (existingImageWarning) {
+      setImagePreview(existingImageWarning.url)
+      setProfileImage(existingImageWarning.url)
+      setExistingImageWarning(null)
+      setPendingUploadFile(null)
+    }
+  }
+
+  function forceUploadImage() {
+    if (pendingUploadFile) {
+      const filename = pendingUploadFile.name.replace(/\s+/g, '-').toLowerCase()
+      const fileUrl = `/authors/${filename}`
+      const objectUrl = URL.createObjectURL(pendingUploadFile)
+      setImagePreview(objectUrl)
+      setProfileImage(fileUrl)
+      setExistingImageWarning(null)
     }
   }
 
@@ -174,104 +164,209 @@ export default function AuthorsPage() {
     setEditingAuthorId(null)
     setName('')
     setSlug('')
-    setGender('Male')
-    setCountry('')
+    setGender('Not Chosen')
+    setRole('')
     setEmail('')
     setCategory('')
-    setWebsiteUrl('')
     setBio('')
-    setProfileImageFile(null)
-    setSelectedFileName('')
+    setProfileImage('')
+    setImagePreview(null)
+    setPendingUploadFile(null)
+    setExistingImageWarning(null)
     setTwitter('')
     setQuora('')
     setReddit('')
     setMedium('')
-    setFormErrors({})
+    setSubstack('')
+    setValidationErrors({})
     setIsModalOpen(true)
   }
 
   const openEditModal = (author: Author) => {
-    setEditingAuthorId(author.id)
+    setEditingAuthorId(author._id)
     setName(author.name)
     setSlug(author.slug)
     setGender(author.gender)
-    setCountry(author.country)
+    setRole(author.role || '')
     setEmail(author.email)
     setCategory(author.category)
-    setWebsiteUrl(author.websiteUrl || '')
     setBio(author.bio)
-    setProfileImageFile(null)
-    setSelectedFileName(author.profileImage ? author.profileImage.split('/').pop() || '' : '')
-    setTwitter(author.socialLinks.twitter || '')
-    setQuora(author.socialLinks.quora || '')
-    setReddit(author.socialLinks.reddit || '')
-    setMedium(author.socialLinks.medium || '')
-    setFormErrors({})
+    setProfileImage(author.profileImage || '')
+    setImagePreview(author.profileImage || null)
+    setPendingUploadFile(null)
+    setExistingImageWarning(null)
+    setTwitter(author.socialLinks?.twitter || '')
+    setQuora(author.socialLinks?.quora || '')
+    setReddit(author.socialLinks?.reddit || '')
+    setMedium(author.socialLinks?.medium || '')
+    setSubstack(author.socialLinks?.substack || '')
+    setValidationErrors({})
     setIsModalOpen(true)
   }
 
-  const deleteAuthor = (id: number) => {
+  const deleteAuthor = async (id: string) => {
     if (confirm('Are you sure you want to delete this author?')) {
-      setAuthors((prev) => prev.filter((a) => a.id !== id))
+      try {
+        const res = await fetch(`/api/authors/${id}`, {
+          method: 'DELETE'
+        })
+        if (res.ok) {
+          setAuthors((prev) => prev.filter((a) => a._id !== id))
+        }
+      } catch (err) {
+        console.error('Delete author error:', err)
+      }
     }
   }
 
-  const saveAuthor = () => {
+  const saveAuthor = async () => {
     // Basic validation
-    const errors: Record<string, boolean> = {}
-    if (!name.trim()) errors.name = true
-    if (!slug.trim()) errors.slug = true
-    if (!country.trim()) errors.country = true
-    if (!email.trim() || !email.includes('@')) errors.email = true
-    if (!category) errors.category = true
-    if (!bio.trim()) errors.bio = true
+    const errors: Record<string, string> = {}
+    if (!name.trim()) {
+      errors.name = 'Author name is required.'
+    }
+    
+    const duplicateSlug = authors.find(
+      a => a.slug.trim().toLowerCase() === slug.trim().toLowerCase() && a._id !== editingAuthorId
+    )
+    if (!slug.trim()) {
+      errors.slug = 'Slug is required.'
+    } else if (duplicateSlug) {
+      errors.slug = 'This slug is already taken by another author.'
+    }
+
+    if (!role.trim()) {
+      errors.role = 'Role is required.'
+    }
+    
+    if (!email.trim()) {
+      errors.email = 'Email address is required.'
+    } else if (!email.includes('@')) {
+      errors.email = 'Please enter a valid email address.'
+    }
+
+    if (!category) {
+      errors.category = 'Primary category is required.'
+    }
+
+    if (!bio.trim()) {
+      errors.bio = 'Author bio/biography is required.'
+    }
 
     if (Object.keys(errors).length > 0) {
-      setFormErrors(errors)
+      setValidationErrors(errors)
+      setTimeout(() => {
+        const errorEl = document.querySelector('.border-red-500, .text-red-500')
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const inputEl = errorEl.closest('div')?.querySelector('input, textarea, select') as HTMLElement
+          if (inputEl) inputEl.focus()
+        }
+      }, 100)
       return
     }
 
-    const savedAuthorData: Author = {
-      id: editingAuthorId ? editingAuthorId : authors.length + 1,
+    let finalImageUrl = profileImage || '/authors/placeholder.webp'
+    if (pendingUploadFile) {
+      setIsUploadingOnSave(true)
+      const formData = new FormData()
+      formData.append('file', pendingUploadFile)
+      formData.append('folder', 'authors')
+      formData.append('overwrite', 'true')
+
+      try {
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json()
+          alert(uploadErr.error || 'Failed to upload profile image to server.')
+          setIsUploadingOnSave(false)
+          return
+        }
+        const uploadData = await uploadRes.json()
+        finalImageUrl = uploadData.url
+      } catch (err) {
+        console.error('Profile image upload on save failed:', err)
+        alert('Failed to upload profile image to server.')
+        setIsUploadingOnSave(false)
+        return
+      } finally {
+        setIsUploadingOnSave(false)
+      }
+    }
+
+    const payload = {
       name: name.trim(),
-      slug: slug.trim(),
+      slug: slug.trim().toLowerCase(),
       gender,
-      country: country.trim(),
+      role: role.trim(),
       email: email.trim(),
       category,
-      websiteUrl: websiteUrl.trim() || undefined,
       bio: bio.trim(),
-      profileImage: selectedFileName ? `/authors/${selectedFileName}` : '/authors/placeholder.webp',
+      profileImage: finalImageUrl,
       socialLinks: {
         ...(twitter.trim() && { twitter: twitter.trim() }),
         ...(quora.trim() && { quora: quora.trim() }),
         ...(reddit.trim() && { reddit: reddit.trim() }),
-        ...(medium.trim() && { medium: medium.trim() })
-      },
-      articlesCount: editingAuthorId ? (authors.find(a => a.id === editingAuthorId)?.articlesCount || 0) : 0
+        ...(medium.trim() && { medium: medium.trim() }),
+        ...(substack.trim() && { substack: substack.trim() })
+      }
     }
 
-    if (editingAuthorId) {
-      setAuthors((prev) => prev.map((a) => (a.id === editingAuthorId ? savedAuthorData : a)))
-      setSavedMessage('updated')
-    } else {
-      setAuthors((prev) => [...prev, savedAuthorData])
-      setSavedMessage('added')
-    }
+    try {
+      if (editingAuthorId) {
+        const res = await fetch(`/api/authors/${editingAuthorId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setAuthors((prev) => prev.map((a) => (a._id === editingAuthorId ? data : a)))
+          setSavedMessage('updated')
+        }
+      } else {
+        const res = await fetch('/api/authors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setAuthors((prev) => [...prev, data])
+          setSavedMessage('added')
+        } else {
+          const errData = await res.json()
+          alert(errData.error || 'Failed to create author')
+          return
+        }
+      }
 
-    setIsModalOpen(false)
-    setTimeout(() => setSavedMessage(''), 3000)
+      setIsModalOpen(false)
+      setTimeout(() => setSavedMessage(''), 3000)
+    } catch (err) {
+      console.error('Save author error:', err)
+    }
   }
 
   // Filter Authors
   const filteredAuthors = authors.filter((author) => {
     const matchesSearch =
       author.name.toLowerCase().includes(search.toLowerCase()) ||
-      author.email.toLowerCase().includes(search.toLowerCase()) ||
-      author.country.toLowerCase().includes(search.toLowerCase())
+      author.email.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = filterCategory === 'all' || author.category === filterCategory
     return matchesSearch && matchesCategory
   })
+
+  const isFormComplete = 
+    name.trim().length > 0 &&
+    slug.trim().length > 0 &&
+    role.trim().length > 0 &&
+    email.trim().includes('@') &&
+    category !== '' &&
+    bio.trim().length > 0
 
   return (
     <>
@@ -281,7 +376,7 @@ export default function AuthorsPage() {
         <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-[28px] font-sans font-extrabold text-[#0f172a] tracking-tight m-0">
-              Authors & Contributors
+              Authors
             </h1>
             <p className="text-[13px] text-[#64748b] mt-1 font-semibold">
               Manage the profile information, primary category, and social presence of publication authors
@@ -309,7 +404,7 @@ export default function AuthorsPage() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input 
-              placeholder="Search by name, email, or country..." 
+              placeholder="Search by name or email..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent text-[13px] text-[#0f172a] outline-none placeholder-slate-400"
@@ -331,7 +426,7 @@ export default function AuthorsPage() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(15,23,42,0.015)] overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-slate-50/50">
             <h2 className="font-extrabold text-[14.5px] text-[#0f172a] tracking-tight uppercase flex items-center gap-2">
-              ✍️ Authors & Contributors <span className="text-[12px] text-slate-400 font-bold">({filteredAuthors.length})</span>
+              ✍️ Authors <span className="text-[12px] text-slate-400 font-bold">({filteredAuthors.length})</span>
             </h2>
           </div>
 
@@ -339,7 +434,7 @@ export default function AuthorsPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {['Author', 'Region / Gender', 'Primary Category', 'Social Links', 'Articles', 'Actions'].map((h) => (
+                  {['Author', 'Role', 'Primary Category', 'Social Links', 'Articles', 'Actions'].map((h) => (
                     <th key={h} className="p-4 px-5 text-left text-[11px] text-slate-400 font-extrabold tracking-wider uppercase">{h}</th>
                   ))}
                 </tr>
@@ -353,7 +448,7 @@ export default function AuthorsPage() {
                   </tr>
                 ) : (
                   filteredAuthors.map((author) => (
-                    <tr key={author.id} className="hover:bg-slate-50/30 transition-colors">
+                    <tr key={author._id} className="hover:bg-slate-50/30 transition-colors">
                       {/* Name & Avatar */}
                       <td className="p-4 px-5">
                         <div className="flex items-center gap-3">
@@ -369,11 +464,10 @@ export default function AuthorsPage() {
                         </div>
                       </td>
 
-                      {/* Region / Gender */}
+                      {/* Role */}
                       <td className="p-4 px-5 text-[12.5px] font-bold text-slate-600">
                         <div className="flex flex-col gap-0.5">
-                          <span>📍 {author.country}</span>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">{author.gender}</span>
+                          <span>{author.role}</span>
                         </div>
                       </td>
 
@@ -389,29 +483,39 @@ export default function AuthorsPage() {
 
                       {/* Social links */}
                       <td className="p-4 px-5">
-                        <div className="flex gap-2">
-                          {author.socialLinks.twitter ? (
+                        <div className="flex gap-2.5 items-center">
+                          {author.socialLinks?.twitter && (
                             <a href={author.socialLinks.twitter} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-slate-900 transition-colors" title="Twitter/X">
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
                             </a>
-                          ) : <span className="text-slate-200 select-none text-[12px]">—</span>}
+                          )}
 
-                          {author.socialLinks.quora && (
+                          {author.socialLinks?.quora && (
                             <a href={author.socialLinks.quora} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-red-700 transition-colors font-serif font-black text-[13px] leading-none shrink-0" title="Quora">
                               Q
                             </a>
                           )}
                           
-                          {author.socialLinks.reddit && (
-                            <a href={author.socialLinks.reddit} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-orange-600 transition-colors shrink-0" title="Reddit">
+                          {author.socialLinks?.reddit && (
+                            <a href={author.socialLinks.reddit} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-orange-600 transition-colors shrink-0 animate-[fade-in_0.2s_ease]" title="Reddit">
                               <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="8"/><circle cx="10" cy="8" r="1"/><path d="M7 11c0 1.5 1.5 2.5 3 2.5s3-1 3-2.5"/><circle cx="7" cy="11" r="0.5"/><circle cx="13" cy="11" r="0.5"/></svg>
                             </a>
                           )}
 
-                          {author.socialLinks.medium && (
-                            <a href={author.socialLinks.medium} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-black transition-colors font-mono font-black text-[11px] leading-none shrink-0" title="Medium">
+                          {author.socialLinks?.medium && (
+                            <a href={author.socialLinks.medium} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-black transition-colors font-mono font-black text-[11.5px] leading-none shrink-0" title="Medium">
                               M
                             </a>
+                          )}
+
+                          {author.socialLinks?.substack && (
+                            <a href={author.socialLinks.substack} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-[#ff6719] transition-colors font-sans font-black text-[12px] leading-none shrink-0" title="Substack">
+                              S
+                            </a>
+                          )}
+
+                          {(!author.socialLinks || (!author.socialLinks.twitter && !author.socialLinks.quora && !author.socialLinks.reddit && !author.socialLinks.medium && !author.socialLinks.substack)) && (
+                            <span className="text-slate-200 select-none text-[12px]">—</span>
                           )}
                         </div>
                       </td>
@@ -431,7 +535,7 @@ export default function AuthorsPage() {
                             Edit
                           </button>
                           <button 
-                            onClick={() => deleteAuthor(author.id)}
+                            onClick={() => deleteAuthor(author._id)}
                             className="p-1.5 px-3.5 border border-red-100 bg-white hover:bg-red-50 text-[11.5px] text-red-600 rounded-lg cursor-pointer font-bold active:translate-y-[1px] transition-all"
                           >
                             Delete
@@ -478,15 +582,21 @@ export default function AuthorsPage() {
                     type="text" 
                     placeholder="Full name"
                     value={name}
-                    onChange={(e) => handleNameChange(e.target.value)}
+                    onChange={(e) => {
+                      handleNameChange(e.target.value)
+                      setValidationErrors(prev => { const c = { ...prev }; delete c.name; return c })
+                    }}
                     className={`w-full bg-white border ${
-                      formErrors.name ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                      validationErrors.name ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                     } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none input-3d transition-all`}
                   />
+                  {validationErrors.name && (
+                    <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.name}</span>
+                  )}
                 </div>
                 <div>
                   <label className="text-[12.5px] font-bold text-[#334155] block mb-1.5">
-                    Slug <span className="text-red-500">*</span> <span className="text-[10px] text-slate-500 font-normal">(auto-generated)</span>
+                    Slug <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -499,15 +609,22 @@ export default function AuthorsPage() {
                       type="text" 
                       placeholder="john-doe"
                       value={slug}
-                      onChange={(e) => handleSlugChange(e.target.value)}
+                      onChange={(e) => {
+                        handleSlugChange(e.target.value)
+                        setValidationErrors(prev => { const c = { ...prev }; delete c.slug; return c })
+                      }}
                       className={`w-full bg-white border ${
-                        formErrors.slug ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                        validationErrors.slug ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                       } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 pl-9 text-[13px] outline-none input-3d transition-all`}
                     />
                   </div>
-                  <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
-                    Only lowercase letters and hyphens allowed (e.g., "john-doe")
-                  </span>
+                  {validationErrors.slug ? (
+                    <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.slug}</span>
+                  ) : (
+                    <span className="text-[11px] text-slate-500 font-semibold mt-1 block">
+                      Only lowercase letters and hyphens allowed (e.g., "john-doe")
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -521,6 +638,7 @@ export default function AuthorsPage() {
                       onChange={(e) => setGender(e.target.value)}
                       className="w-full bg-white border border-slate-200 text-[#0f172a] rounded-xl p-3 text-[13px] outline-none cursor-pointer appearance-none input-3d"
                     >
+                      <option value="Not Chosen">Not Chosen</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
@@ -533,17 +651,23 @@ export default function AuthorsPage() {
                 </div>
                 <div>
                   <label className="text-[12.5px] font-bold text-[#334155] block mb-1.5">
-                    Country <span className="text-red-500">*</span>
+                    Role <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
-                    placeholder="e.g. United Kingdom"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g. Writer"
+                    value={role}
+                    onChange={(e) => {
+                      setRole(e.target.value)
+                      setValidationErrors(prev => { const c = { ...prev }; delete c.role; return c })
+                    }}
                     className={`w-full bg-white border ${
-                      formErrors.country ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                      validationErrors.role ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                     } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none input-3d transition-all`}
                   />
+                  {validationErrors.role && (
+                    <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.role}</span>
+                  )}
                 </div>
               </div>
 
@@ -557,11 +681,17 @@ export default function AuthorsPage() {
                     type="email" 
                     placeholder="author@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setValidationErrors(prev => { const c = { ...prev }; delete c.email; return c })
+                    }}
                     className={`w-full bg-white border ${
-                      formErrors.email ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                      validationErrors.email ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                     } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none input-3d transition-all`}
                   />
+                  {validationErrors.email && (
+                    <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.email}</span>
+                  )}
                 </div>
                 <div>
                   <label className="text-[12.5px] font-bold text-[#334155] block mb-1.5">
@@ -570,9 +700,12 @@ export default function AuthorsPage() {
                   <div className="relative">
                     <select 
                       value={category}
-                      onChange={(e) => setCategory(e.target.value)}
+                      onChange={(e) => {
+                        setCategory(e.target.value)
+                        setValidationErrors(prev => { const c = { ...prev }; delete c.category; return c })
+                      }}
                       className={`w-full bg-white border ${
-                        formErrors.category ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                        validationErrors.category ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                       } text-[#0f172a] rounded-xl p-3 text-[13.5px] outline-none cursor-pointer appearance-none input-3d`}
                     >
                       <option value="">Select Category</option>
@@ -584,20 +717,12 @@ export default function AuthorsPage() {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                     </span>
                   </div>
+                  {validationErrors.category && (
+                    <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.category}</span>
+                  )}
                 </div>
               </div>
 
-              {/* Row 4: Website URL */}
-              <div>
-                <label className="text-[12.5px] font-bold text-[#334155] block mb-1.5">Website URL</label>
-                <input 
-                  type="text" 
-                  placeholder="https://example.com"
-                  value={websiteUrl}
-                  onChange={(e) => setWebsiteUrl(e.target.value)}
-                  className="w-full bg-white border border-slate-200 text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none input-3d focus:border-[#6366f1] transition-all"
-                />
-              </div>
 
               {/* Row 5: Bio */}
               <div>
@@ -608,38 +733,106 @@ export default function AuthorsPage() {
                   rows={4}
                   placeholder="Short author biography..."
                   value={bio}
-                  onChange={(e) => setBio(e.target.value)}
+                  onChange={(e) => {
+                    setBio(e.target.value)
+                    setValidationErrors(prev => { const c = { ...prev }; delete c.bio; return c })
+                  }}
                   className={`w-full bg-white border ${
-                    formErrors.bio ? 'border-red-400 focus:border-red-500' : 'border-slate-200 focus:border-[#6366f1]'
+                    validationErrors.bio ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                   } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none resize-none input-3d transition-all`}
                 />
+                {validationErrors.bio && (
+                  <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.bio}</span>
+                )}
               </div>
 
               {/* Row 6: Profile Image custom file upload */}
               <div>
                 <label className="text-[12.5px] font-bold text-[#334155] block mb-0.5">Profile Image</label>
                 <span className="text-[10.5px] text-slate-400 font-semibold block mb-2">
-                  Only .webp format · Under 100 KB · Uploaded to ImageKit CDN
+                  Only .webp format · Under 100 KB
                 </span>
-                
+
+                {imagePreview && (
+                  <div className="mb-3 relative w-20 h-20 rounded-full overflow-hidden border border-slate-200 shadow-sm bg-slate-100 flex items-center justify-center">
+                    <img 
+                      src={imagePreview} 
+                      alt="Profile preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null)
+                        setProfileImage('')
+                        setPendingUploadFile(null)
+                      }}
+                      className="absolute inset-0 bg-black/45 hover:bg-black/60 text-white flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity text-[11px] font-extrabold cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-2.5 px-3.5 input-3d">
                   <label 
                     htmlFor="profile-image-upload" 
                     className="bg-amber-500 hover:bg-amber-600 text-slate-900 text-[12px] font-bold py-1.5 px-3.5 rounded-lg cursor-pointer transition-colors select-none btn-3d-white"
                   >
-                    Choose File
+                    {uploading ? 'Checking...' : 'Choose File'}
                   </label>
                   <input 
                     id="profile-image-upload"
                     type="file"
                     accept=".webp"
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleImageSelect(e.target.files[0])
+                      }
+                    }}
                     className="hidden"
                   />
                   <span className="text-[12.5px] text-slate-500 truncate max-w-[400px]">
-                    {selectedFileName || 'No file chosen'}
+                    {pendingUploadFile ? pendingUploadFile.name : (profileImage ? profileImage.split('/').pop() : 'No file chosen')}
                   </span>
                 </div>
+
+                {existingImageWarning && (
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex flex-col gap-2.5 animate-[admin-scale-in_0.2s_ease_both]">
+                    <div className="text-[12.5px] text-amber-800 font-bold flex items-center gap-2">
+                      ⚠️ Duplicate Image Warning
+                    </div>
+                    <div className="text-[11.5px] text-amber-700 font-semibold leading-relaxed">
+                      An image named <span className="font-extrabold font-mono text-amber-900">"{existingImageWarning.filename}"</span> already exists under the author profiles folder.
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={acceptExistingImage}
+                        className="p-1.5 px-3 border border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-extrabold cursor-pointer transition-all"
+                      >
+                        Use Existing Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={forceUploadImage}
+                        className="p-1.5 px-3 border border-amber-300 bg-white hover:bg-amber-50 text-amber-800 rounded-lg text-[11px] font-extrabold cursor-pointer transition-all"
+                      >
+                        Replace / Overwrite
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExistingImageWarning(null)
+                          setPendingUploadFile(null)
+                        }}
+                        className="p-1.5 px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-lg text-[11px] font-extrabold cursor-pointer transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Row 7: Social Links */}
@@ -711,6 +904,20 @@ export default function AuthorsPage() {
                     className="w-full bg-white border border-slate-200 text-[#0f172a] placeholder-slate-400 rounded-xl p-3 pl-10 text-[13px] outline-none input-3d focus:border-[#6366f1] transition-all"
                   />
                 </div>
+
+                {/* Substack */}
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[12.5px] font-bold text-slate-400 font-sans select-none">
+                    S
+                  </span>
+                  <input 
+                    type="text" 
+                    placeholder="https://substack.com/..."
+                    value={substack}
+                    onChange={(e) => setSubstack(e.target.value)}
+                    className="w-full bg-white border border-slate-200 text-[#0f172a] placeholder-slate-400 rounded-xl p-3 pl-10 text-[13px] outline-none input-3d focus:border-[#6366f1] transition-all"
+                  />
+                </div>
               </div>
 
             </div>
@@ -724,15 +931,16 @@ export default function AuthorsPage() {
                 Cancel
               </button>
               <button 
+                type="button"
                 onClick={saveAuthor}
-                className="p-2.5 px-6 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-xl font-extrabold text-[13px] border-none cursor-pointer btn-3d-indigo flex items-center gap-2 transition-all active:translate-y-[1px]"
+                className="p-2.5 px-6 bg-[#6366f1] hover:bg-[#4f46e5] text-white border-transparent rounded-xl font-extrabold text-[13px] cursor-pointer btn-3d-indigo flex items-center gap-2 transition-all active:translate-y-[1px]"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
                   <polyline points="17 21 17 13 7 13 7 21"/>
                   <polyline points="7 3 7 8 15 8"/>
                 </svg>
-                Save Author
+                {editingAuthorId ? 'Update Author' : 'Save Author'}
               </button>
             </div>
 

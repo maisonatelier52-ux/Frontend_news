@@ -24,9 +24,10 @@ const pageIcons: Record<string, string> = {
 interface AdminTopBarProps {
   collapsed: boolean
   setCollapsed: (c: boolean) => void
+  user?: any
 }
 
-export default function AdminTopBar({ collapsed, setCollapsed }: AdminTopBarProps) {
+export default function AdminTopBar({ collapsed, setCollapsed, user }: AdminTopBarProps) {
   const pathname = usePathname()
   const crumbs = getBreadcrumb(pathname)
   const [notifOpen, setNotifOpen] = useState(false)
@@ -151,11 +152,11 @@ export default function AdminTopBar({ collapsed, setCollapsed }: AdminTopBarProp
         {/* User Profile Avatar */}
         <div className="flex items-center gap-2 py-1 px-1 pl-2.5 border border-white/15 hover:border-white rounded-xl cursor-pointer bg-white/5 hover:bg-white/10 transition-all duration-150">
           <div className="text-right">
-            <div className="text-[12px] font-bold text-white leading-none">Admin</div>
+            <div className="text-[12px] font-bold text-white leading-none">{user?.name || 'Admin'}</div>
             <div className="text-[10px] text-slate-300">Super Admin</div>
           </div>
-          <div className="w-[30px] h-[30px] rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-[12px] font-extrabold text-white shrink-0 shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
-            A
+          <div className="w-[30px] h-[30px] rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-[12px] font-extrabold text-white shrink-0 shadow-[0_2px_6px_rgba(0,0,0,0.15)] uppercase">
+            {(user?.name || 'A').charAt(0)}
           </div>
         </div>
       </div>

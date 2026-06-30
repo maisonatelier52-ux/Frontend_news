@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 type BlockType = 'paragraph' | 'subheading' | 'pullquote' | 'image' | 'at-glance' | 'faq'
 
@@ -16,20 +16,23 @@ type TabType = 'write' | 'meta' | 'visuals' | 'seo'
 
 function NewArticleForm() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const articleId = searchParams.get('id')
 
   const [activeTab, setActiveTab] = useState<TabType>('write')
+  const [categoriesList, setCategoriesList] = useState<string[]>([])
+  const [authorsList, setAuthorsList] = useState<string[]>([])
 
   // Form Fields State
   const [form, setForm] = useState({
     title: '',
     slug: '',
-    category: 'Politics',
-    author: 'Sarah Johnson',
+    category: '',
+    author: '',
     newsType: 'featured',
     date: '',
-    readTime: '5 mins',
-    status: 'draft',
+    readTime: '',
+    status: '',
     seoTitle: '',
     seoMetaDescription: '',
     keywords: '',
@@ -50,70 +53,102 @@ function NewArticleForm() {
   })
 
   const [blocks, setBlocks] = useState<Block[]>([
-    { id: 'initial-1', type: 'paragraph', value: 'Start writing your news article here...' }
+    { id: 'initial-1', type: 'paragraph', value: '' }
   ])
 
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [existingImageWarning, setExistingImageWarning] = useState<{ url: string; filename: string } | null>(null)
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [isUploadingOnSave, setIsUploadingOnSave] = useState(false)
+  const [existingArticles, setExistingArticles] = useState<{ id: string; title: string; slug: string; featuredImage?: string }[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Set default date client side
+  // Fetch options and/or existing article
   useEffect(() => {
-    setForm(prev => ({
-      ...prev,
-      date: prev.date || new Date().toISOString().substring(0, 16)
-    }))
-  }, [])
+    async function loadFormOptions() {
+      try {
+        const catRes = await fetch('/api/categories')
+        let cats: string[] = []
+        if (catRes.ok) {
+          const catData = await catRes.json()
+          cats = catData.map((c: any) => c.name)
+          setCategoriesList(cats)
+        }
 
-  // If editing an existing article, pre-populate with mock data
-  useEffect(() => {
-    if (articleId) {
-      setForm({
-        title: 'US Senate Passes Major Infrastructure Bill',
-        slug: 'us-senate-passes-major-infrastructure-bill',
-        category: 'Politics',
-        author: 'Sarah Johnson',
-        newsType: 'featured',
-        date: '2026-06-29T14:30',
-        readTime: '6 mins',
-        status: 'published',
-        seoTitle: 'Senate Passes Major Infrastructure Bill | NewsAdmin',
-        seoMetaDescription: 'The Senate has passed a historic bipartisan infrastructure bill allocating billions of dollars to roads, bridges, and public transport.',
-        keywords: 'senate, bill, infrastructure, transport',
-        tags: 'politics, senate, infrastructure',
-        excerpt: 'A historic bipartisan bill focusing on transport, broadband, and clean energy passes the Senate.',
-        featuredImage: '/article-placeholder.jpg',
-        imageAltText: 'Senate house chambers voting',
-        featuredVideoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        cardLabel: 'Breaking News',
-      })
-      setOptions({
-        featuredArticle: true,
-        editorsPick: true,
-        breakingNews: true,
-        allowComments: true,
-      })
-      setBlocks([
-        { id: 'edit-1', type: 'subheading', value: 'A Historic Bipartisan Milestone' },
-        { id: 'edit-2', type: 'paragraph', value: 'Following months of intensive negotiations, the United States Senate today passed the highly anticipated $1.2 trillion bipartisan infrastructure bill. The legislation aims to reconstruct national transport networks, extend high-speed broadband connections, and modernize public utilities.' },
-        { id: 'edit-3', type: 'pullquote', value: { quote: 'This is a monumental victory for the American people, delivering on promises that have been delayed for decades.', author: 'Senator Robert Vance' } },
-        { id: 'edit-4', type: 'at-glance', value: {
-          title: 'At a Glance',
-          subtitle: 'Key investments inside the bill',
-          rows: [
-            { label: 'Transport Networks', value: '$110 Billion for roads, bridges, and major projects' },
-            { label: 'Broadband Expansion', value: '$65 Billion to supply high-speed internet nationwide' },
-            { label: 'Clean Water Infrastructure', value: '$55 Billion for clean water systems and lead pipe replacement' }
-          ]
-        }},
-        { id: 'edit-5', type: 'paragraph', value: 'Supporters emphasize that the investments will stimulate job creation and economic growth over the coming decade. Critics, however, cite concerns regarding the overall budget allocation and national debt trajectory.' },
-        { id: 'edit-6', type: 'faq', value: {
-          title: 'Frequently asked questions',
-          items: [
-            { question: 'When will the investments take effect?', answer: 'Funds will begin distribution to state departments starting next fiscal quarter, with primary project approvals starting within six months.' },
-            { question: 'How is this bill funded?', answer: 'The bill utilizes unspent emergency relief funds, repurposed federal assets, and targeted corporate tax adjustments.' }
-          ]
-        }}
-      ])
+        const authRes = await fetch('/api/authors')
+        let auths: string[] = []
+        if (authRes.ok) {
+          const authData = await authRes.json()
+          auths = authData.map((a: any) => a.name)
+          setAuthorsList(auths)
+        }
+
+        const newsRes = await fetch('/api/news')
+        if (newsRes.ok) {
+          const newsData = await newsRes.json()
+          setExistingArticles(newsData.map((item: any) => ({
+            id: item._id,
+            title: item.title,
+            slug: item.slug,
+            featuredImage: item.featuredImage
+          })))
+        }
+
+        if (articleId) {
+          const articleRes = await fetch(`/api/news/${articleId}`)
+          if (articleRes.ok) {
+            const art = await articleRes.json()
+            setForm({
+              title: art.title || '',
+              slug: art.slug || '',
+              category: art.category || (cats[0] || ''),
+              author: art.author || (auths[0] || ''),
+              newsType: 'featured',
+              date: art.date ? new Date(art.date).toISOString().substring(0, 16) : new Date().toISOString().substring(0, 16),
+              readTime: art.readTime || '5 mins',
+              status: art.status || 'draft',
+              seoTitle: art.seoTitle || '',
+              seoMetaDescription: art.seoMetaDescription || '',
+              keywords: art.keywords || '',
+              tags: art.tags || '',
+              excerpt: art.excerpt || '',
+              featuredImage: art.featuredImage || '',
+              imageAltText: art.imageAltText || '',
+              featuredVideoUrl: art.featuredVideoUrl || '',
+              cardLabel: art.cardLabel || '',
+            })
+            setOptions({
+              featuredArticle: art.options?.featuredArticle || false,
+              editorsPick: art.options?.editorsPick || false,
+              breakingNews: art.options?.breakingNews || false,
+              allowComments: art.options?.allowComments || true,
+            })
+            if (art.blocks && art.blocks.length > 0) {
+              setBlocks(art.blocks)
+            }
+            if (art.featuredImage) {
+              setImagePreview(art.featuredImage)
+            }
+          }
+        } else {
+          // Keep category and author empty so they default to "Not Chosen" placeholder
+          setForm(prev => ({
+            ...prev,
+            category: prev.category || '',
+            author: prev.author || '',
+            date: prev.date || new Date().toISOString().substring(0, 16)
+          }))
+        }
+      } catch (err) {
+        console.error('Error loading options or article:', err)
+      }
     }
+    loadFormOptions()
   }, [articleId])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -121,8 +156,17 @@ function NewArticleForm() {
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === 'title' ? { slug: value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') } : {}),
     }))
+    setIsDirty(true)
+
+    // Clear field validation error instantly when user provides a value
+    if (value && value.trim()) {
+      setValidationErrors((prev) => {
+        const copy = { ...prev }
+        delete copy[name]
+        return copy
+      })
+    }
   }
 
   // Toggle Switch Handler
@@ -144,7 +188,28 @@ function NewArticleForm() {
 
   // Update block value
   function updateBlockValue(id: string, newValue: any) {
-    setBlocks(prev => prev.map(b => b.id === id ? { ...b, value: newValue } : b))
+    setBlocks(prev => {
+      const updated = prev.map(b => b.id === id ? { ...b, value: newValue } : b)
+      setIsDirty(true)
+      const hasContent = updated.some(b => {
+        if (b.type === 'paragraph' || b.type === 'subheading') {
+          return typeof b.value === 'string' && b.value.trim().length > 0 && b.value !== 'Start writing your news article here...'
+        }
+        if (b.type === 'pullquote') {
+          return b.value && b.value.quote && b.value.quote.trim().length > 0
+        }
+        return false
+      })
+
+      if (hasContent) {
+        setValidationErrors(errors => {
+          const copy = { ...errors }
+          delete copy.content
+          return copy
+        })
+      }
+      return updated
+    })
   }
 
   // Delete a block
@@ -162,26 +227,371 @@ function NewArticleForm() {
     setBlocks(newBlocks)
   }
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault()
-    setSaved(true)
-    const bottomContainer = document.getElementById('form-actions-bottom')
-    if (bottomContainer) {
-      bottomContainer.scrollIntoView({ behavior: 'smooth' })
+  function validateTab(tab: TabType): boolean {
+    const errors: Record<string, string> = { ...validationErrors }
+
+    if (tab === 'write') {
+      const normalizedTitle = form.title.trim().toLowerCase()
+      const normalizedSlug = form.slug.trim().toLowerCase()
+
+      const duplicateTitle = existingArticles.find(
+        art => art.title.trim().toLowerCase() === normalizedTitle && art.id !== articleId
+      )
+      const duplicateSlug = existingArticles.find(
+        art => art.slug.trim().toLowerCase() === normalizedSlug && art.id !== articleId
+      )
+
+      if (!form.title.trim()) {
+        errors.title = "Article Headline is required."
+      } else if (duplicateTitle) {
+        errors.title = "A news article with this title already exists."
+      } else {
+        delete errors.title
+      }
+
+      if (!form.slug.trim()) {
+        errors.slug = "URL slug is required."
+      } else if (duplicateSlug) {
+        errors.slug = "A news article with this slug already exists."
+      } else {
+        delete errors.slug
+      }
+
+      if (!form.author) {
+        errors.author = "Author selection is required."
+      } else {
+        delete errors.author
+      }
+
+      if (!form.date) {
+        errors.date = "Publish date is required."
+      } else {
+        delete errors.date
+      }
+
+      if (!form.status) {
+        errors.status = "Article publishing status is required."
+      } else {
+        delete errors.status
+      }
+
+      // Content blocks validation: ensure at least one text block contains content
+      const hasContent = blocks.some(b => {
+        if (b.type === 'paragraph' || b.type === 'subheading') {
+          return typeof b.value === 'string' && b.value.trim().length > 0 && b.value !== 'Start writing your news article here...'
+        }
+        if (b.type === 'pullquote') {
+          return b.value && b.value.quote && b.value.quote.trim().length > 0
+        }
+        return false
+      })
+      if (!hasContent) {
+        errors.content = "Article content cannot be empty. Please enter text in the editor below."
+      } else {
+        delete errors.content
+      }
     }
-    setTimeout(() => setSaved(false), 4000)
+
+    if (tab === 'meta') {
+      if (!form.category) {
+        errors.category = "Category selection is required."
+      } else {
+        delete errors.category
+      }
+
+      const rt = Number(form.readTime)
+      if (!form.readTime.trim()) {
+        errors.readTime = "Read time is required."
+      } else if (isNaN(rt) || !Number.isInteger(rt)) {
+        errors.readTime = "Read time must be a whole number."
+      } else if (rt < 1 || rt > 60) {
+        errors.readTime = "Read time must be between 1 and 60 minutes."
+      } else {
+        delete errors.readTime
+      }
+    }
+
+    if (tab === 'visuals') {
+      if (!imagePreview) {
+        errors.featuredImage = "Please upload an image using the file picker above."
+      } else {
+        delete errors.featuredImage
+      }
+
+      if (!form.imageAltText.trim()) {
+        errors.imageAltText = "Image Alt Text description is required."
+      } else {
+        delete errors.imageAltText
+      }
+    }
+
+    if (tab === 'seo') {
+      if (!form.seoTitle.trim()) {
+        errors.seoTitle = "SEO Title is required for search engines."
+      } else {
+        delete errors.seoTitle
+      }
+
+      if (!form.seoMetaDescription.trim()) {
+        errors.seoMetaDescription = "SEO Meta Description is required."
+      } else {
+        delete errors.seoMetaDescription
+      }
+    }
+
+    setValidationErrors(errors)
+
+    // Check if the current tab is valid
+    let isTabValid = true
+    if (tab === 'write') {
+      isTabValid = !errors.title && !errors.slug && !errors.author && !errors.date && !errors.status && !errors.content
+    } else if (tab === 'meta') {
+      isTabValid = !errors.category && !errors.readTime
+    } else if (tab === 'visuals') {
+      isTabValid = !errors.featuredImage && !errors.imageAltText
+    } else if (tab === 'seo') {
+      isTabValid = !errors.seoTitle && !errors.seoMetaDescription
+    }
+
+    // Scroll to the first validation issue dynamically if invalid
+    if (!isTabValid) {
+      setTimeout(() => {
+        const errorEl = document.querySelector('.border-red-500, .text-red-500')
+        if (errorEl) {
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const inputEl = errorEl.closest('div')?.querySelector('input, textarea, select') as HTMLElement
+          if (inputEl) inputEl.focus()
+        }
+      }, 100)
+    }
+
+    return isTabValid
+  }
+
+  function handleTabClick(targetTab: TabType) {
+    const steps: TabType[] = ['write', 'meta', 'visuals', 'seo']
+    const currentIndex = steps.indexOf(activeTab)
+    const targetIndex = steps.indexOf(targetTab)
+    
+    if (targetIndex <= currentIndex) {
+      setActiveTab(targetTab)
+    } else {
+      let isValid = true
+      for (let i = currentIndex; i < targetIndex; i++) {
+        if (!validateTab(steps[i])) {
+          isValid = false
+          break
+        }
+      }
+      if (isValid) {
+        setActiveTab(targetTab)
+      }
+    }
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    if (e) e.preventDefault()
+    setSaved(false)
+
+    // Validate all tabs
+    const isWriteValid = validateTab('write')
+    const isMetaValid = validateTab('meta')
+    const isVisualsValid = validateTab('visuals')
+    const isSeoValid = validateTab('seo')
+
+    if (!isWriteValid || !isMetaValid || !isVisualsValid || !isSeoValid) {
+      if (!isWriteValid) setActiveTab('write')
+      else if (!isMetaValid) setActiveTab('meta')
+      else if (!isVisualsValid) setActiveTab('visuals')
+      else if (!isSeoValid) setActiveTab('seo')
+      return
+    }
+
+    // Perform upload if there's a pending file selected
+    let finalImageUrl = form.featuredImage
+    if (pendingUploadFile) {
+      setIsUploadingOnSave(true)
+      const formData = new FormData()
+      formData.append('file', pendingUploadFile)
+      formData.append('overwrite', 'true')
+
+      try {
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json()
+          setSaveError(uploadErr.error || 'Failed to upload featured image to server.')
+          setIsUploadingOnSave(false)
+          return
+        }
+        const uploadData = await uploadRes.json()
+        finalImageUrl = uploadData.url
+      } catch (err) {
+        console.error('Image upload on save failed:', err)
+        setSaveError('Failed to upload image to public/images folder.')
+        setIsUploadingOnSave(false)
+        return
+      } finally {
+        setIsUploadingOnSave(false)
+      }
+    }
+
+    const payload = {
+      ...form,
+      featuredImage: finalImageUrl,
+      options,
+      blocks
+    }
+
+    try {
+      const url = articleId ? `/api/news/${articleId}` : '/api/news'
+      const method = articleId ? 'PUT' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        setSaved(true)
+        setIsDirty(false)
+        
+        // Reset form fields
+        setForm({
+          title: '',
+          slug: '',
+          category: '',
+          author: '',
+          newsType: 'featured',
+          date: '',
+          readTime: '',
+          status: '',
+          seoTitle: '',
+          seoMetaDescription: '',
+          keywords: '',
+          tags: '',
+          excerpt: '',
+          featuredImage: '',
+          imageAltText: '',
+          featuredVideoUrl: '',
+          cardLabel: '',
+        })
+        setOptions({
+          featuredArticle: false,
+          editorsPick: false,
+          breakingNews: false,
+          allowComments: true,
+        })
+        setBlocks([
+          { id: 'initial-1', type: 'paragraph', value: '' }
+        ])
+        setImagePreview(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+
+        const bottomContainer = document.getElementById('form-actions-bottom')
+        if (bottomContainer) {
+          bottomContainer.scrollIntoView({ behavior: 'smooth' })
+        }
+        
+        // Redirect to admin news articles page after a short delay
+        setTimeout(() => {
+          setSaved(false)
+          router.push('/admin/news')
+          router.refresh()
+        }, 1500)
+      } else {
+        const errData = await res.json()
+        setSaveError(errData.error || 'Failed to save article')
+      }
+    } catch (err) {
+      console.error('Save article error:', err)
+    }
   }
 
   function handleNext() {
-    if (activeTab === 'write') setActiveTab('meta')
-    else if (activeTab === 'meta') setActiveTab('visuals')
-    else if (activeTab === 'visuals') setActiveTab('seo')
+    if (activeTab === 'write') {
+      if (validateTab('write')) setActiveTab('meta')
+    } else if (activeTab === 'meta') {
+      if (validateTab('meta')) setActiveTab('visuals')
+    } else if (activeTab === 'visuals') {
+      if (validateTab('visuals')) setActiveTab('seo')
+    }
   }
 
   function handleBack() {
     if (activeTab === 'seo') setActiveTab('visuals')
     else if (activeTab === 'visuals') setActiveTab('meta')
     else if (activeTab === 'meta') setActiveTab('write')
+  }
+
+  // Check if image exists on server before save
+  async function handleImageSelect(file: File) {
+    setUploading(true)
+    setExistingImageWarning(null)
+    setPendingUploadFile(null)
+
+    const filename = file.name.replace(/\s+/g, '-').toLowerCase()
+    const fileUrl = `/images/${filename}`
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('checkOnly', 'true')
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.exists) {
+          setExistingImageWarning({ url: fileUrl, filename: file.name })
+          setPendingUploadFile(file)
+        } else {
+          // Keep file in pending upload, set preview and input field path
+          setPendingUploadFile(file)
+          const objectUrl = URL.createObjectURL(file)
+          setImagePreview(objectUrl)
+          setForm(prev => ({ ...prev, featuredImage: fileUrl }))
+          setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
+        }
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Failed to check image file')
+      }
+    } catch (e) {
+      console.error('Check image error:', e)
+      alert('Error verifying image existence.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function acceptExistingImage() {
+    if (existingImageWarning) {
+      setImagePreview(existingImageWarning.url)
+      setForm(prev => ({ ...prev, featuredImage: existingImageWarning.url }))
+      setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
+      setExistingImageWarning(null)
+      setPendingUploadFile(null)
+    }
+  }
+
+  function forceUploadImage() {
+    if (pendingUploadFile) {
+      const filename = pendingUploadFile.name.replace(/\s+/g, '-').toLowerCase()
+      const fileUrl = `/images/${filename}`
+      const objectUrl = URL.createObjectURL(pendingUploadFile)
+      setImagePreview(objectUrl)
+      setForm(prev => ({ ...prev, featuredImage: fileUrl }))
+      setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
+      setExistingImageWarning(null)
+    }
   }
 
   useEffect(() => {
@@ -228,7 +638,7 @@ function NewArticleForm() {
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id as TabType)}
+            onClick={() => handleTabClick(tab.id as TabType)}
             className={`flex-1 flex items-center gap-3 p-4 px-6 border-none cursor-pointer transition-all text-left relative ${
               activeTab === tab.id
                 ? 'text-[#6366f1]'
@@ -291,8 +701,13 @@ function NewArticleForm() {
                     value={form.title}
                     onChange={handleChange}
                     placeholder="Enter article headline..."
-                    className={fieldClass}
+                    className={`${fieldClass} ${validationErrors.title ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.title && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.title}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -311,49 +726,48 @@ function NewArticleForm() {
                       value={form.slug}
                       onChange={handleChange}
                       placeholder="slug-path-here"
-                      className={`${fieldClass} pl-10`}
+                      className={`${fieldClass} pl-10 ${validationErrors.slug ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                   </div>
+                  {validationErrors.slug && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.slug}
+                    </div>
+                  )}
                   <div className="text-[11px] text-[#94a3b8] mt-1.5 font-semibold">Example: breaking-news-headline-2025</div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Excerpt (Short Description)</label>
-                    <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Brief summary for listings and SEO</div>
-                    <textarea
-                      id="art-excerpt"
-                      name="excerpt"
-                      value={form.excerpt}
-                      onChange={handleChange}
-                      placeholder="Write a short summary of your article..."
-                      rows={3}
-                      className={`${fieldClass} resize-none leading-relaxed`}
-                    />
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a]">Excerpt (Short Description)</label>
+                    <span className={`text-[10px] font-semibold ${form.excerpt.length > 300 ? 'text-red-500' : 'text-slate-400'}`}>{form.excerpt.length}/300</span>
                   </div>
-                  
-                  <div>
-                    <label htmlFor="art-video" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Featured Video URL (Optional)</label>
-                    <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Add YouTube or Vimeo link</div>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-4 text-slate-400 text-[14px]">▶</span>
-                      <input
-                        id="art-video"
-                        name="featuredVideoUrl"
-                        value={form.featuredVideoUrl}
-                        onChange={handleChange}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        className={`${fieldClass} pl-10`}
-                      />
-                    </div>
-                  </div>
+                  <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Brief summary for listings and SEO</div>
+                  <textarea
+                    id="art-excerpt"
+                    name="excerpt"
+                    value={form.excerpt}
+                    onChange={handleChange}
+                    maxLength={300}
+                    placeholder="Write a short summary of your article..."
+                    rows={3}
+                    className={`${fieldClass} resize-none leading-relaxed`}
+                  />
+                  {form.excerpt.length >= 280 && (
+                    <div className="text-[11px] text-amber-500 font-semibold mt-1 flex items-center gap-1">⚠️ {300 - form.excerpt.length} characters remaining</div>
+                  )}
                 </div>
               </div>
 
               {/* Card - Content Block Editor */}
-              <div className="bg-white rounded-2xl p-6.5 border border-slate-100 shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-4">
+              <div className={`bg-white rounded-2xl p-6.5 border shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-4 ${validationErrors.content ? 'border-red-500' : 'border-slate-100'}`}>
                 <div className="text-[13px] font-extrabold text-[#0f172a] block">Content *</div>
-                <div className="text-[11.5px] text-[#64748b] -mt-2.5 mb-2 font-medium">Write your article content</div>
+                {validationErrors.content && (
+                  <div className="text-[12px] text-red-500 font-semibold -mt-2 mb-1 flex items-center gap-1">
+                    <span>⚠️</span> {validationErrors.content}
+                  </div>
+                )}
+                <div className="text-[11.5px] text-[#64748b] -mt-1.5 mb-2 font-medium">Write your article content</div>
 
                 <div className="flex flex-col gap-4">
                   {blocks.map((block, index) => (
@@ -392,15 +806,24 @@ function NewArticleForm() {
                       </div>
 
                       {/* Inputs */}
-                      {block.type === 'paragraph' && (
-                        <textarea
-                          value={block.value}
-                          rows={4}
-                          onChange={(e) => updateBlockValue(block.id, e.target.value)}
-                          placeholder="Write paragraph content here..."
-                          className="w-full border border-slate-200 bg-white text-[#0f172a] rounded-lg p-2.5 px-3.5 text-[13.5px] outline-none placeholder-slate-400 input-3d"
-                        />
-                      )}
+                      {block.type === 'paragraph' && (() => {
+                        const wordCount = block.value ? block.value.trim().split(/\s+/).filter(Boolean).length : 0
+                        const isOverLimit = wordCount > 4000
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <textarea
+                              value={block.value}
+                              rows={4}
+                              onChange={(e) => updateBlockValue(block.id, e.target.value)}
+                              placeholder="Write paragraph content here..."
+                              className={`w-full border bg-white text-[#0f172a] rounded-lg p-2.5 px-3.5 text-[13.5px] outline-none placeholder-slate-400 input-3d ${isOverLimit ? 'border-red-400' : 'border-slate-200'}`}
+                            />
+                            <div className={`text-[10.5px] font-semibold text-right ${isOverLimit ? 'text-red-500' : 'text-slate-400'}`}>
+                              {wordCount.toLocaleString()} / 4,000 words{isOverLimit ? ' — over limit!' : ''}
+                            </div>
+                          </div>
+                        )
+                      })()}
 
                       {block.type === 'subheading' && (
                         <input
@@ -584,32 +1007,54 @@ function NewArticleForm() {
                       name="category"
                       value={form.category}
                       onChange={handleChange}
-                      className={fieldClass}
+                      className={`${fieldClass} ${validationErrors.category ? 'border-red-500 focus:border-red-500' : ''}`}
                     >
-                      {['Politics', 'Technology', 'Business', 'World', 'Sports', 'Entertainment', 'Science', 'Health'].map((c) => (
+                      <option value="">-- Not Chosen --</option>
+                      {categoriesList.map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
+                    {validationErrors.category && (
+                      <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                        <span>⚠️</span> {validationErrors.category}
+                      </div>
+                    )}
                   </div>
                   <div>
-                    <label htmlFor="art-read-time" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Read Time</label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label htmlFor="art-read-time" className="text-[13px] font-extrabold text-[#0f172a]">Read Time (mins)</label>
+                      {form.readTime && <span className="text-[10px] text-slate-400 font-semibold">{form.readTime} min{Number(form.readTime) !== 1 ? 's' : ''}</span>}
+                    </div>
                     <input
                       id="art-read-time"
-                      type="text"
+                      type="number"
                       name="readTime"
+                      min={1}
+                      max={60}
                       value={form.readTime}
                       onChange={handleChange}
-                      className={fieldClass}
+                      placeholder="e.g. 5"
+                      className={`${fieldClass} ${validationErrors.readTime ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
+                    <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Enter a number between 1–60</div>
+                    {validationErrors.readTime && (
+                      <div className="text-[12px] text-red-500 font-semibold mt-1 flex items-center gap-1">
+                        <span>⚠️</span> {validationErrors.readTime}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="art-tags" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Tags</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-tags" className="text-[13px] font-extrabold text-[#0f172a]">Tags</label>
+                    <span className={`text-[10px] font-semibold ${form.tags.length > 200 ? 'text-red-500' : 'text-slate-400'}`}>{form.tags.length}/200</span>
+                  </div>
                   <input
                     id="art-tags"
                     name="tags"
                     value={form.tags}
+                    maxLength={200}
                     onChange={handleChange}
                     placeholder="e.g. senate, updates, voting"
                     className={fieldClass}
@@ -635,19 +1080,33 @@ function NewArticleForm() {
                     value={form.featuredImage || ''}
                     onChange={handleChange}
                     placeholder="e.g. /images/articles/news.jpg"
-                    className={fieldClass}
+                    className={`${fieldClass} ${validationErrors.featuredImage ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.featuredImage && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.featuredImage}
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <label htmlFor="art-image-alt" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Image Alt Text</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-image-alt" className="text-[13px] font-extrabold text-[#0f172a]">Image Alt Text</label>
+                    <span className={`text-[10px] font-semibold ${form.imageAltText.length > 150 ? 'text-red-500' : 'text-slate-400'}`}>{form.imageAltText.length}/150</span>
+                  </div>
                   <input
                     id="art-image-alt"
                     name="imageAltText"
                     value={form.imageAltText}
+                    maxLength={150}
                     onChange={handleChange}
                     placeholder="Describe featured image visual context..."
-                    className={fieldClass}
+                    className={`${fieldClass} ${validationErrors.imageAltText ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.imageAltText && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.imageAltText}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -662,36 +1121,58 @@ function NewArticleForm() {
                 </div>
                 
                 <div>
-                  <label htmlFor="art-seo-title" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">SEO Title</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-seo-title" className="text-[13px] font-extrabold text-[#0f172a]">SEO Title</label>
+                    <span className={`text-[10px] font-semibold ${form.seoTitle.length > 60 ? 'text-red-500' : form.seoTitle.length >= 50 ? 'text-emerald-500' : 'text-slate-400'}`}>{form.seoTitle.length}/60</span>
+                  </div>
                   <input
                     id="art-seo-title"
                     name="seoTitle"
                     value={form.seoTitle}
+                    maxLength={60}
                     onChange={handleChange}
-                    placeholder="Optimal search list title (50-60 characters)"
-                    className={fieldClass}
+                    placeholder="Optimal search list title (50–60 characters)"
+                    className={`${fieldClass} ${validationErrors.seoTitle ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.seoTitle && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.seoTitle}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="art-seo-desc" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">SEO Meta Description</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-seo-desc" className="text-[13px] font-extrabold text-[#0f172a]">SEO Meta Description</label>
+                    <span className={`text-[10px] font-semibold ${form.seoMetaDescription.length > 160 ? 'text-red-500' : form.seoMetaDescription.length >= 140 ? 'text-emerald-500' : 'text-slate-400'}`}>{form.seoMetaDescription.length}/160</span>
+                  </div>
                   <textarea
                     id="art-seo-desc"
                     name="seoMetaDescription"
                     value={form.seoMetaDescription}
+                    maxLength={160}
                     onChange={handleChange}
-                    placeholder="Search snippet summary details (150-160 characters)..."
+                    placeholder="Search snippet summary (150–160 characters)..."
                     rows={3}
-                    className={`${fieldClass} resize-none leading-relaxed`}
+                    className={`${fieldClass} resize-none leading-relaxed ${validationErrors.seoMetaDescription ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  {validationErrors.seoMetaDescription && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.seoMetaDescription}
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label htmlFor="art-seo-keywords" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Keywords</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-seo-keywords" className="text-[13px] font-extrabold text-[#0f172a]">Keywords</label>
+                    <span className={`text-[10px] font-semibold ${form.keywords.length > 250 ? 'text-red-500' : 'text-slate-400'}`}>{form.keywords.length}/250</span>
+                  </div>
                   <input
                     id="art-seo-keywords"
                     name="keywords"
                     value={form.keywords}
+                    maxLength={250}
                     onChange={handleChange}
                     placeholder="infrastructure, voting, political updates"
                     className={fieldClass}
@@ -717,19 +1198,25 @@ function NewArticleForm() {
                 <label htmlFor="side-status" className="text-[12.5px] font-bold text-[#475569] mb-1.5 block">Status</label>
                 <div className="relative flex items-center">
                   <span className={`w-2.5 h-2.5 rounded-full absolute left-4 z-10 ${
-                    form.status === 'published' ? 'bg-emerald-500' : 'bg-amber-500'
+                    form.status === 'published' ? 'bg-emerald-500' : form.status === 'draft' ? 'bg-amber-500' : 'bg-slate-300'
                   }`} />
                   <select
                     id="side-status"
                     name="status"
                     value={form.status}
                     onChange={handleChange}
-                    className={`${fieldClass} pl-9 font-bold`}
+                    className={`${fieldClass} pl-9 font-bold ${validationErrors.status ? 'border-red-500 focus:border-red-500' : ''}`}
                   >
+                    <option value="">-- None --</option>
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
                   </select>
                 </div>
+                {validationErrors.status && (
+                  <div className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                    <span>⚠️</span> {validationErrors.status}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -740,8 +1227,13 @@ function NewArticleForm() {
                   name="date"
                   value={form.date}
                   onChange={handleChange}
-                  className={fieldClass}
+                  className={`${fieldClass} ${validationErrors.date ? 'border-red-500 focus:border-red-500' : ''}`}
                 />
+                {validationErrors.date && (
+                  <div className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                    <span>⚠️</span> {validationErrors.date}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -753,21 +1245,31 @@ function NewArticleForm() {
                     name="author"
                     value={form.author}
                     onChange={handleChange}
-                    className={`${fieldClass} pl-10`}
+                    className={`${fieldClass} pl-10 ${validationErrors.author ? 'border-red-500 focus:border-red-500' : ''}`}
                   >
-                    {['Sarah Johnson', 'Michael Chen', 'Emily Davis', 'James Wilson', 'Lisa Park'].map((a) => (
+                    <option value="">-- Not Chosen --</option>
+                    {authorsList.map((a) => (
                       <option key={a} value={a}>{a}</option>
                     ))}
                   </select>
                 </div>
+                {validationErrors.author && (
+                  <div className="text-[11px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
+                    <span>⚠️</span> {validationErrors.author}
+                  </div>
+                )}
               </div>
 
               <div>
-                <label htmlFor="side-card-label" className="text-[12.5px] font-bold text-[#475569] mb-1.5 block">Card Label (Optional)</label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="side-card-label" className="text-[12.5px] font-bold text-[#475569]">Card Label (Optional)</label>
+                  <span className={`text-[10px] font-semibold ${form.cardLabel.length > 30 ? 'text-red-500' : 'text-slate-400'}`}>{form.cardLabel.length}/30</span>
+                </div>
                 <input
                   id="side-card-label"
                   name="cardLabel"
                   value={form.cardLabel}
+                  maxLength={30}
                   onChange={handleChange}
                   placeholder="e.g. Breaking News"
                   className={fieldClass}
@@ -788,7 +1290,6 @@ function NewArticleForm() {
                 { key: 'featuredArticle', label: 'Featured Article', desc: 'Show in featured section' },
                 { key: 'editorsPick', label: "Editors' Pick", desc: 'Highlight as editors choice' },
                 { key: 'breakingNews', label: 'Breaking News', desc: 'Mark as breaking news' },
-                { key: 'allowComments', label: 'Allow Comments', desc: 'Enable reader comments' },
               ].map((opt) => (
                 <div key={opt.key} className="flex justify-between items-center py-1">
                   <div>
@@ -820,38 +1321,224 @@ function NewArticleForm() {
               <div className="flex items-center gap-2 text-[13.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">
                 <span>🖼️</span> MEDIA UPLOAD
               </div>
-              <div className="border-2 border-dashed border-slate-200 hover:border-[#6366f1] rounded-xl p-6 text-center cursor-pointer transition-all bg-white shadow-sm hover:bg-slate-50 btn-3d-white">
-                <div className="text-3xl mb-1.5 font-sans">🖼️</div>
-                <div className="text-[13.5px] text-slate-800 font-bold">Select Media File</div>
-                <div className="text-[11px] text-[#64748b] mt-0.5 font-medium">PNG, JPG, WebP up to 5MB</div>
-              </div>
+
+              {/* Hidden real file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (file.size > 5 * 1024 * 1024) {
+                    setValidationErrors(prev => ({ ...prev, featuredImage: 'File too large. Maximum allowed size is 5 MB.' }))
+                    return
+                  }
+                  handleImageSelect(file)
+                }}
+              />
+
+              {/* Uploading loader state */}
+              {uploading && (
+                <div className="border border-slate-200 rounded-xl p-8 text-center bg-slate-50 flex flex-col items-center justify-center gap-2">
+                  <div className="animate-spin text-3xl">⏳</div>
+                  <div className="text-[13px] text-slate-700 font-bold">Uploading file to server...</div>
+                </div>
+              )}
+
+              {/* Existing file warning options state */}
+              {!uploading && existingImageWarning && (
+                <div className="border border-amber-200 rounded-xl p-5 bg-amber-50/50 flex flex-col gap-3.5 border-dashed">
+                  <div className="text-[13.5px] text-amber-800 font-semibold flex items-start gap-2">
+                    <span className="text-[16px]">⚠️</span>
+                    <div>
+                      An image named <span className="font-extrabold text-amber-900">"{existingImageWarning.filename}"</span> already exists in the public images folder.
+                    </div>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={acceptExistingImage}
+                      className="flex-1 text-white bg-amber-600 hover:bg-amber-700 font-bold p-2 px-3 rounded-lg text-[12px] cursor-pointer text-center transition-colors border-none"
+                    >
+                      Use Existing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={forceUploadImage}
+                      className="flex-1 text-amber-700 bg-white border border-amber-300 hover:bg-amber-100/50 font-bold p-2 px-3 rounded-lg text-[12px] cursor-pointer text-center transition-colors"
+                    >
+                      Replace / Overwrite
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExistingImageWarning(null)
+                        setPendingUploadFile(null)
+                      }}
+                      className="text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold p-2 px-3 rounded-lg text-[12px] cursor-pointer text-center transition-colors border-none"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Default file selection or preview states */}
+              {!uploading && !existingImageWarning && (
+                <>
+                  {!imagePreview ? (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-slate-200 hover:border-[#6366f1] rounded-xl p-8 text-center cursor-pointer transition-all bg-white hover:bg-slate-50 select-none"
+                    >
+                      <div className="text-4xl mb-2">🖼️</div>
+                      <div className="text-[13.5px] text-slate-800 font-bold">Click to Select Media File</div>
+                      <div className="text-[11px] text-[#64748b] mt-1 font-medium">PNG, JPG, WebP, GIF · up to 5MB</div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {/* Image preview */}
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <img
+                          src={imagePreview}
+                          alt="Selected featured image"
+                          className="w-full max-h-52 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImagePreview(null)
+                            setForm(prev => ({ ...prev, featuredImage: '' }))
+                            if (fileInputRef.current) fileInputRef.current.value = ''
+                          }}
+                          className="absolute top-2 right-2 bg-white/90 hover:bg-red-50 text-red-500 border border-red-200 rounded-lg px-2 py-1 text-[11px] font-bold shadow cursor-pointer transition-colors"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                      {/* Re-select button */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-[12px] text-[#6366f1] font-bold border border-[#6366f1]/30 hover:bg-[#6366f1]/5 rounded-lg py-2 transition-colors cursor-pointer bg-white"
+                      >
+                        🔄 Change Image
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {validationErrors.featuredImage && (
+                <div className="text-[12px] text-red-500 font-semibold flex items-center gap-1">
+                  <span>⚠️</span> {validationErrors.featuredImage}
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB 4: Search Snippet Preview */}
           {activeTab === 'seo' && (
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-4 animate-[admin-fade-in_0.25s_ease_both]">
+            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-5 animate-[admin-fade-in_0.25s_ease_both]">
               <div className="flex items-center gap-2 text-[13.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">
                 <span>🔍</span> SEARCH PREVIEW
               </div>
-              <p className="text-[11px] text-slate-400 font-semibold -mt-2.5">
-                Here is a preview of how this article looks in Google Search results.
+              <p className="text-[11px] text-slate-400 font-semibold -mt-3">
+                Preview of how this article appears in Google Search results.
               </p>
-              
-              <div className="border border-slate-100 bg-slate-50/50 p-4 rounded-xl flex flex-col gap-1.5 shadow-[inset_0_1px_2.5px_rgba(0,0,0,0.02)]">
-                <div className="text-[11.5px] text-slate-600 flex items-center gap-1.5 font-medium truncate">
-                  <span>news.com</span>
-                  <span className="text-[9px] text-slate-400">➔</span>
-                  <span className="text-slate-400 truncate">news</span>
-                  <span className="text-[9px] text-slate-400">➔</span>
-                  <span className="text-slate-500 font-semibold truncate">{form.slug || 'slug-url'}</span>
+
+              {/* Google SERP Container */}
+              <div className="bg-white border border-[#dfe1e5] rounded-2xl p-5 shadow-[0_1px_6px_rgba(32,33,36,0.12)] overflow-hidden" style={{ fontFamily: 'arial, sans-serif' }}>
+
+                {/* Site identity row: favicon + domain + breadcrumb */}
+                <div className="flex items-center gap-2 mb-1 min-w-0">
+                  {/* Favicon placeholder */}
+                  <div className="w-[26px] h-[26px] rounded-full bg-[#f1f3f4] border border-[#dadce0] flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {imagePreview
+                      ? <img src={imagePreview} alt="" className="w-full h-full object-cover" />
+                      : <span style={{ fontSize: 12 }}>🌐</span>
+                    }
+                  </div>
+                  <div className="flex flex-col leading-tight min-w-0 flex-1">
+                    <span className="text-[14px] text-[#202124] font-medium truncate block">
+                      {typeof window !== 'undefined' ? window.location.hostname : 'maisonatelier.com'}
+                    </span>
+                    <span className="text-[12px] text-[#4d5156] truncate block">
+                      {typeof window !== 'undefined' ? window.location.hostname : 'maisonatelier.com'} › news › {(form.slug || 'article-slug').substring(0, 30)}{(form.slug || '').length > 30 ? '...' : ''}
+                    </span>
+                  </div>
+                  {/* 3-dot menu */}
+                  <div className="flex-shrink-0 text-[#70757a] text-[18px] leading-none pb-1 cursor-default select-none">⋮</div>
                 </div>
-                <a href="#" onClick={(e) => e.preventDefault()} className="text-[17px] text-[#1a0dab] hover:underline font-medium leading-tight truncate block">
-                  {form.seoTitle || form.title || 'Untitled Article'}
+
+                {/* Blue title link — hard truncated at 60 chars */}
+                <a
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="block text-[20px] leading-[1.3] font-normal mt-1"
+                  style={{
+                    color: '#1a0dab',
+                    textDecoration: 'none',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    textOverflow: 'ellipsis',
+                    display: 'block',
+                    maxWidth: '100%',
+                  }}
+                  title={form.seoTitle || form.title || ''}
+                  onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                  onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                >
+                  {(() => {
+                    const t = form.seoTitle || form.title || 'Untitled Article — Your Site Name'
+                    return t.length > 60 ? t.substring(0, 57) + '…' : t
+                  })()}
                 </a>
-                <p className="text-[12px] text-[#4d5156] leading-relaxed line-clamp-3">
-                  {form.seoMetaDescription || form.excerpt || 'Write an SEO description to see how your article appears.'}
+
+                {/* Description — max 160 chars, clamped to 2 lines */}
+                <p
+                  className="text-[14px] mt-1 line-clamp-2"
+                  style={{
+                    color: '#4d5156',
+                    lineHeight: '1.58',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {(() => {
+                    const desc = form.seoMetaDescription || form.excerpt || ''
+                    if (!desc) return <span style={{ color: '#70757a', fontStyle: 'italic' }}>Add a meta description to see how your snippet appears.</span>
+                    return desc.length > 160 ? desc.substring(0, 157) + '…' : desc
+                  })()}
                 </p>
+
+                {/* Sitelinks (optional sub-links row) */}
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {['Home', 'News', form.category || 'Category'].map((link) => (
+                    <a
+                      key={link}
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      className="text-[13px] border border-[#dadce0] rounded-lg px-3 py-1 hover:bg-[#f8f9fa] transition-colors"
+                      style={{ color: '#1a0dab', textDecoration: 'none' }}
+                    >
+                      {link}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Character count helpers */}
+              <div className="flex gap-4 text-[11px] font-semibold">
+                <div className={`flex items-center gap-1 ${form.seoTitle.length > 60 ? 'text-red-500' : 'text-slate-400'}`}>
+                  Title: {form.seoTitle.length}/60 chars
+                </div>
+                <div className={`flex items-center gap-1 ${form.seoMetaDescription.length > 160 ? 'text-red-500' : 'text-slate-400'}`}>
+                  Description: {form.seoMetaDescription.length}/160 chars
+                </div>
               </div>
             </div>
           )}
@@ -864,6 +1551,12 @@ function NewArticleForm() {
             {saved && (
               <div className="animate-[admin-scale-in_0.2s_ease_both] bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0] rounded-xl p-2.5 px-4 text-[13px] font-extrabold shadow-sm text-center">
                 ✓ News Article saved successfully
+              </div>
+            )}
+            {saveError && (
+              <div className="animate-[admin-scale-in_0.2s_ease_both] bg-[#fef2f2] text-red-600 border border-red-200 rounded-xl p-2.5 px-4 text-[13px] font-extrabold shadow-sm flex items-center justify-between gap-3">
+                <span>⚠️ {saveError}</span>
+                <button type="button" onClick={() => setSaveError(null)} className="text-red-400 hover:text-red-600 font-black text-[15px] cursor-pointer leading-none">✕</button>
               </div>
             )}
             <div className="flex items-center gap-3">
@@ -894,9 +1587,14 @@ function NewArticleForm() {
                   Next Step ➔
                 </button>
               ) : (
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white font-extrabold p-2.5 px-4 rounded-xl text-[13px] cursor-pointer text-center btn-3d-indigo"
+                <button
+                  type="submit"
+                  disabled={!isDirty}
+                  className={`flex-1 font-extrabold p-2.5 px-4 rounded-xl text-[13px] text-center border transition-all ${
+                    isDirty
+                      ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white border-transparent cursor-pointer btn-3d-indigo'
+                      : 'bg-[#f1f5f9] text-[#94a3b8] border-[#e2e8f0] cursor-not-allowed opacity-60'
+                  }`}
                 >
                   Save & Publish
                 </button>

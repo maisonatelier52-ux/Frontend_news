@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface HeaderProps {
   activeCategory: string;
@@ -22,6 +22,26 @@ export default function Header({
   setShowBookmarksOnly,
 }: HeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+
+  useEffect(() => {
+    async function loadCats() {
+      try {
+        const res = await fetch("/api/categories");
+        if (res.ok) {
+          const data = await res.json();
+          // Map to names, only include visible in navigation
+          const visibleCats = data
+            .filter((c: any) => c.isVisible !== false && c.showInNav !== false)
+            .map((c: any) => c.name);
+          setCategories(["All", ...visibleCats]);
+        }
+      } catch (err) {
+        console.error("Failed to load header categories:", err);
+      }
+    }
+    loadCats();
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,17 +53,6 @@ export default function Header({
     setLocalSearch("");
     setSearchQuery("");
   };
-
-  const categories = [
-    "All",
-    "US",
-    "World",
-    "Finance",
-    "Technology",
-    "Entertainment",
-    "Marketing",
-    "PR News",
-  ];
 
   // Get current date string in US style
   const today = new Date();

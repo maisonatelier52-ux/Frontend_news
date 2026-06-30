@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 type NavItem = {
   label: string
@@ -9,6 +9,12 @@ type NavItem = {
   icon: React.ReactNode
   badge?: string
   badgeColor?: string
+}
+
+interface AdminSidebarProps {
+  collapsed: boolean
+  setCollapsed: (c: boolean) => void
+  user?: any
 }
 
 const navGroups: { label: string; items: NavItem[] }[] = [
@@ -59,13 +65,14 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   },
 ]
 
-interface AdminSidebarProps {
-  collapsed: boolean
-  setCollapsed: (c: boolean) => void
-}
-
-export default function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarProps) {
+export default function AdminSidebar({ collapsed, setCollapsed, user }: AdminSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/admin/login')
+  }
 
   function isActive(href: string) {
     if (href === '/admin/dashboard') return pathname === href
@@ -204,22 +211,22 @@ export default function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarPr
 
       {/* User Area Footer */}
       <div className={`p-[14px_16px_18px] border-t border-[#f1f5f9] flex items-center ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
-        <div className="w-[34px] h-[34px] rounded-full bg-[#1e1b4b] text-white flex items-center justify-center text-[13px] font-extrabold shrink-0 shadow-[0_2px_6px_rgba(30,27,75,0.15)]">
-          A
+        <div className="w-[34px] h-[34px] rounded-full bg-[#1e1b4b] text-white flex items-center justify-center text-[13px] font-extrabold shrink-0 shadow-[0_2px_6px_rgba(30,27,75,0.15)] uppercase">
+          {(user?.name || 'A').charAt(0)}
         </div>
         {!collapsed && (
           <>
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold text-[#0f172a] truncate">Admin User</div>
-              <div className="text-[11px] text-[#64748b] truncate">admin@newssite.com</div>
+              <div className="text-[13px] font-semibold text-[#0f172a] truncate">{user?.name || 'Admin User'}</div>
+              <div className="text-[11px] text-[#64748b] truncate">{user?.email || 'admin@newssite.com'}</div>
             </div>
-            <Link 
-              href="/admin/login" 
+            <button 
+              onClick={handleLogout}
               title="Sign out" 
-              className="text-[#94a3b8] hover:text-[#ef4444] flex transition-colors duration-150"
+              className="text-[#94a3b8] hover:text-[#ef4444] flex transition-colors duration-150 bg-transparent border-none cursor-pointer p-0"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </Link>
+            </button>
           </>
         )}
       </div>

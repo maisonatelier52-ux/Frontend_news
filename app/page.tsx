@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { NEWS_ARTICLES, Article } from "./data/news";
+import { Article } from "./data/news";
 import Header from "./components/Header";
 import { StockTicker } from "./components/Widgets";
 import LeadStory from "./components/LeadStory";
@@ -40,6 +40,47 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        const res = await fetch("/api/news?activeOnly=true");
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((art: any) => {
+            const paragraphs = art.blocks
+              ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
+              : [art.excerpt || ''];
+
+            return {
+              id: art._id,
+              title: art.title,
+              excerpt: art.excerpt || '',
+              content: paragraphs.length > 0 ? paragraphs : [art.excerpt || ''],
+              category: art.category,
+              author: art.author,
+              authorTitle: 'Staff Reporter',
+              date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              readTime: art.readTime || '5 mins',
+              image: art.featuredImage || '/article-placeholder.jpg',
+              isLead: art.options?.featuredArticle || false,
+              isBreaking: art.options?.breakingNews || false,
+              isTrending: art.options?.featuredArticle || false,
+              commentsCount: Math.floor(Math.random() * 25) + 3
+            };
+          });
+          setArticles(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to load articles:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadArticles();
+  }, []);
 
   const handleCategoryChange = (cat: string) => {
     if (cat === "All") {
@@ -127,7 +168,7 @@ export default function Home() {
   };
 
   // Filter Articles
-  const filteredArticles = NEWS_ARTICLES.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     // Bookmark filter
     if (showBookmarksOnly && !bookmarkedIds.includes(article.id)) {
       return false;
@@ -149,18 +190,18 @@ export default function Home() {
   });
 
   // Highlight Articles for home view
-  const leadArticle = NEWS_ARTICLES.find((a) => a.isLead) || NEWS_ARTICLES[0];
+  const leadArticle = articles.find((a) => a.isLead) || articles[0];
 
   // Secondary / Breaking news list for the Lead component
-  const breakingArticles = NEWS_ARTICLES.filter((a) => a.isBreaking && a.id !== leadArticle.id).slice(0, 3);
+  const breakingArticles = leadArticle ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id).slice(0, 3) : [];
 
   // Sub-articles for the bottom of the lead story left-column
-  const leadSubArticles = NEWS_ARTICLES
+  const leadSubArticles = leadArticle ? articles
     .filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
-    .slice(0, 4);
+    .slice(0, 4) : [];
 
   // Selected article for reader modal
-  const selectedArticle = NEWS_ARTICLES.find((a) => a.id === selectedArticleId);
+  const selectedArticle = articles.find((a) => a.id === selectedArticleId);
 
   // Calculate dynamic comments count
   const getComments = (articleId: string) => {
@@ -183,9 +224,21 @@ export default function Home() {
     commentsCount: getCommentsCount(selectedArticle),
   } : null;
 
-  const leadArticleWithStats = {
+  const leadArticleWithStats = leadArticle ? {
     ...leadArticle,
     commentsCount: getCommentsCount(leadArticle),
+  } : {
+    id: "",
+    title: "",
+    excerpt: "",
+    content: [],
+    category: "",
+    author: "",
+    authorTitle: "",
+    date: "",
+    readTime: "",
+    image: "",
+    commentsCount: 0
   };
 
   const breakingArticlesWithStats = breakingArticles.map((art) => ({
@@ -197,6 +250,19 @@ export default function Home() {
     ...art,
     commentsCount: getCommentsCount(art),
   }));
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-zinc-200 border-t-zinc-950 rounded-full animate-spin"></div>
+          <div className="text-xs text-zinc-500 font-serif tracking-widest uppercase">
+            Loading The Domain Name...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
@@ -372,7 +438,7 @@ export default function Home() {
       </footer>
 
       {/* 5. Immersive Article Reader Drawer (Opened if active selection exists) */}
-      {/* {activeArticleWithStats && (
+      {activeArticleWithStats && (
         <ArticleReader
           article={activeArticleWithStats}
           onClose={() => setSelectedArticleId(null)}
@@ -381,7 +447,7 @@ export default function Home() {
           comments={getComments(activeArticleWithStats.id)}
           onAddComment={handleAddComment}
         />
-      )} */}
+      )}
 
     </div>
   );

@@ -1,42 +1,98 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import StatusBadge from '../../components/StatusBadge'
 
-const allArticles = [
-  { id: 1, title: 'US Senate Passes Major Infrastructure Bill', category: 'Politics', author: 'Sarah Johnson', status: 'published', date: 'Jun 29, 2026', views: '24.5K' },
-  { id: 2, title: 'Tech Giants Face New Antitrust Scrutiny in Europe', category: 'Technology', author: 'Michael Chen', status: 'published', date: 'Jun 29, 2026', views: '18.2K' },
-  { id: 3, title: 'Global Markets Rally on Fed Rate Decision', category: 'Business', author: 'Emily Davis', status: 'draft', date: 'Jun 28, 2026', views: '—' },
-  { id: 4, title: 'Climate Summit: Nations Agree on New Targets', category: 'World', author: 'James Wilson', status: 'scheduled', date: 'Jun 30, 2026', views: '—' },
-  { id: 5, title: 'Sports Roundup: World Cup Qualifiers Results', category: 'Sports', author: 'Lisa Park', status: 'published', date: 'Jun 28, 2026', views: '11.7K' },
-  { id: 6, title: 'Supreme Court Rules on Privacy Case', category: 'Politics', author: 'Sarah Johnson', status: 'published', date: 'Jun 27, 2026', views: '31.0K' },
-  { id: 7, title: 'AI Startup Raises $500M in Series C Round', category: 'Technology', author: 'Michael Chen', status: 'draft', date: 'Jun 27, 2026', views: '—' },
-  { id: 8, title: 'Unemployment Drops to Record Low', category: 'Business', author: 'Emily Davis', status: 'published', date: 'Jun 26, 2026', views: '9.8K' },
-  { id: 9, title: 'Hurricane Warning Issued for Gulf Coast', category: 'World', author: 'James Wilson', status: 'published', date: 'Jun 26, 2026', views: '42.1K' },
-  { id: 10, title: 'NBA Finals Preview: Who Takes the Title?', category: 'Sports', author: 'Lisa Park', status: 'scheduled', date: 'Jul 1, 2026', views: '—' },
-]
+interface Article {
+  _id: string
+  title: string
+  category: string
+  author: string
+  status: string
+  date: string
+  views: string | number
+}
 
 export default function NewsPage() {
+  const [articles, setArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
-  const [selected, setSelected] = useState<number[]>([])
+  const [selected, setSelected] = useState<string[]>([])
 
-  const filtered = allArticles.filter((a) => {
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const newsRes = await fetch('/api/news')
+        if (newsRes.ok) {
+          const data = await newsRes.json()
+          setArticles(data)
+        }
+        
+        const catRes = await fetch('/api/categories')
+        if (catRes.ok) {
+          const data = await catRes.json()
+          setCategories(data.map((c: any) => c.name))
+        }
+      } catch (err) {
+        console.error('Failed to fetch news listing data:', err)
+      }
+    }
+    loadData()
+  }, [])
+
+  const filtered = articles.filter((a) => {
     const matchSearch = a.title.toLowerCase().includes(search.toLowerCase()) || a.author.toLowerCase().includes(search.toLowerCase())
     const matchStatus = filterStatus === 'all' || a.status === filterStatus
     const matchCat = filterCategory === 'all' || a.category === filterCategory
     return matchSearch && matchStatus && matchCat
   })
 
-  function toggleSelect(id: number) {
+  async function deleteArticle(id: string) {
+    if (!confirm('Are you sure you want to delete this article?')) return
+    try {
+      const res = await fetch(`/api/news/${id}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        setArticles((prev) => prev.filter((a) => a._id !== id))
+        setSelected((prev) => prev.filter((i) => i !== id))
+      }
+    } catch (err) {
+      console.error('Delete article error:', err)
+    }
+  }
+
+  async function toggleVisibility(id: string, currentStatus: string) {
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published'
+    try {
+      const res = await fetch(`/api/news/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (res.ok) {
+        setArticles((prev) => 
+          prev.map((a) => a._id === id ? { ...a, status: newStatus } : a)
+        )
+      } else {
+        const errData = await res.json()
+        alert(errData.error || 'Failed to update article visibility')
+      }
+    } catch (err) {
+      console.error('Toggle visibility error:', err)
+    }
+  }
+
+  function toggleSelect(id: string) {
     setSelected((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id])
   }
 
   function toggleAll() {
     if (selected.length === filtered.length && filtered.length > 0) setSelected([])
-    else setSelected(filtered.map((a) => a.id))
+    else setSelected(filtered.map((a) => a._id))
   }
 
   return (
@@ -53,7 +109,7 @@ export default function NewsPage() {
             News Articles
           </h1>
           <p className="text-[13.5px] text-slate-300 mt-1.5 font-medium">
-            {allArticles.length} total articles published across sections
+            {articles.length} total articles published across sections
           </p>
         </div>
         <Link
@@ -104,7 +160,7 @@ export default function NewsPage() {
           className="border border-[#e2e8f0] focus:border-[#1e1b4b]/30 rounded-lg p-2 px-3.5 text-[13px] text-[#475569] bg-white outline-none cursor-pointer font-medium transition-all"
         >
           <option value="all">All Categories</option>
-          {['Politics', 'Technology', 'Business', 'World', 'Sports'].map((c) => (
+          {categories.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
@@ -156,18 +212,18 @@ export default function NewsPage() {
               ) : (
                 filtered.map((art, i) => (
                   <tr 
-                    key={art.id} 
+                    key={art._id} 
                     className={`hover:bg-[#faf8f5]/30 transition-colors duration-150 ${
                       i < filtered.length - 1 ? 'border-b border-[#f8fafc]' : ''
                     } ${
-                      selected.includes(art.id) ? 'bg-[#eff6ff]/35' : ''
+                      selected.includes(art._id) ? 'bg-[#eff6ff]/35' : ''
                     }`}
                   >
                     <td className="p-4 px-5">
                       <input 
                         type="checkbox" 
-                        checked={selected.includes(art.id)} 
-                        onChange={() => toggleSelect(art.id)} 
+                        checked={selected.includes(art._id)} 
+                        onChange={() => toggleSelect(art._id)} 
                         className="cursor-pointer rounded border-[#cbd5e1] text-[#1e1b4b] focus:ring-[#1e1b4b]/30" 
                       />
                     </td>
@@ -181,23 +237,35 @@ export default function NewsPage() {
                       {art.author}
                     </td>
                     <td className="p-4 px-3 text-[12.5px] text-[#64748b] whitespace-nowrap">
-                      {art.views}
+                      {art.views || 0}
                     </td>
                     <td className="p-4 px-3">
                       <StatusBadge status={art.status as 'published' | 'draft' | 'scheduled'} />
                     </td>
                     <td className="p-4 px-3 text-[12px] text-[#94a3b8] whitespace-nowrap">
-                      {art.date}
+                      {new Date(art.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="p-4 px-3">
                       <div className="flex gap-2">
+                        <button
+                          onClick={() => toggleVisibility(art._id, art.status)}
+                          className={`text-[12px] font-semibold p-1.5 px-3 rounded-md border cursor-pointer transition-all flex items-center gap-1.5 ${
+                            art.status === 'published'
+                              ? 'text-emerald-700 hover:bg-emerald-50 border-emerald-200 hover:border-emerald-500 bg-transparent'
+                              : 'text-slate-500 hover:bg-slate-50 border-slate-200 hover:border-slate-400 bg-transparent'
+                          }`}
+                          title="Toggle visibility status"
+                        >
+                          {art.status === 'published' ? '👁️ Hide' : '👁️ Show'}
+                        </button>
                         <Link 
-                          href={`/admin/news/new?id=${art.id}`} 
+                          href={`/admin/news/new?id=${art._id}`} 
                           className="text-[12px] font-semibold text-[#475569] hover:text-[#1e1b4b] bg-[#f8fafc] hover:bg-[#eff6ff] p-1.5 px-3 rounded-md border border-[#e2e8f0] hover:border-[#1e1b4b] no-underline transition-all"
                         >
                           Edit
                         </Link>
                         <button 
+                          onClick={() => deleteArticle(art._id)}
                           className="text-[12px] font-semibold text-[#ef4444] hover:bg-[#fef2f2] p-1.5 px-3 rounded-md border border-[#fee2e2] hover:border-[#ef4444] bg-transparent cursor-pointer transition-all"
                         >
                           Delete
@@ -214,7 +282,7 @@ export default function NewsPage() {
         {/* Paginator Footer */}
         <div className="p-4 px-5 border-t border-[#f1f5f9] flex justify-between items-center bg-[#faf8f5]/20">
           <span className="text-[12.5px] text-[#64748b]">
-            Showing {filtered.length} of {allArticles.length} articles
+            Showing {filtered.length} of {articles.length} articles
           </span>
           <div className="flex gap-1.5">
             {[1, 2, 3].map((p) => (

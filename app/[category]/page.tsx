@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { NEWS_ARTICLES, Article } from "../data/news";
+import { Article } from "../data/news";
 import Header from "../components/Header";
 import { StockTicker } from "../components/Widgets";
 import ArticleReader from "../components/ArticleReader";
@@ -55,6 +55,84 @@ export default function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch articles and trending fallbacks
+  useEffect(() => {
+    async function loadArticles() {
+      if (!decodedCategory) return;
+      try {
+        setLoading(true);
+        // Load articles for current category
+        const res = await fetch(`/api/news?activeOnly=true&category=${decodedCategory}`);
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((art: any) => {
+            const paragraphs = art.blocks
+              ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
+              : [art.excerpt || ''];
+
+            return {
+              id: art._id,
+              title: art.title,
+              excerpt: art.excerpt || '',
+              content: paragraphs.length > 0 ? paragraphs : [art.excerpt || ''],
+              category: art.category,
+              author: art.author,
+              authorTitle: 'Staff Reporter',
+              date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              readTime: art.readTime || '5 mins',
+              image: art.featuredImage || '/article-placeholder.jpg',
+              isLead: art.options?.featuredArticle || false,
+              isBreaking: art.options?.breakingNews || false,
+              isTrending: art.options?.featuredArticle || false,
+              commentsCount: Math.floor(Math.random() * 25) + 3
+            };
+          });
+          setArticles(mapped);
+        }
+
+        // Load trending articles (from other categories as fallback)
+        const trendingRes = await fetch("/api/news?activeOnly=true");
+        if (trendingRes.ok) {
+          const trendData = await trendingRes.json();
+          const mappedTrend = trendData
+            .filter((art: any) => art.category !== decodedCategory)
+            .slice(0, 7)
+            .map((art: any) => {
+              const paragraphs = art.blocks
+                ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
+                : [art.excerpt || ''];
+
+              return {
+                id: art._id,
+                title: art.title,
+                excerpt: art.excerpt || '',
+                content: paragraphs.length > 0 ? paragraphs : [art.excerpt || ''],
+                category: art.category,
+                author: art.author,
+                authorTitle: 'Staff Reporter',
+                date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                readTime: art.readTime || '5 mins',
+                image: art.featuredImage || '/article-placeholder.jpg',
+                isLead: art.options?.featuredArticle || false,
+                isBreaking: art.options?.breakingNews || false,
+                isTrending: art.options?.featuredArticle || false,
+                commentsCount: Math.floor(Math.random() * 25) + 3
+              };
+            });
+          setTrendingArticles(mappedTrend);
+        }
+      } catch (err) {
+        console.error("Failed to load category articles:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadArticles();
+  }, [decodedCategory]);
 
   // Bookmarks State
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
@@ -146,7 +224,7 @@ export default function CategoryPage() {
   };
 
   // Filter Articles for this Category Page
-  const filteredArticles = NEWS_ARTICLES.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     // Bookmark filter
     if (showBookmarksOnly && !bookmarkedIds.includes(article.id)) {
       return false;
@@ -182,7 +260,7 @@ export default function CategoryPage() {
     commentsCount: getCommentsCount(art),
   }));
 
-  const selectedArticle = NEWS_ARTICLES.find((a) => a.id === selectedArticleId);
+  const selectedArticle = articles.find((a) => a.id === selectedArticleId);
   const activeArticleWithStats = selectedArticle ? {
     ...selectedArticle,
     commentsCount: getCommentsCount(selectedArticle),
@@ -200,7 +278,7 @@ export default function CategoryPage() {
   const hasExtraArticles = extraArticles.length > 0;
   const sidebarArticles = (hasExtraArticles
     ? extraArticles
-    : NEWS_ARTICLES.filter(a => a.category !== decodedCategory && a.isTrending)).slice(0, 7);
+    : trendingArticles).slice(0, 7);
   const sidebarTitle = hasExtraArticles
     ? `More in ${decodedCategory}`
     : "Trending Coverage";
@@ -215,6 +293,19 @@ export default function CategoryPage() {
     "Marketing": "Strategy, brand, and the science of reaching modern audiences.",
     "PR News": "Official statements, press releases, and institutional announcements.",
   };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-zinc-200 border-t-zinc-950 rounded-full animate-spin"></div>
+          <div className="text-xs text-zinc-500 font-serif tracking-widest uppercase">
+            Loading {decodedCategory}...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const tagline = categoryTaglines[decodedCategory] ?? `In-depth reporting on ${decodedCategory}.`;
 
   return (
@@ -540,7 +631,7 @@ export default function CategoryPage() {
       </footer>
 
       {/* 5. Immersive Article Reader Drawer (Opened if active selection exists) */}
-      {/* {activeArticleWithStats && (
+      {activeArticleWithStats && (
         <ArticleReader
           article={activeArticleWithStats}
           onClose={() => setSelectedArticleId(null)}
@@ -549,7 +640,7 @@ export default function CategoryPage() {
           comments={getComments(activeArticleWithStats.id)}
           onAddComment={handleAddComment}
         />
-      )} */}
+      )}
 
     </div>
   );

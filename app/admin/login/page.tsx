@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type AuthMode = 'signin' | 'forgot' | 'verification'
 
@@ -19,42 +20,127 @@ export default function LoginPage() {
   
   // Verification States
   const [code, setCode] = useState(['', '', '', ''])
+  const [activeOtpEmail, setActiveOtpEmail] = useState('')
+  const [timer, setTimer] = useState(60)
+  const [resendSuccess, setResendSuccess] = useState('')
   
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function handleSignInSubmit(e: React.FormEvent) {
+  // Countdown timer for OTP
+  useEffect(() => {
+    let interval: any
+    if (mode === 'verification' && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [mode, timer])
+
+  async function handleSignInSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     if (!email || !password) { setError('Please fill in all fields.'); return }
     setLoading(true)
-    setTimeout(() => { 
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed')
+      }
+      if (data.requireOtp) {
+        setActiveOtpEmail(data.email)
+        setTimer(60)
+        setResendSuccess('')
+        setMode('verification')
+      } else {
+        router.push('/admin/dashboard')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Incorrect email or password.')
+    } finally {
       setLoading(false)
-      setMode('verification') // Redirects to verification component for authentication
-    }, 900)
+    }
   }
 
-  function handleForgotSubmit(e: React.FormEvent) {
+  async function handleForgotSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     if (!resetEmail) { setError('Please enter your email address.'); return }
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send OTP')
+      }
+      setActiveOtpEmail(resetEmail)
+      setTimer(60)
+      setResendSuccess('')
       setMode('verification')
-    }, 1000)
+    } catch (err: any) {
+      setError(err.message || 'Error sending verification code.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function handleVerificationSubmit(e: React.FormEvent) {
+  async function handleVerificationSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     const enteredCode = code.join('')
     if (enteredCode.length < 4) { setError('Please enter the 4-digit code.'); return }
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: activeOtpEmail, otp: enteredCode }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Verification failed')
+      }
       router.push('/admin/dashboard')
-    }, 1000)
+    } catch (err: any) {
+      setError(err.message || 'Incorrect verification code.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResendOtp() {
+    if (timer > 0) return
+    setError('')
+    setResendSuccess('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: activeOtpEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to resend OTP')
+      }
+      setResendSuccess('Verification code resent successfully!')
+      setTimer(60)
+      setTimeout(() => setResendSuccess(''), 4000)
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend code.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function handleCodeChange(index: number, val: string) {
@@ -65,8 +151,9 @@ export default function LoginPage() {
     
     // Auto-focus next input
     if (val && index < 3) {
-      const nextInput = document.getElementById(`code-in-${index + 1}`)
-      nextInput?.focus()
+      const nextInputId = `code-in-${index + 1}`
+      const nextInputEl = document.getElementById(nextInputId)
+      nextInputEl?.focus()
     }
   }
 
@@ -192,6 +279,8 @@ export default function LoginPage() {
                   {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
+
+
               </form>
             </div>
           )}
@@ -263,7 +352,7 @@ export default function LoginPage() {
                   Verify Email
                 </h1>
                 <p className="text-[13.5px] text-[#78716c] mt-2 leading-[1.5]">
-                  We sent a 4-digit code to <span className="text-[#1c1917] font-semibold">{resetEmail || 'your email'}</span>.
+                  We sent a 4-digit code to <span className="text-[#1c1917] font-semibold">{activeOtpEmail}</span>.
                 </p>
               </div>
 
@@ -271,6 +360,13 @@ export default function LoginPage() {
                 <div className="animate-[admin-scale-in_0.35s_cubic-bezier(0.16,1,0.3,1)_both] bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] rounded-[6px] px-[14px] py-[10px] text-[13px] mb-[18px] flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   {error}
+                </div>
+              )}
+
+              {resendSuccess && (
+                <div className="animate-[admin-scale-in_0.35s_cubic-bezier(0.16,1,0.3,1)_both] bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] rounded-[6px] px-[14px] py-[10px] text-[13px] mb-[18px] flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/><path d="M12 2a10 10 0 1 0 10 10"/></svg>
+                  {resendSuccess}
                 </div>
               )}
 
@@ -301,9 +397,17 @@ export default function LoginPage() {
                 <div className="text-center flex flex-col gap-2.5">
                   <div className="text-[12.5px] text-[#78716c]">
                     Didn't receive the code?{' '}
-                    <button type="button" className="bg-transparent border-none p-0 text-[#1e40af] font-semibold cursor-pointer underline">
-                      Resend
-                    </button>
+                    {timer > 0 ? (
+                      <span className="text-[#a8a29e] font-semibold">Resend in {timer}s</span>
+                    ) : (
+                      <button 
+                        type="button" 
+                        onClick={handleResendOtp}
+                        className="bg-transparent border-none p-0 text-[#1e40af] font-semibold cursor-pointer underline"
+                      >
+                        Resend
+                      </button>
+                    )}
                   </div>
                   <button 
                     type="button" 
