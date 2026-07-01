@@ -11,72 +11,65 @@ interface LayoutSection {
   limit: number
   designStyle: string
   colorTheme: string
-}
-
-const TEMPLATE_PRESETS: Record<string, LayoutSection[]> = {
-  default: [
-    { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson' },
-    { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'category-nav', title: 'Categories Navigation', isVisible: true, categorySource: 'All', order: 3, limit: 1, designStyle: 'default', colorTheme: 'indigo' },
-    { id: 'first-hero', title: 'Main Hero Story', isVisible: true, categorySource: 'All', order: 4, limit: 5, designStyle: 'hero-split', colorTheme: 'indigo' },
-    { id: 'us-politics', title: 'U.S. News & Politics', isVisible: true, categorySource: 'Politics', order: 5, limit: 4, designStyle: 'grid', colorTheme: 'indigo' },
-    { id: 'finance-markets', title: 'Finance & Markets', isVisible: true, categorySource: 'Business', order: 6, limit: 4, designStyle: 'grid', colorTheme: 'indigo' },
-    { id: 'opinion-column', title: 'Opinions & Perspectives', isVisible: true, categorySource: 'All', order: 7, limit: 3, designStyle: 'columns', colorTheme: 'zinc' },
-    { id: 'technology-section', title: 'Tech Pulse', isVisible: true, categorySource: 'Technology', order: 8, limit: 4, designStyle: 'grid', colorTheme: 'indigo' },
-    { id: 'trending-columns', title: 'Trending Columns', isVisible: true, categorySource: 'All', order: 9, limit: 5, designStyle: 'list', colorTheme: 'indigo' },
-    { id: 'world-affairs', title: 'World Affairs', isVisible: true, categorySource: 'World', order: 10, limit: 5, designStyle: 'grid', colorTheme: 'indigo' },
-    { id: 'arts-marketing-pr', title: 'Culture & Press Spotlight', isVisible: true, categorySource: 'Entertainment,Sports', order: 11, limit: 6, designStyle: 'spotlight-grid', colorTheme: 'indigo' },
-    { id: 'latest-news', title: 'The Latest Chronicle Feed', isVisible: true, categorySource: 'All', order: 12, limit: 10, designStyle: 'list', colorTheme: 'indigo' }
-  ],
-  'grid-focus': [
-    { id: 'breaking-news', title: 'Breaking Ticker Alert', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-ribbon', colorTheme: 'crimson' },
-    { id: 'domain-header', title: 'Top Identity Banner', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'category-nav', title: 'Main Navigation Bar', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'indigo' },
-    { id: 'first-hero', title: 'Premium Spotlights', isVisible: true, categorySource: 'All', order: 3, limit: 5, designStyle: 'hero-full', colorTheme: 'emerald' },
-    { id: 'technology-section', title: 'Tech & Innovations', isVisible: true, categorySource: 'Technology', order: 4, limit: 6, designStyle: 'grid', colorTheme: 'emerald' },
-    { id: 'trending-columns', title: 'Popular Columns Now', isVisible: true, categorySource: 'All', order: 5, limit: 5, designStyle: 'list', colorTheme: 'zinc' },
-    { id: 'finance-markets', title: 'Markets Monitor', isVisible: true, categorySource: 'Business', order: 6, limit: 4, designStyle: 'magazine', colorTheme: 'indigo' },
-    { id: 'us-politics', title: 'Political Capital', isVisible: true, categorySource: 'Politics', order: 7, limit: 4, designStyle: 'magazine', colorTheme: 'indigo' },
-    { id: 'opinion-column', title: 'Perspectives Forum', isVisible: true, categorySource: 'All', order: 8, limit: 3, designStyle: 'quote', colorTheme: 'zinc' },
-    { id: 'world-affairs', title: 'International Dispatch', isVisible: true, categorySource: 'World', order: 9, limit: 4, designStyle: 'grid', colorTheme: 'zinc' },
-    { id: 'arts-marketing-pr', title: 'Entertainment & Corporate', isVisible: true, categorySource: 'Entertainment,Sports', order: 10, limit: 6, designStyle: 'spotlight-flex', colorTheme: 'amber' },
-    { id: 'latest-news', title: 'Chronicle Feed', isVisible: true, categorySource: 'All', order: 11, limit: 8, designStyle: 'list', colorTheme: 'zinc' },
-    { id: 'date-section', title: 'Header Metainfo Line', isVisible: false, categorySource: 'All', order: 12, limit: 1, designStyle: 'default', colorTheme: 'zinc' }
-  ],
-  minimal: [
-    { id: 'breaking-news', title: 'Alerts', isVisible: true, categorySource: 'All', order: 0, limit: 8, designStyle: 'ticker-minimal', colorTheme: 'zinc' },
-    { id: 'date-section', title: 'Daily Info', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'domain-header', title: 'Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'category-nav', title: 'Nav Menu', isVisible: true, categorySource: 'All', order: 3, limit: 1, designStyle: 'default', colorTheme: 'zinc' },
-    { id: 'latest-news', title: 'Chronicle Direct Stream', isVisible: true, categorySource: 'All', order: 4, limit: 15, designStyle: 'list', colorTheme: 'zinc' },
-    { id: 'trending-columns', title: 'Popular Articles', isVisible: true, categorySource: 'All', order: 5, limit: 5, designStyle: 'list', colorTheme: 'zinc' },
-    { id: 'opinion-column', title: 'Guest Voices', isVisible: true, categorySource: 'All', order: 6, limit: 3, designStyle: 'list', colorTheme: 'zinc' },
-    { id: 'first-hero', title: 'Featured Hero Story', isVisible: false, categorySource: 'All', order: 7, limit: 1, designStyle: 'hero-minimal', colorTheme: 'zinc' },
-    { id: 'us-politics', title: 'Politics', isVisible: false, categorySource: 'Politics', order: 8, limit: 4, designStyle: 'grid', colorTheme: 'zinc' },
-    { id: 'finance-markets', title: 'Finance', isVisible: false, categorySource: 'Business', order: 9, limit: 4, designStyle: 'grid', colorTheme: 'zinc' },
-    { id: 'technology-section', title: 'Technology', isVisible: false, categorySource: 'Technology', order: 10, limit: 4, designStyle: 'grid', colorTheme: 'zinc' },
-    { id: 'world-affairs', title: 'World Affairs', isVisible: false, categorySource: 'World', order: 11, limit: 4, designStyle: 'grid', colorTheme: 'zinc' },
-    { id: 'arts-marketing-pr', title: 'Culture', isVisible: false, categorySource: 'Entertainment,Sports', order: 12, limit: 4, designStyle: 'spotlight-grid', colorTheme: 'zinc' }
-  ]
+  settings: Record<string, any>
 }
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; accent: string }> = {
   indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', accent: 'bg-[#6366f1]' },
-  zinc: { bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-300', accent: 'bg-zinc-800' },
+  zinc: { bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-300', accent: 'bg-zinc-850' },
   emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-250', accent: 'bg-[#059669]' },
   amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-250', accent: 'bg-[#d97706]' },
   crimson: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-250', accent: 'bg-rose-600' }
 }
 
+const colorOptions = [
+  { value: 'indigo', label: 'Brand Indigo' },
+  { value: 'zinc', label: 'Slate Neutral' },
+  { value: 'emerald', label: 'Forest Emerald' },
+  { value: 'amber', label: 'Warm Amber' },
+  { value: 'crimson', label: 'Crimson Alert' }
+]
+
+function getDesignOptions(sectionId: string) {
+  if (sectionId === 'first-hero') {
+    return [
+      { value: 'hero-split', label: 'Standard Hero Split' },
+      { value: 'hero-full', label: 'Full-Width Hero Card' },
+      { value: 'hero-minimal', label: 'Minimal Text Headline' }
+    ]
+  }
+  if (sectionId === 'opinion-column') {
+    return [
+      { value: 'columns', label: 'Styled Card Columns' },
+      { value: 'quote', label: 'Simple Block Quote' },
+      { value: 'list', label: 'Compact List' }
+    ]
+  }
+  if (sectionId === 'arts-marketing-pr') {
+    return [
+      { value: 'spotlight-grid', label: 'Spotlight Grid' },
+      { value: 'spotlight-flex', label: 'Horizontal Flex Columns' },
+      { value: 'spotlight-text', label: 'Text Bulletins' }
+    ]
+  }
+  return [
+    { value: 'grid', label: 'Card Grid Layout' },
+    { value: 'magazine', label: 'Magazine Row Layout' },
+    { value: 'list', label: 'Compact List Layout' }
+  ]
+}
+
 export default function HomeLayoutConfigPage() {
   const [sections, setSections] = useState<LayoutSection[]>([])
   const [originalSections, setOriginalSections] = useState<LayoutSection[]>([])
-  const [templateName, setTemplateName] = useState('default')
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  
+  // Navigation / Customizer sub-page state
+  const [activeEditId, setActiveEditId] = useState<string | null>(null)
+  const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -94,7 +87,6 @@ export default function HomeLayoutConfigPage() {
           const sortedSections = (layout.sections as LayoutSection[]).sort((a, b) => a.order - b.order)
           setSections(sortedSections)
           setOriginalSections(JSON.parse(JSON.stringify(sortedSections)))
-          setTemplateName(layout.templateName || 'default')
         }
       } catch (err) {
         console.error('Failed to load layout data:', err)
@@ -105,28 +97,49 @@ export default function HomeLayoutConfigPage() {
     loadData()
   }, [])
 
-  // Preset switch
-  function applyPreset(preset: string) {
-    if (preset === 'current') return
-    const defaultData = TEMPLATE_PRESETS[preset]
-    if (defaultData) {
-      const cloned = JSON.parse(JSON.stringify(defaultData)) as LayoutSection[]
-      setSections(cloned.sort((a, b) => a.order - b.order))
-      setTemplateName(preset)
+  // Enter sub-page customization edit mode
+  function enterEditMode(section: LayoutSection) {
+    setActiveEditId(section.id)
+    setDraftSection(JSON.parse(JSON.stringify(section)))
+  }
+
+  // Save current section draft edits and exit back to main board
+  function saveSectionDraft() {
+    if (draftSection) {
+      setSections(prev => 
+        prev.map(s => s.id === draftSection.id ? draftSection : s)
+      )
+    }
+    setActiveEditId(null)
+    setDraftSection(null)
+  }
+
+  // Discard section draft edits and exit back to main board
+  function cancelSectionEdit() {
+    setActiveEditId(null)
+    setDraftSection(null)
+  }
+
+  // Undo changes: reset Proposed Draft list in memory back to Original live database state
+  function undoAllChanges() {
+    setSections(JSON.parse(JSON.stringify(originalSections)))
+    setMessage('undone')
+    setTimeout(() => setMessage(null), 3000)
+  }
+
+  // Update field in current draft section
+  function updateDraftField(field: keyof LayoutSection, value: any) {
+    if (draftSection) {
+      setDraftSection({ ...draftSection, [field]: value })
     }
   }
 
-  // Update specific field in layout
-  function updateSectionField(id: string, field: keyof LayoutSection, value: any) {
-    setSections(prev => 
-      prev.map(s => {
-        if (s.id === id) {
-          return { ...s, [field]: value }
-        }
-        return s
-      })
-    )
-    setTemplateName('custom')
+  // Update dynamic setting in current draft section
+  function updateDraftSetting(key: string, value: any) {
+    if (draftSection) {
+      const nextSettings = { ...draftSection.settings, [key]: value }
+      setDraftSection({ ...draftSection, settings: nextSettings })
+    }
   }
 
   // Move index up
@@ -140,7 +153,6 @@ export default function HomeLayoutConfigPage() {
     // Recalculate order index values
     const updated = copy.map((sec, idx) => ({ ...sec, order: idx }))
     setSections(updated)
-    setTemplateName('custom')
   }
 
   // Move index down
@@ -154,7 +166,6 @@ export default function HomeLayoutConfigPage() {
     // Recalculate order index values
     const updated = copy.map((sec, idx) => ({ ...sec, order: idx }))
     setSections(updated)
-    setTemplateName('custom')
   }
 
   // Save layout logic
@@ -166,7 +177,7 @@ export default function HomeLayoutConfigPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          templateName,
+          templateName: 'custom',
           sections
         })
       })
@@ -186,266 +197,222 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
-  // Helper to retrieve design styles option based on section ID
-  function getDesignOptions(id: string) {
-    if (id === 'breaking-news') {
-      return [
-        { value: 'ticker-banner', label: 'Red Banner Flash' },
-        { value: 'ticker-ribbon', label: 'Dark High-Contrast Ribbon' },
-        { value: 'ticker-minimal', label: 'Minimal Ticker Line' }
-      ]
-    }
-    if (id === 'first-hero') {
-      return [
-        { value: 'hero-split', label: 'Standard Hero Split' },
-        { value: 'hero-full', label: 'Full-Width Hero Card' },
-        { value: 'hero-minimal', label: 'Minimal Text Headline' }
-      ]
-    }
-    if (id === 'opinion-column') {
-      return [
-        { value: 'columns', label: 'Styled Card Columns' },
-        { value: 'quote', label: 'Simple Block Quote' },
-        { value: 'list', label: 'Compact List' }
-      ]
-    }
-    if (id === 'arts-marketing-pr') {
-      return [
-        { value: 'spotlight-grid', label: 'Spotlight Grid' },
-        { value: 'spotlight-flex', label: 'Horizontal Flex Columns' },
-        { value: 'spotlight-text', label: 'Text Bulletins' }
-      ]
-    }
-    if (['date-section', 'domain-header', 'category-nav'].includes(id)) {
-      return [{ value: 'default', label: 'Default Structure' }]
-    }
-    // Standard visual sections (us-politics, technology-section, etc.)
-    return [
-      { value: 'grid', label: 'Card Grid Layout' },
-      { value: 'magazine', label: 'Magazine Row Layout' },
-      { value: 'list', label: 'Compact List Layout' }
-    ]
+  // Render mock of breaking-news section preview
+  const renderBreakingNewsPreview = (sec: LayoutSection) => {
+    const isScrolling = sec.settings?.isScrolling !== false
+    const bgColor = sec.settings?.bgColor || '#dc2626'
+    const textColor = sec.settings?.textColor || '#ffffff'
+    const customText = sec.settings?.customText || ''
+    const alertText = customText || `Breaking News: Federal grid upgrades active • Stock indexes climb • Supreme Court issues rulings`
+
+    return (
+      <div 
+        className="p-2.5 px-4 rounded-xl flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden"
+        style={{ backgroundColor: bgColor, color: textColor }}
+      >
+        <span className="bg-white px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shadow-xs shrink-0" style={{ color: bgColor }}>
+          BREAKING
+        </span>
+        {isScrolling ? (
+          React.createElement('marquee', { className: 'cursor-default flex-1 font-medium' }, alertText)
+        ) : (
+          <div className="flex-1 font-medium truncate animate-pulse select-text">{alertText}</div>
+        )}
+      </div>
+    )
   }
 
-  // Pre-defined color theme options
-  const colorOptions = [
-    { value: 'indigo', label: 'Brand Indigo' },
-    { value: 'zinc', label: 'Slate Neutral' },
-    { value: 'emerald', label: 'Forest Emerald' },
-    { value: 'amber', label: 'Warm Amber' },
-    { value: 'crimson', label: 'Crimson Alert' }
-  ]
+  // Render mock of domain-header section preview
+  const renderDomainHeaderPreview = (sec: LayoutSection) => {
+    const isText = sec.settings?.logoType !== 'image'
+    const alignment = sec.settings?.alignment || 'center'
+    const logoSize = sec.settings?.logoSize || '36px'
+    const logoColor = sec.settings?.logoColor || '#000000'
+    const logoImg = sec.settings?.logoImage || ''
+    const tagline = sec.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism'
+    const tagSize = sec.settings?.taglineSize || '11px'
+    const tagColor = sec.settings?.taglineColor || '#64748b'
+    const bgColor = sec.settings?.bgColor || '#ffffff'
 
-  // Render a specific preview mock section
+    const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center'
+
+    return (
+      <div 
+        className={`p-6 rounded-2xl flex flex-col justify-center border shadow-xs select-none transition-all ${alignClass}`}
+        style={{ backgroundColor: bgColor }}
+      >
+        {isText ? (
+          <h1 
+            className="font-serif font-extrabold tracking-tighter uppercase m-0 leading-tight"
+            style={{ fontSize: logoSize, color: logoColor }}
+          >
+            DOMAIN NAME
+          </h1>
+        ) : (
+          <div 
+            className="border-2 border-dashed border-slate-350 rounded-lg flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
+            style={{ width: '200px', height: '50px' }}
+          >
+            🖼️ {logoImg ? 'Loaded: ' + logoImg.substring(0, 15) + '...' : 'Upload Image Logo'}
+          </div>
+        )}
+        <p 
+          className="mt-2 uppercase tracking-widest font-bold font-sans m-0"
+          style={{ fontSize: tagSize, color: tagColor }}
+        >
+          {tagline}
+        </p>
+      </div>
+    )
+  }
+
+  // Render mock of category-nav section preview
+  const renderCategoryNavPreview = (sec: LayoutSection) => {
+    const bgColor = sec.settings?.bgColor || '#ffffff'
+    const alignment = sec.settings?.alignment || 'center'
+    const searchPlacement = sec.settings?.searchPlacement || 'right'
+    const activeDesign = sec.settings?.activeLinkDesign || 'underline'
+    const searchPlaceholder = sec.settings?.searchPlaceholder || 'Search articles...'
+    const searchBorderColor = sec.settings?.searchBorderColor || '#e4e4e7'
+    const searchBorderThickness = sec.settings?.searchBorderThickness || '1px'
+
+    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center'
+
+    return (
+      <div 
+        className="p-3 rounded-2xl border flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs select-none"
+        style={{ backgroundColor: bgColor }}
+      >
+        <nav className={`flex items-center gap-4 text-[12px] font-bold text-slate-800 flex-1 ${alignClass}`}>
+          <span className={activeDesign === 'underline' ? 'border-b-2 border-slate-900 pb-0.5' : 'bg-slate-900 text-white px-2 py-0.5 rounded'}>
+            All News
+          </span>
+          <span className="text-slate-500 font-medium hover:text-slate-800">Politics</span>
+          <span className="text-slate-500 font-medium hover:text-slate-800">Technology</span>
+          <span className="text-slate-500 font-medium hover:text-slate-800">Business</span>
+        </nav>
+
+        {searchPlacement !== 'hidden' && (
+          <div className={`relative flex items-center w-40 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+            <input
+              type="text"
+              readOnly
+              placeholder={searchPlaceholder}
+              className="w-full bg-slate-50 px-2.5 py-1 text-[11px] rounded outline-none cursor-default font-semibold text-slate-400"
+              style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
+            />
+            <span className="absolute right-2 text-slate-350 text-[10px]">🔍</span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Render standard mock components
   const renderPreviewMock = (section: LayoutSection) => {
+    if (section.id === 'breaking-news') return renderBreakingNewsPreview(section)
+    if (section.id === 'domain-header') return renderDomainHeaderPreview(section)
+    if (section.id === 'category-nav') return renderCategoryNavPreview(section)
+
     const theme = COLOR_MAP[section.colorTheme] || COLOR_MAP.indigo
-    const accentColor = theme.accent
     const badgeStyle = `${theme.bg} ${theme.text} ${theme.border} border`
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : ''
+    const customBg = section.settings?.bgColor || '#ffffff'
 
     switch (section.id) {
-      case 'breaking-news':
-        if (section.designStyle === 'ticker-banner') {
-          return (
-            <div key={section.id} className="bg-red-600 text-white p-2.5 px-4 rounded-xl flex items-center gap-3 text-[11px] font-bold">
-              <span className="bg-white text-red-600 font-extrabold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">FLASH</span>
-              <div className="flex-grow truncate">🚨 {section.title}: Federal Reserve Rates Hold • New Infrastructure Funding Active</div>
-            </div>
-          )
-        }
-        if (section.designStyle === 'ticker-ribbon') {
-          return (
-            <div key={section.id} className="bg-slate-900 text-slate-100 p-2.5 px-4 rounded-xl flex items-center gap-3 text-[11px] font-bold border-l-4 border-red-500">
-              <span className="text-red-400 font-extrabold text-[10px]">ALERT</span>
-              <div className="flex-grow truncate">📰 {section.title}: Stock Indices Hit Record Highs Following Growth Agreement</div>
-            </div>
-          )
-        }
-        return (
-          <div key={section.id} className="border-t border-b border-red-200 py-1.5 text-center text-[10.5px] font-bold text-red-650 tracking-wider">
-            LATEST: {section.title} — Supreme Court Issues Rulings on Environmental Legislation
-          </div>
-        )
-
       case 'date-section':
+        const dateBg = section.settings?.bgColor || '#f8fafc'
+        const dateCol = section.settings?.textColor || '#64748b'
         return (
-          <div key={section.id} className="p-1 px-3 bg-slate-50 border border-slate-200 rounded-lg text-[10px] text-slate-400 font-bold flex justify-between tracking-wide font-mono uppercase">
-            <span>July 1, 2026</span>
-            <span>Update: 11:45 AM</span>
+          <div 
+            key={section.id} 
+            className="p-1 px-3 border rounded-lg text-[10px] font-bold flex justify-between tracking-wide font-mono uppercase"
+            style={{ backgroundColor: dateBg, color: dateCol }}
+          >
+            <span>Wednesday, July 1, 2026</span>
+            <span>Washington, D.C.</span>
           </div>
         )
-
-      case 'domain-header':
-        return (
-          <div key={section.id} className="bg-white border border-slate-150 p-4 py-6 rounded-2xl flex flex-col items-center justify-center">
-            <div className="text-[24px] font-serif font-extrabold tracking-tighter text-slate-900 border-b-2 border-slate-900 pb-1">
-              THE DOMAIN CHRONICLE
-            </div>
-          </div>
-        )
-
-      case 'category-nav':
-        return (
-          <div key={section.id} className="bg-white border border-slate-150 p-2.5 rounded-xl flex justify-between items-center text-[11px] font-bold text-[#6366f1] px-4">
-            <div className="flex gap-3">
-              <span className="text-slate-900 border-b border-slate-950 pb-0.5">Home</span>
-              <span className="text-slate-500 font-medium">US</span>
-              <span className="text-slate-500 font-medium">Business</span>
-              <span className="text-slate-500 font-medium">Technology</span>
-            </div>
-            <span className="text-slate-450">🔍 Search...</span>
-          </div>
-        )
-
       case 'first-hero':
         if (section.designStyle === 'hero-full') {
           return (
-            <div key={section.id} className="bg-white border border-slate-150 rounded-2xl overflow-hidden shadow-xs flex flex-col gap-3">
-              <div className="h-36 bg-slate-150 flex items-center justify-center text-slate-400 font-bold text-[12px] uppercase">
-                [Full-Width Image Area]
-              </div>
-              <div className="p-4 pt-1">
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${badgeStyle}`}>
-                  Featured Hero
-                </span>
-                <h4 className="font-serif font-extrabold text-[15px] mt-2 text-slate-900">
-                  Bipartisan Infrastructure Grid Reaches Funding Accord
-                </h4>
+            <div key={section.id} className="border rounded-2xl overflow-hidden shadow-xs flex flex-col gap-2" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <div className="h-32 bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-[11px] uppercase">[Featured Image Hero]</div>
+              <div className="p-3">
+                <span className={`text-[8.5px] font-bold px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.title}</span>
+                <h4 className="font-serif font-extrabold text-[14px] mt-1 text-slate-800">Grid Expansion Accord Reaches Funding Settlement</h4>
               </div>
             </div>
           )
         }
         if (section.designStyle === 'hero-minimal') {
           return (
-            <div key={section.id} className="p-4 bg-white border border-slate-200 rounded-xl">
-              <h4 className="font-serif font-extrabold text-[16px] text-slate-900 text-center leading-snug">
-                "Bipartisan Infrastructure Grid Expansion Reaches Full Accord"
-              </h4>
-              <p className="text-[11px] text-slate-500 text-center mt-1">A key Senate committee finalized utility grid upgrades.</p>
+            <div key={section.id} className="p-3 bg-white border rounded-xl text-center" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <h4 className="font-serif font-extrabold text-[14px] text-slate-900 leading-snug">"Infrastructure Expansion Finalized Under Senate Committee Vote"</h4>
             </div>
           )
         }
-        // Standard hero split
         return (
           <div key={section.id} className="grid grid-cols-3 gap-3">
-            <div className="col-span-2 bg-white border border-slate-150 rounded-2xl p-3 flex flex-col justify-between">
-              <div className="h-20 bg-slate-200 rounded-xl" />
-              <div className="text-[12.5px] font-bold text-slate-800 mt-2 line-clamp-1">Infrastructure Grid Finalized</div>
+            <div className="col-span-2 border rounded-2xl p-3 flex flex-col justify-between" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <div className="h-16 bg-slate-200 rounded-lg" />
+              <div className="text-[11.5px] font-bold text-slate-800 mt-2 truncate">Grid Electrification Agreement Passed</div>
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-[10.5px] font-medium text-slate-500">
-              <div className="font-bold border-b pb-1 mb-1 text-[11px] text-slate-700">SIDEBAR</div>
-              <div className="truncate">Stocks Rise After Agree</div>
+            <div className="bg-slate-50 border rounded-2xl p-3 text-[10px] font-medium text-slate-400">
+              <div className="font-bold border-b pb-0.5 mb-1 text-slate-600 uppercase">TRENDING</div>
+              <div className="truncate">Stocks Rally Following</div>
             </div>
           </div>
         )
-
       case 'opinion-column':
         if (section.designStyle === 'quote') {
           return (
-            <div key={section.id} className="p-4 bg-[#faf8f5] border border-amber-200/50 rounded-xl text-center">
-              <span className="text-[20px] text-amber-500 font-serif block leading-none">“</span>
-              <p className="text-[11.5px] italic text-slate-650 leading-relaxed m-0 px-4">
-                "The Grid Lock: Why rural utility grid upgrades will shape digital agriculture over the next decade."
-              </p>
-              <cite className="text-[9.5px] font-bold text-slate-500 block mt-2">— Arthur Pendelton</cite>
+            <div key={section.id} className="p-4 bg-[#faf8f5] border rounded-xl text-center" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <blockquote className="text-[11px] italic text-slate-650 leading-relaxed">"Electrifying rural grids will trigger agriculture growth..."</blockquote>
+              <cite className="text-[9px] font-bold text-slate-400 block mt-2">— Arthur Pendelton</cite>
             </div>
           )
         }
-        if (section.designStyle === 'list') {
-          return (
-            <div key={section.id} className="bg-white border rounded-xl p-3 flex flex-col gap-2">
-              <div className="text-[11px] font-bold text-slate-700 uppercase tracking-widest border-b pb-1">OPINIONS</div>
-              <div className="text-[11.5px] font-semibold text-indigo-700">Grid upgrades are long overdue • Arthur P.</div>
-              <div className="text-[11.5px] font-semibold text-indigo-700">Venture capital is cooling off • Emily D.</div>
-            </div>
-          )
-        }
-        // Columns
         return (
-          <div key={section.id} className="bg-zinc-50/50 border border-slate-200 p-3.5 rounded-2xl">
-            <div className="text-[12px] font-bold text-slate-700 mb-2">{section.title}</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white p-2.5 rounded-lg border text-[11px] italic">"Electrifying rural grids will trigger agriculture growth..."</div>
-              <div className="bg-white p-2.5 rounded-lg border text-[11px] italic">"STARTUPS: Balancing security vs scaling guidelines..."</div>
+          <div key={section.id} className="border p-3 rounded-2xl shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+            <div className="text-[11px] font-bold text-slate-700 mb-1.5">{section.title}</div>
+            <div className="grid grid-cols-2 gap-2 text-[10.5px] italic">
+              <div className="bg-white p-2 rounded border">"Rural grid upgrades will shape digital agriculture..."</div>
+              <div className="bg-white p-2 rounded border">"STARTUPS: Balancing security vs scaling rules..."</div>
             </div>
           </div>
         )
-
-      case 'arts-marketing-pr':
-        if (section.designStyle === 'spotlight-flex') {
-          return (
-            <div key={section.id} className="bg-white border border-slate-150 p-3 rounded-2xl flex items-center justify-between gap-3 text-[11px]">
-              <div>
-                <span className="text-[#6366f1] font-bold">[Arts]</span> Digital Sculptures Blend Haptics
-              </div>
-              <div>
-                <span className="text-amber-600 font-bold">[Strategy]</span> Hyperlocal Targeting
-              </div>
-            </div>
-          )
-        }
-        if (section.designStyle === 'spotlight-text') {
-          return (
-            <div key={section.id} className="bg-[#fcfbf9] border p-3.5 rounded-2xl text-[11.5px] space-y-1.5">
-              <div className="font-bold text-slate-800 border-b pb-0.5 mb-1">{section.title}</div>
-              <div>🔹 ARTS: Spotlight exhibition starts in London</div>
-              <div>🔹 MARKETING: Brands pivot to micro-campaign designs</div>
-            </div>
-          )
-        }
-        // Spotlight grid
-        return (
-          <div key={section.id} className="bg-[#fdfcfb] border border-slate-150 p-3.5 rounded-2xl flex flex-col gap-2">
-            <div className="text-[12px] font-bold text-slate-700">{section.title}</div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-white p-2 border rounded-lg text-[10px]"><span className="text-indigo-600 font-bold block">ARTS</span> London Digital Display</div>
-              <div className="bg-white p-2 border rounded-lg text-[10px]"><span className="text-amber-600 font-bold block">MARKETING</span> Strategy Shift</div>
-              <div className="bg-white p-2 border rounded-lg text-[10px]"><span className="text-emerald-600 font-bold block">PR</span> Corporate electric fleet</div>
-            </div>
-          </div>
-        )
-
       default:
-        // Category feeds / Latest news
+        // Category blocks
         if (section.designStyle === 'magazine') {
           return (
-            <div key={section.id} className="bg-white border border-slate-150 p-3.5 rounded-2xl flex gap-3 shadow-xs">
-              <div className="w-16 h-16 bg-slate-150 rounded-lg shrink-0" />
-              <div className="flex-grow flex flex-col justify-center">
-                <span className={`text-[8.5px] font-bold w-max px-1.5 py-0.25 rounded ${badgeStyle}`}>
-                  {section.categorySource}
-                </span>
-                <div className="text-[12.5px] font-bold mt-1 text-slate-800">{section.title} Block Lead Article</div>
+            <div key={section.id} className="border p-3 rounded-2xl flex gap-3 shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <div className="w-14 h-14 bg-slate-150 rounded-lg shrink-0" />
+              <div className="flex-grow flex flex-col justify-center gap-1.5">
+                <span className={`text-[8px] font-bold w-max px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.categorySource}</span>
+                <div className="text-[12px] font-bold text-slate-800 line-clamp-1">{section.title} Row Entry</div>
               </div>
             </div>
           )
         }
         if (section.designStyle === 'list') {
           return (
-            <div key={section.id} className="bg-white border border-slate-150 p-3 rounded-2xl flex flex-col gap-1.5 shadow-xs">
-              <div className="text-[12px] font-bold text-slate-700 border-b pb-1">{section.title}</div>
-              <div className="text-[11.5px] font-semibold text-slate-600">▪️ Representative article entry title one ({section.categorySource})</div>
-              <div className="text-[11.5px] font-semibold text-slate-600">▪️ Representative article entry title two ({section.categorySource})</div>
+            <div key={section.id} className="border p-3 rounded-2xl flex flex-col gap-1.5 shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+              <div className="text-[11.5px] font-bold text-slate-700 border-b pb-0.5">{section.title}</div>
+              <div className="text-[11px] text-slate-600 truncate">▪️ Representative article entry headline one ({section.categorySource})</div>
+              <div className="text-[11px] text-slate-600 truncate">▪️ Representative article entry headline two ({section.categorySource})</div>
             </div>
           )
         }
-        // Grid
         return (
-          <div key={section.id} className="bg-white border border-slate-150 p-3.5 rounded-2xl shadow-xs">
-            <div className="flex justify-between items-center mb-2.5 border-b pb-1">
-              <span className="text-[12.5px] font-extrabold text-slate-800">{section.title}</span>
-              <span className={`text-[8.5px] font-bold px-1.5 py-0.25 rounded ${badgeStyle}`}>
-                {section.categorySource}
-              </span>
+          <div key={section.id} className="border p-3 rounded-2xl shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+            <div className="flex justify-between items-center mb-2 border-b pb-0.5">
+              <span className="text-[11.5px] font-extrabold text-slate-800">{section.title}</span>
+              <span className={`text-[8px] font-bold px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.categorySource}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col gap-1">
-                <div className="h-10 bg-slate-150 rounded-lg" />
-                <div className="text-[10px] font-bold truncate">Article Entry One</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="h-10 bg-slate-150 rounded-lg" />
-                <div className="text-[10px] font-bold truncate">Article Entry Two</div>
-              </div>
+              <div className="h-10 bg-slate-150 rounded" />
+              <div className="h-10 bg-slate-150 rounded" />
             </div>
           </div>
         )
@@ -456,159 +423,386 @@ export default function HomeLayoutConfigPage() {
     return (
       <div className="flex flex-col items-center justify-center p-12 py-24 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
         <div className="w-8 h-8 border-3 border-slate-200 border-t-[#6366f1] rounded-full animate-spin"></div>
-        <div className="text-[12px] text-slate-400 mt-3 font-semibold uppercase tracking-wider">Loading Extreme Layout Manager...</div>
+        <div className="text-[12px] text-slate-400 mt-3 font-semibold uppercase tracking-wider">Loading Homepage Customizer...</div>
       </div>
     )
   }
 
-  return (
-    <div className="max-w-[1250px] animate-[admin-fade-in_0.4s_ease_both] pb-12">
-      {/* Header card with gradient backdrop */}
-      <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 flex justify-between items-center text-white">
-        <div className="relative z-10">
-          <h1 className="text-[26px] font-serif font-extrabold text-white tracking-tight m-0">Extreme Layout & Design Manager</h1>
-          <p className="text-[13px] text-slate-300 mt-1 font-medium">Customize styles, design patterns, and colors for each landing page section individually</p>
-        </div>
-      </div>
+  // SUB-PAGE EDITOR VIEW: Custom settings panel for the selected active section
+  if (activeEditId && draftSection) {
+    const isBreaking = draftSection.id === 'breaking-news'
+    const isHeader = draftSection.id === 'domain-header'
+    const isNav = draftSection.id === 'category-nav'
+    const isDate = draftSection.id === 'date-section'
 
-      {/* Preset selection panel */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.015)] mb-6 flex flex-col gap-4">
-        <div className="text-[13px] font-extrabold text-[#6366f1] tracking-wider uppercase font-sans">Template Presets</div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button
-            onClick={() => applyPreset('default')}
-            className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1.5 ${
-              templateName === 'default'
-                ? 'border-[#6366f1] bg-[#6366f1]/5 shadow-[0_4px_12px_rgba(99,102,241,0.05)]'
-                : 'border-slate-200 bg-white hover:bg-slate-50'
-            }`}
-          >
-            <div className="text-[13.5px] font-bold text-slate-800">Default Editorial Preset</div>
-            <div className="text-[11px] text-slate-400 font-medium">Standard columns, crimson alerts ticker, and traditional hero split.</div>
-          </button>
-
-          <button
-            onClick={() => applyPreset('grid-focus')}
-            className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1.5 ${
-              templateName === 'grid-focus'
-                ? 'border-[#6366f1] bg-[#6366f1]/5 shadow-[0_4px_12px_rgba(99,102,241,0.05)]'
-                : 'border-slate-200 bg-white hover:bg-slate-50'
-            }`}
-          >
-            <div className="text-[13.5px] font-bold text-slate-800">Modern Grid Preset</div>
-            <div className="text-[11px] text-slate-400 font-medium">Emerald accents, full width visual hero cards, and magazine layout rows.</div>
-          </button>
-
-          <button
-            onClick={() => applyPreset('minimal')}
-            className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1.5 ${
-              templateName === 'minimal'
-                ? 'border-[#6366f1] bg-[#6366f1]/5 shadow-[0_4px_12px_rgba(99,102,241,0.05)]'
-                : 'border-slate-200 bg-white hover:bg-slate-50'
-            }`}
-          >
-            <div className="text-[13.5px] font-bold text-slate-800">Minimal Bulletin Preset</div>
-            <div className="text-[11px] text-slate-400 font-medium">Neutral slate color themes, text tickers, and list configurations.</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Main reordering & design management blocks */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.015)] mb-6 overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-[#faf8f5]/20">
-          <div className="text-[13px] font-extrabold text-[#6366f1] tracking-wider uppercase font-sans">Section Design Configurations</div>
+    return (
+      <div className="animate-[admin-fade-in_0.35s_ease_both]">
+        {/* Breadcrumb Header */}
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div className="text-[11px] text-slate-450 font-bold uppercase tracking-widest flex items-center gap-1 mb-1">
+              <span>Homepage Layout</span> ➔ <span>Custom Settings</span>
+            </div>
+            <h1 className="text-[25px] font-serif font-extrabold text-slate-900 m-0">
+              Customize Section: {draftSection.title}
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={cancelSectionEdit}
+              className="p-2 px-5 bg-white text-slate-650 border rounded-xl text-[12.5px] font-bold hover:bg-slate-50 cursor-pointer transition"
+            >
+              Cancel & Back
+            </button>
+            <button
+              onClick={saveSectionDraft}
+              className="p-2 px-6 bg-[#6366f1] text-white rounded-xl text-[12.5px] font-bold hover:bg-[#4f46e5] cursor-pointer shadow-[0_3px_8px_rgba(99,102,241,0.2)] transition"
+            >
+              Apply Section Edits
+            </button>
+          </div>
         </div>
 
-        <div className="p-5 flex flex-col gap-4">
-          {sections.map((section, idx) => {
-            const hasCategorySource = !['breaking-news', 'date-section', 'domain-header', 'category-nav', 'opinion-column', 'latest-news', 'trending-columns'].includes(section.id)
-            const designOpts = getDesignOptions(section.id)
-            return (
-              <div
-                key={section.id}
-                className={`p-4 px-5 rounded-2xl border transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
-                  section.isVisible 
-                    ? 'border-slate-200 bg-white shadow-sm hover:border-slate-350'
-                    : 'border-slate-200 bg-slate-50/55 opacity-60'
-                }`}
-              >
-                {/* Title & System Key */}
-                <div className="flex items-center gap-3.5 min-w-[260px]">
-                  <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[11px] font-extrabold flex items-center justify-center font-mono">
-                    {idx + 1}
-                  </span>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+          {/* LEFT COLUMN: OPTIONS CONTROLLER */}
+          <div className="bg-white rounded-2xl border p-6 flex flex-col gap-5 shadow-xs">
+            <div className="text-[13px] font-extrabold text-[#6366f1] border-b pb-2 tracking-wider uppercase font-sans">
+              Layout & Presentation Controls
+            </div>
+
+            {/* 1. BREAKING NEWS TICKER SETTINGS */}
+            {isBreaking && (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Ticker Background Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.bgColor || '#dc2626'}
+                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg cursor-pointer bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Ticker Text Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.textColor || '#ffffff'}
+                      onChange={(e) => updateDraftSetting('textColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg cursor-pointer bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <div>
+                    <div className="text-[12.5px] font-bold text-slate-800">Auto-Scroll Animation</div>
+                    <div className="text-[10px] text-slate-450 mt-0.5 font-medium">If disabled, the ticker remains stationary as a line alert.</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input 
+                      type="checkbox" 
+                      checked={draftSection.settings?.isScrolling !== false}
+                      onChange={(e) => updateDraftSetting('isScrolling', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Limit News Quantity</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={15}
+                    value={draftSection.limit}
+                    onChange={(e) => updateDraftField('limit', parseInt(e.target.value) || 5)}
+                    className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Ticker Text Override (Optional)</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Enter manual text override. Leave empty to scroll live breaking articles automatically..."
+                    value={draftSection.settings?.customText || ''}
+                    onChange={(e) => updateDraftSetting('customText', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none resize-none font-medium"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 2. LOGO HEADER SETTINGS */}
+            {isHeader && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Banner Mode</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => updateDraftSetting('logoType', 'text')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.logoType !== 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Text Typography Logo
+                    </button>
+                    <button
+                      onClick={() => updateDraftSetting('logoType', 'image')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.logoType === 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Image Logo Asset
+                    </button>
+                  </div>
+                </div>
+
+                {draftSection.settings?.logoType === 'image' ? (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Image URL</label>
                     <input
                       type="text"
-                      value={section.title}
-                      onChange={(e) => updateSectionField(section.id, 'title', e.target.value)}
-                      className="font-bold text-slate-800 text-[13.5px] border-none focus:bg-slate-50 p-1 px-1.5 rounded outline-none w-[200px]"
+                      placeholder="/logo-placeholder.png"
+                      value={draftSection.settings?.logoImage || ''}
+                      onChange={(e) => updateDraftSetting('logoImage', e.target.value)}
+                      className="p-2 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none"
                     />
-                    <div className="text-[9.5px] text-slate-450 font-bold font-mono mt-0.5 uppercase tracking-wider ml-1">
-                      Key: {section.id}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Font Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.logoColor || '#000000'}
+                        onChange={(e) => updateDraftSetting('logoColor', e.target.value)}
+                        className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Font Size</label>
+                      <select
+                        value={draftSection.settings?.logoSize || '36px'}
+                        onChange={(e) => updateDraftSetting('logoSize', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer font-bold text-slate-700"
+                      >
+                        <option value="28px">28px (Compact)</option>
+                        <option value="36px">36px (Normal)</option>
+                        <option value="48px">48px (Large)</option>
+                        <option value="64px">64px (Extra Large)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Alignment</label>
+                  <select
+                    value={draftSection.settings?.alignment || 'center'}
+                    onChange={(e) => updateDraftSetting('alignment', e.target.value)}
+                    className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer font-bold text-slate-700"
+                  >
+                    <option value="left">Left Align</option>
+                    <option value="center">Center Align</option>
+                    <option value="right">Right Align</option>
+                  </select>
+                </div>
+
+                <div className="border-t pt-3">
+                  <label className="text-[12px] font-extrabold text-[#6366f1] block mb-2 uppercase tracking-wide">Subtitle Tagline Settings</label>
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-405 block mb-1">Tagline Text</label>
+                      <input
+                        type="text"
+                        value={draftSection.settings?.taglineText || ''}
+                        onChange={(e) => updateDraftSetting('taglineText', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none font-medium"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-405 block mb-1">Tagline Color</label>
+                        <input
+                          type="color"
+                          value={draftSection.settings?.taglineColor || '#64748b'}
+                          onChange={(e) => updateDraftSetting('taglineColor', e.target.value)}
+                          className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-405 block mb-1">Tagline Size</label>
+                        <select
+                          value={draftSection.settings?.taglineSize || '12px'}
+                          onChange={(e) => updateDraftSetting('taglineSize', e.target.value)}
+                          className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-750"
+                        >
+                          <option value="9px">9px (Micro)</option>
+                          <option value="11px">11px (Normal)</option>
+                          <option value="12px">12px (Standard)</option>
+                          <option value="14px">14px (Large)</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Form configuration fields */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:flex-row flex-wrap items-center gap-4 flex-1">
-                  {/* Category Source */}
-                  <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 block mb-1 uppercase tracking-widest">Category Source</label>
-                    {hasCategorySource ? (
-                      <select
-                        value={section.categorySource}
-                        onChange={(e) => updateSectionField(section.id, 'categorySource', e.target.value)}
-                        className="p-1.5 pr-6 border border-slate-200 rounded-lg text-[11.5px] bg-white text-slate-700 font-semibold outline-none cursor-pointer w-full"
-                      >
-                        <option value="All">All Categories</option>
-                        {categoriesList.map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-[11.5px] text-slate-400 font-bold font-mono">Dynamic Feed</span>
-                    )}
-                  </div>
+                <div className="border-t pt-3">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Header Background Color</label>
+                  <input
+                    type="color"
+                    value={draftSection.settings?.bgColor || '#ffffff'}
+                    onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                    className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
 
-                  {/* Limit */}
+            {/* 3. CATEGORIES NAVIGATION SETTINGS */}
+            {isNav && (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 block mb-1 uppercase tracking-widest">Max Items</label>
-                    {!['date-section', 'domain-header', 'category-nav'].includes(section.id) ? (
-                      <input
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={section.limit}
-                        onChange={(e) => updateSectionField(section.id, 'limit', parseInt(e.target.value) || 3)}
-                        className="p-1.5 border border-slate-200 rounded-lg text-[11.5px] w-14 text-center bg-white text-slate-700 font-semibold outline-none"
-                      />
-                    ) : (
-                      <span className="text-[11.5px] text-slate-450 font-bold font-mono">N/A</span>
-                    )}
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Navbar Background Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.bgColor || '#ffffff'}
+                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
                   </div>
-
-                  {/* Design style selection */}
                   <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 block mb-1 uppercase tracking-widest">Design Style</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Navbar Alignment</label>
                     <select
-                      value={section.designStyle}
-                      onChange={(e) => updateSectionField(section.id, 'designStyle', e.target.value)}
-                      className="p-1.5 pr-6 border border-slate-200 rounded-lg text-[11.5px] bg-white text-slate-700 font-semibold outline-none cursor-pointer w-full"
+                      value={draftSection.settings?.alignment || 'center'}
+                      onChange={(e) => updateDraftSetting('alignment', e.target.value)}
+                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
                     >
-                      {designOpts.map(opt => (
+                      <option value="left">Left Align Links</option>
+                      <option value="center">Center Align Links</option>
+                      <option value="right">Right Align Links</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Active Category Style</label>
+                  <select
+                    value={draftSection.settings?.activeLinkDesign || 'underline'}
+                    onChange={(e) => updateDraftSetting('activeLinkDesign', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
+                  >
+                    <option value="underline">Underline Highlight</option>
+                    <option value="capsule">Colored Background Capsule</option>
+                  </select>
+                </div>
+
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <label className="text-[12px] font-extrabold text-[#6366f1] block uppercase tracking-wide">Search Box Customizations</label>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">Search Placement</label>
+                      <select
+                        value={draftSection.settings?.searchPlacement || 'right'}
+                        onChange={(e) => updateDraftSetting('searchPlacement', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
+                      >
+                        <option value="left">Aligned Left</option>
+                        <option value="right">Aligned Right</option>
+                        <option value="hidden">Hidden / Disabled</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">Placeholder Text</label>
+                      <input
+                        type="text"
+                        value={draftSection.settings?.searchPlaceholder || ''}
+                        onChange={(e) => updateDraftSetting('searchPlaceholder', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Border Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.searchBorderColor || '#e4e4e7'}
+                        onChange={(e) => updateDraftSetting('searchBorderColor', e.target.value)}
+                        className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Border Thickness</label>
+                      <select
+                        value={draftSection.settings?.searchBorderThickness || '1px'}
+                        onChange={(e) => updateDraftSetting('searchBorderThickness', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
+                      >
+                        <option value="1px">1px (Thin)</option>
+                        <option value="2px">2px (Medium)</option>
+                        <option value="3px">3px (Thick)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. DATE SECTION SETTINGS */}
+            {isDate && (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Background Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.bgColor || '#f8fafc'}
+                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Text Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.textColor || '#64748b'}
+                      onChange={(e) => updateDraftSetting('textColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 5. STANDARD NEWS SECTIONS SETTINGS */}
+            {!isBreaking && !isHeader && !isNav && !isDate && (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Design Style</label>
+                    <select
+                      value={draftSection.designStyle}
+                      onChange={(e) => updateDraftField('designStyle', e.target.value)}
+                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none text-slate-700 font-bold"
+                    >
+                      {getDesignOptions(draftSection.id).map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
-
-                  {/* Color theme selection */}
                   <div>
-                    <label className="text-[10px] font-extrabold text-slate-400 block mb-1 uppercase tracking-widest">Color Theme</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Color Theme Badge</label>
                     <select
-                      value={section.colorTheme}
-                      onChange={(e) => updateSectionField(section.id, 'colorTheme', e.target.value)}
-                      className="p-1.5 pr-6 border border-slate-200 rounded-lg text-[11.5px] bg-white text-slate-700 font-semibold outline-none cursor-pointer w-full"
+                      value={draftSection.colorTheme}
+                      onChange={(e) => updateDraftField('colorTheme', e.target.value)}
+                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none text-slate-700 font-bold"
                     >
                       {colorOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -617,116 +811,206 @@ export default function HomeLayoutConfigPage() {
                   </div>
                 </div>
 
-                {/* Show toggle */}
-                <div className="flex items-center gap-4 border-l lg:border-l-0 border-slate-100 pl-4 lg:pl-0 shrink-0">
-                  <div className="text-center">
-                    <label className="text-[10px] font-extrabold text-slate-400 block mb-1 uppercase tracking-widest">Visible</label>
-                    <label className="relative inline-flex items-center cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
-                        checked={section.isVisible}
-                        onChange={(e) => updateSectionField(section.id, 'isVisible', e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
-                    </label>
+                <div className="grid grid-cols-2 gap-3 border-t pt-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Background Color Override</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.bgColor || '#ffffff'}
+                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
                   </div>
-
-                  {/* Move up / down buttons */}
-                  <div className="flex items-center gap-1.5 ml-2">
-                    <button
-                      onClick={() => moveUp(idx)}
-                      disabled={idx === 0}
-                      className="p-1.5 border border-slate-200 rounded-lg hover:border-slate-400 text-slate-650 bg-white hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[11px] font-bold active:translate-y-[1px] transition-all"
-                      title="Move Up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={() => moveDown(idx)}
-                      disabled={idx === sections.length - 1}
-                      className="p-1.5 border border-slate-200 rounded-lg hover:border-slate-400 text-slate-650 bg-white hover:bg-slate-50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[11px] font-bold active:translate-y-[1px] transition-all"
-                      title="Move Down"
-                    >
-                      ▼
-                    </button>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Top Border Color (Accent)</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.borderColor || '#ffffff'}
+                      onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
                   </div>
                 </div>
               </div>
-            )
-          })}
-        </div>
+            )}
+          </div>
 
-        {/* Footer actions block */}
-        <div className="p-5 border-t border-slate-100 flex justify-end gap-3.5 bg-slate-50/30">
+          {/* RIGHT COLUMN: FOCUSED SECTION PREVIEW */}
+          <div className="flex flex-col gap-3">
+            <div className="bg-[#eff6ff] p-3 px-4 border rounded-xl border-blue-200 select-none">
+              <span className="text-[12.5px] font-extrabold text-blue-800 tracking-wide uppercase font-sans">
+                👁️ Live Section Preview Mockup
+              </span>
+            </div>
+            <div className="bg-slate-100/50 border border-slate-200 rounded-3xl p-6 min-h-[220px] flex flex-col justify-center gap-3">
+              {renderPreviewMock(draftSection)}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // MAIN DASHBOARD VIEW: Lists the sections and displays stacked dual previews
+  return (
+    <div className="max-w-[1250px] animate-[admin-fade-in_0.4s_ease_both] pb-12">
+      {/* Header board */}
+      <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center text-white gap-4">
+        <div>
+          <h1 className="text-[26px] font-serif font-extrabold text-white tracking-tight m-0">Modular Homepage Builder</h1>
+          <p className="text-[13px] text-slate-300 mt-1 font-medium">Reorder elements globally or click customize to adjust individual alignment, logo files, and marquee scrolls.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={undoAllChanges}
+            className="bg-white/10 hover:bg-white/20 text-white transition px-4 py-2.5 rounded-xl text-[12.5px] font-bold border border-white/10 cursor-pointer"
+          >
+            ↩️ Undo Changes
+          </button>
           <button
             onClick={saveLayout}
             disabled={saving}
-            className="p-3 px-8 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-xl font-extrabold text-[13.5px] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.2)] transition-all disabled:opacity-50 flex items-center gap-1.5"
+            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white transition px-5 py-2.5 rounded-xl text-[12.5px] font-bold shadow-[0_4px_12px_rgba(99,102,241,0.2)] cursor-pointer"
           >
-            {saving ? '⏳ Saving Custom Layout...' : '💾 Publish & Save Live Layout'}
+            {saving ? '⏳ Publishing...' : '💾 Confirm & Save Changes'}
           </button>
         </div>
       </div>
 
-      {/* Save Success Alert */}
+      {/* Save Message Status Toast */}
       {message === 'success' && (
         <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-250 text-emerald-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
-          <span>✓</span> Homepage custom layout properties have been saved live! Refreshing dashboard preview frames.
+          <span>✓</span> Layout configurations saved successfully! Changes are now live on the homepage.
         </div>
       )}
       {message === 'failed' && (
         <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
-          <span>⚠️</span> An error occurred while writing configuration rules to the database.
+          <span>⚠️</span> Failed to persist changes to the database. Please try again.
+        </div>
+      )}
+      {message === 'undone' && (
+        <div className="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
+          <span>↩️</span> Draft layout discarded. Reverted back to the active database configuration.
         </div>
       )}
 
-      {/* SIDE BY SIDE COMPARISON PREVIEWS */}
-      <div className="mt-10 grid grid-cols-1 xl:grid-cols-2 gap-8">
+      {/* Sections Table list */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.015)] mb-8 overflow-hidden">
+        <div className="p-4 px-5 border-b border-slate-100 bg-[#faf8f5]/20 text-[13px] font-extrabold text-[#6366f1] tracking-wider uppercase font-sans">
+          Homepage Layout Sections
+        </div>
+        <div className="p-5 flex flex-col gap-3">
+          {sections.map((section, idx) => (
+            <div
+              key={section.id}
+              className={`p-3 px-5 rounded-xl border flex items-center justify-between gap-4 transition-all ${
+                section.isVisible 
+                  ? 'border-slate-200 bg-white shadow-xs hover:border-slate-350'
+                  : 'border-slate-200 bg-slate-50/50 opacity-60'
+              }`}
+            >
+              {/* Order & Title */}
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-650 text-[11px] font-extrabold flex items-center justify-center font-mono">
+                  {idx + 1}
+                </span>
+                <div>
+                  <div className="font-bold text-slate-800 text-[13.5px]">{section.title}</div>
+                  <div className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                    System ID: {section.id}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Info */}
+              <div className="hidden sm:flex items-center gap-4 text-xs font-semibold text-slate-500">
+                <div>Style: <span className="text-slate-800 capitalize">{section.designStyle}</span></div>
+                <div>Theme: <span className="text-slate-800 capitalize">{section.colorTheme}</span></div>
+                <div>Status: {section.isVisible ? <span className="text-emerald-600 font-bold">Visible</span> : <span className="text-slate-400 font-medium">Hidden</span>}</div>
+              </div>
+
+              {/* Actions & Move Controls */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => enterEditMode(section)}
+                  className="p-1.5 px-3.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-[12px] font-bold cursor-pointer transition-all"
+                >
+                  ⚙️ Customize Style & Options
+                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => moveUp(idx)}
+                    disabled={idx === 0}
+                    className="p-1.5 border rounded-lg hover:border-slate-400 bg-white cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[11px]"
+                    title="Move Up"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => moveDown(idx)}
+                    disabled={idx === sections.length - 1}
+                    className="p-1.5 border rounded-lg hover:border-slate-400 bg-white cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-[11px]"
+                    title="Move Down"
+                  >
+                    ▼
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* DUAL COMPILATION PREVIEWS */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         
         {/* LEFT: CURRENT LAYOUT PREVIEW */}
         <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-slate-200/50 p-3 px-4 rounded-xl border border-slate-350 select-none">
+          <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
             <span className="text-[12.5px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
-              ⏮️ BEFORE: Current Live Layout
+              ⏮️ BEFORE: Live Website View
             </span>
             <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
-              Active Database Configuration
+              Active DB State
             </span>
           </div>
 
           <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
             {originalSections
               .filter(s => s.isVisible)
-              .map(section => renderPreviewMock(section))}
-            {originalSections.filter(s => s.isVisible).length === 0 && (
-              <div className="text-center py-20 text-slate-400 font-bold text-[12px] uppercase">
-                No active layout configurations loaded
-              </div>
-            )}
+              .map(sec => (
+                <div key={sec.id} className="relative group">
+                  <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
+                    {sec.title}
+                  </div>
+                  {renderPreviewMock(sec)}
+                </div>
+              ))}
           </div>
         </div>
 
         {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
         <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-indigo-100 p-3 px-4 rounded-xl border border-indigo-200 select-none shadow-sm">
+          <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
             <span className="text-[12.5px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
-              ⏭️ AFTER: Unsaved Proposed Draft
+              ⏭️ AFTER: Proposed Draft View (Unsaved)
             </span>
-            <span className="text-[10px] bg-indigo-600 text-white font-bold px-2 py-0.5 rounded animate-pulse">
-              Live Draft Simulation
+            <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
+              Interactive Draft Simulation
             </span>
           </div>
 
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px] shadow-sm">
+          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
             {sections
               .filter(s => s.isVisible)
-              .map(section => renderPreviewMock(section))}
-            {sections.filter(s => s.isVisible).length === 0 && (
-              <div className="text-center py-20 text-slate-400 font-bold text-[12px] uppercase">
-                All sections hidden
-              </div>
-            )}
+              .map(sec => (
+                <div key={sec.id} className="relative group">
+                  <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
+                    {sec.title}
+                  </div>
+                  {renderPreviewMock(sec)}
+                </div>
+              ))}
           </div>
         </div>
 

@@ -279,31 +279,146 @@ export default function Home() {
 
   // Dynamic layout rendering components
   const renderBreakingNewsSection = (section: any) => {
-    const breakingList = articles.filter(a => a.isBreaking);
-    const marqueeText = breakingList.length > 0
-      ? breakingList.map(a => `🚨 ${a.title}`).join('  •  ')
-      : `🚨 ${section.title}: Federal Reserve Rates Hold • New Infrastructure Funding Active • Tech Shares Surge`;
+    const isScrolling = section.settings?.isScrolling !== false;
+    const bgColor = section.settings?.bgColor || '#09090b';
+    const textColor = section.settings?.textColor || '#ffffff';
+    const customText = section.settings?.customText || '';
 
-    if (section.designStyle === 'ticker-banner') {
-      return (
-        <div key={section.id} className="bg-red-600 text-white p-2.5 px-4 flex items-center gap-3 text-xs font-bold font-sans">
-          <span className="bg-white text-red-600 font-extrabold px-1.5 py-0.5 rounded text-[10px] uppercase select-none tracking-wider">FLASH</span>
-          {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
-        </div>
-      );
-    }
-    if (section.designStyle === 'ticker-ribbon') {
-      return (
-        <div key={section.id} className="bg-zinc-950 text-zinc-100 p-2.5 px-4 flex items-center gap-3 text-xs font-bold font-sans border-l-4 border-red-600">
-          <span className="text-red-500 font-extrabold text-[10px] uppercase select-none">ALERT</span>
-          {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
-        </div>
-      );
-    }
-    // ticker-minimal
+    const breakingList = articles.filter(a => a.isBreaking);
+    const alertText = customText || (breakingList.length > 0
+      ? breakingList.map(a => `🚨 ${a.title}`).join('   •   ')
+      : `📢 Federal Reserve Rates Hold • New Infrastructure Funding Active • Tech Shares Surge`);
+
     return (
-      <div key={section.id} className="border-t border-b border-zinc-200 py-2 text-center text-xs font-bold text-red-650 bg-white font-sans">
-        {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
+      <div 
+        key={section.id} 
+        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none flex items-center"
+        style={{ backgroundColor: bgColor, color: textColor }}
+      >
+        <div className="bg-red-750 text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 animate-pulse animate-[pulse_1.5s_infinite]">
+          BREAKING NEWS
+        </div>
+        {isScrolling ? (
+          <div className="relative w-full overflow-hidden flex items-center">
+            {React.createElement('marquee', { className: 'cursor-default flex-1 font-medium' }, alertText)}
+          </div>
+        ) : (
+          <div className="flex-grow font-semibold truncate px-2 select-text">{alertText}</div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDomainHeaderSection = (section: any) => {
+    const isText = section.settings?.logoType !== 'image';
+    const alignment = section.settings?.alignment || 'center';
+    const logoSize = section.settings?.logoSize || '72px';
+    const logoColor = section.settings?.logoColor || '#000000';
+    const logoImg = section.settings?.logoImage || '';
+    const tagline = section.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism';
+    const tagSize = section.settings?.taglineSize || '12px';
+    const tagColor = section.settings?.taglineColor || '#71717a';
+    const bgColor = section.settings?.bgColor || '#ffffff';
+
+    const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center';
+
+    return (
+      <div 
+        key={section.id} 
+        className={`w-full flex flex-col justify-center py-6 border-b border-zinc-205 px-4 select-none ${alignClass}`}
+        style={{ backgroundColor: bgColor }}
+      >
+        {isText ? (
+          <h1
+            className="font-editorial-title font-extrabold tracking-tighter uppercase cursor-pointer m-0 leading-tight"
+            onClick={() => handleCategoryChange("All")}
+            style={{ fontSize: logoSize, color: logoColor }}
+          >
+            DOMAIN NAME
+          </h1>
+        ) : (
+          <img
+            src={logoImg || '/logo-placeholder.png'}
+            alt="Logo"
+            className="h-12 object-contain"
+            style={{ maxHeight: logoSize }}
+          />
+        )}
+        <p 
+          className="mt-2 uppercase tracking-widest font-bold font-mono m-0"
+          style={{ fontSize: tagSize, color: tagColor }}
+        >
+          {tagline}
+        </p>
+      </div>
+    );
+  };
+
+  const renderCategoryNavSection = (section: any) => {
+    const bgColor = section.settings?.bgColor || '#ffffff';
+    const alignment = section.settings?.alignment || 'center';
+    const activeDesign = section.settings?.activeLinkDesign || 'underline';
+    const searchPlacement = section.settings?.searchPlacement || 'right';
+    const searchPlaceholder = section.settings?.searchPlaceholder || 'Search articles...';
+    const searchBorderColor = section.settings?.searchBorderColor || '#e4e4e7';
+    const searchBorderThickness = section.settings?.searchBorderThickness || '1px';
+
+    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
+
+    return (
+      <div 
+        key={section.id} 
+        className="w-full border-b border-zinc-400 py-2 sticky top-0 z-30 shadow-sm select-none"
+        style={{ backgroundColor: bgColor }}
+      >
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
+          <nav className={`flex items-center flex-nowrap md:flex-wrap gap-0 overflow-x-auto no-scrollbar w-full md:w-auto -mx-4 px-4 md:mx-0 md:px-0 ${alignClass} flex-1`}>
+            {categoriesList.map((cat) => {
+              const isActive = activeCategory === cat && !showBookmarksOnly;
+              let btnClass = `py-2 px-3.5 text-xs md:text-sm font-bold transition-all whitespace-nowrap cursor-pointer `;
+              
+              if (isActive) {
+                if (activeDesign === 'capsule') {
+                  btnClass += `bg-zinc-905 text-white rounded-full px-4 py-1.5`;
+                } else {
+                  btnClass += `text-black border-b-2 border-black font-semibold`;
+                }
+              } else {
+                btnClass += `text-zinc-650 hover:text-black`;
+              }
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryChange(cat)}
+                  className={btnClass}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </nav>
+          
+          {searchPlacement !== 'hidden' && (
+            <div className={`flex items-center justify-end gap-4 w-full md:w-auto ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+              <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full max-w-[200px] md:w-44 lg:w-56">
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  className="w-full bg-zinc-50 rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 focus:bg-white transition-all outline-none"
+                  style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
+                />
+                <button type="submit" className="absolute right-2 text-zinc-400 hover:text-zinc-700 cursor-pointer">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -311,10 +426,12 @@ export default function Home() {
   const renderFirstHeroSection = (section: any) => {
     const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
     const badgeStyle = `${theme.bg} ${theme.text} ${theme.border} border`;
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
 
     if (section.designStyle === 'hero-full') {
       return (
-        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200">
+        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <div
             onClick={() => setSelectedArticleId(leadArticleWithStats.id)}
             className="group cursor-pointer bg-white border border-zinc-150 rounded-3xl overflow-hidden shadow-sm hover:shadow transition flex flex-col md:flex-row gap-6 p-6"
@@ -334,7 +451,7 @@ export default function Home() {
                 <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider font-mono ${badgeStyle}`}>
                   {section.title}
                 </span>
-                <h2 className="font-editorial-title font-extrabold text-2xl md:text-4xl text-zinc-950 leading-tight group-hover:text-indigo-650 transition">
+                <h2 className="font-editorial-title font-extrabold text-2xl md:text-4xl text-zinc-955 leading-tight transition" style={{ color: section.settings?.logoColor || '' }}>
                   {leadArticleWithStats.title}
                 </h2>
                 <p className="text-zinc-650 text-sm leading-relaxed">
@@ -352,7 +469,7 @@ export default function Home() {
 
     if (section.designStyle === 'hero-minimal') {
       return (
-        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200">
+        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <div className="p-6 bg-zinc-50/50 border border-zinc-200 rounded-3xl text-center max-w-4xl mx-auto">
             <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>
               {section.title}
@@ -376,20 +493,24 @@ export default function Home() {
 
     // Default hero-split
     return (
-      <LeadStory
-        key="first-hero"
-        leadArticle={leadArticleWithStats}
-        secondaryArticles={breakingArticlesWithStats}
-        subArticles={leadSubArticlesWithStats}
-        onSelectArticle={setSelectedArticleId}
-      />
+      <section key={section.id} style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+        <LeadStory
+          leadArticle={leadArticleWithStats}
+          secondaryArticles={breakingArticlesWithStats}
+          subArticles={leadSubArticlesWithStats}
+          onSelectArticle={setSelectedArticleId}
+        />
+      </section>
     );
   };
 
   const renderOpinionSection = (section: any) => {
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
+
     if (section.designStyle === 'quote') {
       return (
-        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none">
+        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <div className="p-8 bg-[#fafaf8] border border-zinc-250/75 rounded-3xl text-center max-w-3xl mx-auto relative overflow-hidden">
             <span className="text-[60px] text-zinc-300 font-serif leading-none absolute top-2 left-6">“</span>
             <p className="text-base sm:text-lg italic text-zinc-700 leading-relaxed px-6 relative z-10">
@@ -405,7 +526,7 @@ export default function Home() {
 
     if (section.designStyle === 'list') {
       return (
-        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none">
+        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-900 pl-3 mb-6">
             {section.title}
           </h3>
@@ -425,7 +546,7 @@ export default function Home() {
 
     // Default columns
     return (
-      <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-zinc-50/40 rounded-3xl my-6 select-none">
+      <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-zinc-50/40 rounded-3xl my-6 select-none" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-[#0f172a] border-l-3 border-[#0f172a] pl-3">
             {section.title}
@@ -467,10 +588,12 @@ export default function Home() {
     const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
     const badgeStyle = `${theme.bg} ${theme.text} ${theme.border} border`;
     const hoverColor = theme.hoverText;
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
 
     if (section.designStyle === 'magazine') {
       return (
-        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]">
+        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
               {section.title}
@@ -514,7 +637,7 @@ export default function Home() {
 
     if (section.designStyle === 'list') {
       return (
-        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]">
+        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
               {section.title}
@@ -548,7 +671,7 @@ export default function Home() {
 
     // Default grid
     return (
-      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
+      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
             {section.title}
@@ -599,9 +722,11 @@ export default function Home() {
 
     const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
     const hoverColor = theme.hoverText;
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
 
     return (
-      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
+      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
         <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 mb-6 border-l-3 border-zinc-950 pl-3">
           {section.title}
         </h3>
@@ -642,9 +767,11 @@ export default function Home() {
     const hoverColor = theme.hoverText;
     const accentBg = theme.bg;
     const accentText = theme.text;
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
 
     return (
-      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-[#fbfbfa]/60 rounded-3xl my-6">
+      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-[#fbfbfa]/60 rounded-3xl my-6" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
             {section.title}
@@ -688,9 +815,11 @@ export default function Home() {
 
     const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
     const hoverColor = theme.hoverText;
+    const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : '';
+    const customBg = section.settings?.bgColor || '';
 
     return (
-      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
+      <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
             {section.title}
@@ -796,66 +925,24 @@ export default function Home() {
                   return renderBreakingNewsSection(section)
                 
                 case 'date-section':
+                  const dateBg = section.settings?.bgColor || '#f8fafc';
+                  const dateCol = section.settings?.textColor || '#64748b';
                   return (
-                    <div key="date-section" className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs text-zinc-650 flex justify-between select-none tracking-wide font-mono uppercase bg-zinc-50/50">
+                    <div 
+                      key="date-section" 
+                      className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex justify-between select-none tracking-wide font-mono uppercase"
+                      style={{ backgroundColor: dateBg, color: dateCol }}
+                    >
                       <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
                       <span>Washington, D.C.</span>
                     </div>
                   )
                 
                 case 'domain-header':
-                  return (
-                    <div key="domain-header" className="w-full flex flex-col items-center justify-center pt-4 pb-6 md:pt-6 md:pb-10 border-b border-zinc-200 px-4 select-none animate-[admin-fade-in_0.3s_ease]">
-                      <h1
-                        className="font-editorial-title text-3xl sm:text-6xl md:text-8xl font-extrabold tracking-tighter text-black cursor-pointer text-center uppercase"
-                        onClick={() => handleCategoryChange("All")}
-                      >
-                        DOMAIN NAME
-                      </h1>
-                      <p className="mt-2 text-[10px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center font-bold font-mono">
-                        Truth, Clarity, and Perspective <span className="mx-1.5 text-zinc-350">•</span> Independent Journalism
-                      </p>
-                    </div>
-                  )
+                  return renderDomainHeaderSection(section)
                 
                 case 'category-nav':
-                  return (
-                    <div key="category-nav" className="w-full border-b border-zinc-400 py-2 bg-white sticky top-0 z-30 shadow-sm select-none animate-[admin-fade-in_0.3s_ease]">
-                      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
-                        <nav className="flex items-center flex-nowrap md:flex-wrap justify-start md:justify-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto -mx-4 px-4 md:mx-0 md:px-0">
-                          {categoriesList.map((cat) => (
-                            <button
-                              key={cat}
-                              onClick={() => handleCategoryChange(cat)}
-                              className={`py-2 px-3.5 text-xs md:text-sm font-bold transition-all hover:bg-zinc-50 cursor-pointer whitespace-nowrap ${
-                                activeCategory === cat && !showBookmarksOnly
-                                  ? "text-black border-b-2 border-black font-semibold"
-                                  : "text-zinc-650 hover:text-black"
-                              }`}
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </nav>
-                        <div className="flex items-center justify-end gap-4 w-full md:w-auto">
-                          <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full max-w-[200px] md:w-44 lg:w-56">
-                            <input
-                              type="text"
-                              placeholder="Search articles..."
-                              value={localSearch}
-                              onChange={(e) => setLocalSearch(e.target.value)}
-                              className="w-full bg-zinc-50 border border-zinc-200 rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 focus:bg-white focus:border-zinc-500 transition-all"
-                            />
-                            <button type="submit" className="absolute right-2 text-zinc-400 hover:text-zinc-700 cursor-pointer">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                              </svg>
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  )
+                  return renderCategoryNavSection(section)
                 
                 case 'first-hero':
                   return renderFirstHeroSection(section)

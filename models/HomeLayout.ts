@@ -8,7 +8,8 @@ const LayoutSectionSchema = new Schema({
   order: { type: Number, required: true },
   limit: { type: Number, default: 5 },
   designStyle: { type: String, default: 'grid' },
-  colorTheme: { type: String, default: 'indigo' }
+  colorTheme: { type: String, default: 'indigo' },
+  settings: { type: Schema.Types.Mixed, default: {} }
 }, { _id: false });
 
 const HomeLayoutSchema = new Schema({
