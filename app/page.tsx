@@ -278,6 +278,184 @@ export default function Home() {
   }));
 
   // Dynamic layout rendering components
+  const renderBreakingNewsSection = (section: any) => {
+    const breakingList = articles.filter(a => a.isBreaking);
+    const marqueeText = breakingList.length > 0
+      ? breakingList.map(a => `🚨 ${a.title}`).join('  •  ')
+      : `🚨 ${section.title}: Federal Reserve Rates Hold • New Infrastructure Funding Active • Tech Shares Surge`;
+
+    if (section.designStyle === 'ticker-banner') {
+      return (
+        <div key={section.id} className="bg-red-600 text-white p-2.5 px-4 flex items-center gap-3 text-xs font-bold font-sans">
+          <span className="bg-white text-red-600 font-extrabold px-1.5 py-0.5 rounded text-[10px] uppercase select-none tracking-wider">FLASH</span>
+          {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
+        </div>
+      );
+    }
+    if (section.designStyle === 'ticker-ribbon') {
+      return (
+        <div key={section.id} className="bg-zinc-950 text-zinc-100 p-2.5 px-4 flex items-center gap-3 text-xs font-bold font-sans border-l-4 border-red-600">
+          <span className="text-red-500 font-extrabold text-[10px] uppercase select-none">ALERT</span>
+          {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
+        </div>
+      );
+    }
+    // ticker-minimal
+    return (
+      <div key={section.id} className="border-t border-b border-zinc-200 py-2 text-center text-xs font-bold text-red-650 bg-white font-sans">
+        {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, marqueeText)}
+      </div>
+    );
+  };
+
+  const renderFirstHeroSection = (section: any) => {
+    const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
+    const badgeStyle = `${theme.bg} ${theme.text} ${theme.border} border`;
+
+    if (section.designStyle === 'hero-full') {
+      return (
+        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200">
+          <div
+            onClick={() => setSelectedArticleId(leadArticleWithStats.id)}
+            className="group cursor-pointer bg-white border border-zinc-150 rounded-3xl overflow-hidden shadow-sm hover:shadow transition flex flex-col md:flex-row gap-6 p-6"
+          >
+            <div className="md:w-3/5 aspect-video bg-zinc-100 rounded-2xl overflow-hidden relative">
+              <img
+                src={leadArticleWithStats.image}
+                alt={leadArticleWithStats.title}
+                className="object-cover w-full h-full group-hover:scale-[1.01] transition duration-300"
+              />
+              <div className="absolute top-3 left-3 bg-white/95 text-black text-[10px] font-extrabold px-2.5 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                {leadArticleWithStats.category}
+              </div>
+            </div>
+            <div className="md:w-2/5 flex flex-col justify-between py-2">
+              <div className="space-y-4">
+                <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider font-mono ${badgeStyle}`}>
+                  {section.title}
+                </span>
+                <h2 className="font-editorial-title font-extrabold text-2xl md:text-4xl text-zinc-950 leading-tight group-hover:text-indigo-650 transition">
+                  {leadArticleWithStats.title}
+                </h2>
+                <p className="text-zinc-650 text-sm leading-relaxed">
+                  {leadArticleWithStats.excerpt}
+                </p>
+              </div>
+              <div className="text-xs text-zinc-400 font-mono font-bold uppercase tracking-wider mt-4">
+                By {leadArticleWithStats.author} · {leadArticleWithStats.readTime}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    if (section.designStyle === 'hero-minimal') {
+      return (
+        <section key={section.id} className="max-w-7xl mx-auto py-8 px-4 border-b border-zinc-200">
+          <div className="p-6 bg-zinc-50/50 border border-zinc-200 rounded-3xl text-center max-w-4xl mx-auto">
+            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>
+              {section.title}
+            </span>
+            <h2
+              onClick={() => setSelectedArticleId(leadArticleWithStats.id)}
+              className="font-editorial-title font-extrabold text-2xl md:text-4xl text-zinc-950 mt-4 leading-snug hover:text-indigo-650 transition cursor-pointer"
+            >
+              "{leadArticleWithStats.title}"
+            </h2>
+            <p className="text-zinc-600 text-sm max-w-2xl mx-auto mt-3 leading-relaxed">
+              {leadArticleWithStats.excerpt}
+            </p>
+            <div className="text-[11px] text-zinc-450 font-mono font-bold uppercase mt-4">
+              Written by {leadArticleWithStats.author} · {leadArticleWithStats.readTime}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // Default hero-split
+    return (
+      <LeadStory
+        key="first-hero"
+        leadArticle={leadArticleWithStats}
+        secondaryArticles={breakingArticlesWithStats}
+        subArticles={leadSubArticlesWithStats}
+        onSelectArticle={setSelectedArticleId}
+      />
+    );
+  };
+
+  const renderOpinionSection = (section: any) => {
+    if (section.designStyle === 'quote') {
+      return (
+        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none">
+          <div className="p-8 bg-[#fafaf8] border border-zinc-250/75 rounded-3xl text-center max-w-3xl mx-auto relative overflow-hidden">
+            <span className="text-[60px] text-zinc-300 font-serif leading-none absolute top-2 left-6">“</span>
+            <p className="text-base sm:text-lg italic text-zinc-700 leading-relaxed px-6 relative z-10">
+              "The Grid Lock: Why rural grid upgrades will shape the digital agriculture boom over the next decade. Standard infrastructure yields multi-decade returns."
+            </p>
+            <cite className="text-xs font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4 font-mono">
+              — Arthur Pendelton, D.C.
+            </cite>
+          </div>
+        </div>
+      );
+    }
+
+    if (section.designStyle === 'list') {
+      return (
+        <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 select-none">
+          <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-900 pl-3 mb-6">
+            {section.title}
+          </h3>
+          <div className="flex flex-col gap-4">
+            <div className="p-4 border border-zinc-150 rounded-2xl bg-white flex justify-between items-center shadow-xs">
+              <span className="text-sm font-semibold text-zinc-700">"Monetary Policy Balancing Act for Modern Startups"</span>
+              <span className="text-xs font-bold text-zinc-450 uppercase font-mono">— Emily Davis</span>
+            </div>
+            <div className="p-4 border border-zinc-150 rounded-2xl bg-white flex justify-between items-center shadow-xs">
+              <span className="text-sm font-semibold text-zinc-700">"Software Efficiency is the True Scaling Frontier of AI Models"</span>
+              <span className="text-xs font-bold text-zinc-450 uppercase font-mono">— Michael Chen</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default columns
+    return (
+      <div key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-zinc-50/40 rounded-3xl my-6 select-none">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-[#0f172a] border-l-3 border-[#0f172a] pl-3">
+            {section.title}
+          </h3>
+          <span className="text-[10px] text-zinc-450 font-extrabold uppercase tracking-widest font-mono">Perspectives</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
+            <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
+              "The Grid Lock: Why rural grid upgrades will shape the digital agriculture boom over the next decade. Standard infrastructure yields multi-decade returns."
+            </blockquote>
+            <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Arthur Pendelton, D.C.</cite>
+          </div>
+          <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
+            <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
+              "Market Safety vs Innovation: The balancing act of monetary guidelines in high-tech startups. Higher yields could trigger venture cooling."
+            </blockquote>
+            <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Emily Davis, London</cite>
+          </div>
+          <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
+            <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
+              "Beyond GPU scarcity: Software efficiency and compiler improvements are emerging as the true scaling frontier of AI models in enterprise."
+            </blockquote>
+            <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Michael Chen, Tech Analyst</cite>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderCategorySection = (section: any) => {
     const sourceCats = section.categorySource.split(',').map((s: string) => s.trim());
     const sectionArticles = articlesWithDynamicStats
@@ -286,6 +464,89 @@ export default function Home() {
 
     if (sectionArticles.length === 0) return null;
 
+    const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
+    const badgeStyle = `${theme.bg} ${theme.text} ${theme.border} border`;
+    const hoverColor = theme.hoverText;
+
+    if (section.designStyle === 'magazine') {
+      return (
+        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
+              {section.title}
+            </h3>
+            <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider font-mono">
+              {sourceCats.join(' · ')}
+            </span>
+          </div>
+          <div className="flex flex-col gap-6">
+            {sectionArticles.map((article) => (
+              <div
+                key={article.id}
+                onClick={() => setSelectedArticleId(article.id)}
+                className="group cursor-pointer flex flex-col md:flex-row gap-5 p-4 border border-zinc-150 rounded-2xl hover:shadow shadow-xs transition bg-white"
+              >
+                <div className="w-full md:w-48 aspect-video md:aspect-auto md:h-32 bg-zinc-150 rounded-xl overflow-hidden shrink-0 relative">
+                  <img src={article.image} alt={article.title} className="object-cover w-full h-full" />
+                </div>
+                <div className="flex-grow flex flex-col justify-between py-1">
+                  <div className="space-y-2">
+                    <span className={`text-[8.5px] font-bold px-2 py-0.5 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>
+                      {article.category}
+                    </span>
+                    <h4 className={`font-editorial-title font-bold text-lg text-zinc-900 leading-snug transition ${hoverColor}`}>
+                      {article.title}
+                    </h4>
+                    <p className="text-zinc-550 text-xs leading-relaxed line-clamp-2">
+                      {article.excerpt}
+                    </p>
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider mt-3">
+                    By {article.author} · {article.readTime}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    if (section.designStyle === 'list') {
+      return (
+        <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 animate-[admin-fade-in_0.3s_ease]">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
+              {section.title}
+            </h3>
+            <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider font-mono">
+              {sourceCats.join(' · ')}
+            </span>
+          </div>
+          <div className="flex flex-col border border-zinc-200 rounded-2xl overflow-hidden divide-y divide-zinc-200 bg-white">
+            {sectionArticles.map((article) => (
+              <div
+                key={article.id}
+                onClick={() => setSelectedArticleId(article.id)}
+                className={`p-4 px-6 hover:bg-zinc-50/50 cursor-pointer flex justify-between items-center gap-4 transition group`}
+              >
+                <div className="space-y-1">
+                  <span className={`text-[8px] font-extrabold px-1.5 py-0.25 rounded uppercase tracking-widest font-mono mr-2.5 ${badgeStyle}`}>
+                    {article.category}
+                  </span>
+                  <span className={`text-sm font-semibold text-zinc-800 transition ${hoverColor}`}>
+                    {article.title}
+                  </span>
+                </div>
+                <div className="text-[10px] text-zinc-400 font-mono whitespace-nowrap">{article.readTime}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // Default grid
     return (
       <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
         <div className="flex justify-between items-center mb-6">
@@ -310,11 +571,11 @@ export default function Home() {
                     alt={article.title}
                     className="object-cover w-full h-full group-hover:scale-[1.03] transition duration-300"
                   />
-                  <div className="absolute top-2 left-2 bg-white/90 text-black text-[9.5px] font-extrabold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                  <div className={`absolute top-2 left-2 text-[9.5px] font-extrabold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider ${badgeStyle}`}>
                     {article.category}
                   </div>
                 </div>
-                <h4 className="font-editorial-title font-bold text-[15px] text-zinc-900 leading-snug group-hover:text-indigo-650 transition">
+                <h4 className={`font-editorial-title font-bold text-[15px] text-zinc-900 leading-snug transition ${hoverColor}`}>
                   {article.title}
                 </h4>
                 <p className="text-zinc-550 text-[11.5px] leading-relaxed line-clamp-2">
@@ -336,6 +597,9 @@ export default function Home() {
     const trendingArticles = articlesWithDynamicStats.slice(0, section.limit);
     if (trendingArticles.length === 0) return null;
 
+    const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
+    const hoverColor = theme.hoverText;
+
     return (
       <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
         <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 mb-6 border-l-3 border-zinc-950 pl-3">
@@ -352,7 +616,7 @@ export default function Home() {
                 {String(idx + 1).padStart(2, '0')}
               </span>
               <div className="space-y-1">
-                <h4 className="font-editorial-title text-[14px] font-bold text-zinc-800 leading-snug group-hover:text-indigo-650 transition">
+                <h4 className={`font-editorial-title text-[14px] font-bold text-zinc-800 leading-snug transition ${hoverColor}`}>
                   {article.title}
                 </h4>
                 <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider font-bold">
@@ -374,13 +638,18 @@ export default function Home() {
 
     if (spotlightArticles.length === 0) return null;
 
+    const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
+    const hoverColor = theme.hoverText;
+    const accentBg = theme.bg;
+    const accentText = theme.text;
+
     return (
       <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-[#fbfbfa]/60 rounded-3xl my-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-zinc-900 border-l-3 border-zinc-950 pl-3">
             {section.title}
           </h3>
-          <span className="text-[10px] bg-[#6366f1]/10 text-[#6366f1] font-extrabold px-2.5 py-0.5 rounded-full select-none tracking-widest uppercase font-mono">
+          <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full select-none tracking-widest uppercase font-mono ${accentBg} ${accentText}`}>
             Spotlight Feed
           </span>
         </div>
@@ -392,10 +661,10 @@ export default function Home() {
               className="group cursor-pointer bg-white border border-zinc-200/70 p-5 rounded-2xl hover:shadow shadow-xs transition flex flex-col justify-between"
             >
               <div className="space-y-2">
-                <span className="text-[9.5px] text-indigo-650 font-extrabold uppercase tracking-widest font-mono">
+                <span className={`text-[9.5px] font-extrabold uppercase tracking-widest font-mono ${accentText}`}>
                   {article.category}
                 </span>
-                <h4 className="font-editorial-title font-bold text-[14px] text-zinc-900 leading-snug group-hover:text-indigo-650 transition">
+                <h4 className={`font-editorial-title font-bold text-[14px] text-zinc-900 leading-snug transition ${hoverColor}`}>
                   {article.title}
                 </h4>
                 <p className="text-[11.5px] text-zinc-550 leading-relaxed line-clamp-3">
@@ -416,6 +685,9 @@ export default function Home() {
   const renderLatestNewsSection = (section: any) => {
     const latestArticles = articlesWithDynamicStats.slice(0, section.limit);
     if (latestArticles.length === 0) return null;
+
+    const theme = COLOR_THEMES[section.colorTheme] || COLOR_THEMES.indigo;
+    const hoverColor = theme.hoverText;
 
     return (
       <section key={section.id} className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200">
@@ -443,7 +715,7 @@ export default function Home() {
               </div>
               <div className="flex-1 flex flex-col justify-between">
                 <div className="space-y-1">
-                  <h4 className="font-editorial-title font-bold text-[14px] text-zinc-900 leading-snug group-hover:text-indigo-650 transition">
+                  <h4 className={`font-editorial-title font-bold text-[14px] text-zinc-900 leading-snug transition ${hoverColor}`}>
                     {article.title}
                   </h4>
                   <p className="text-zinc-550 text-[11.5px] leading-relaxed line-clamp-1 m-0">
@@ -469,6 +741,15 @@ export default function Home() {
 
   const isFrontPage = activeCategory === "All" && searchQuery === "" && !showBookmarksOnly;
   const hasCustomLayout = isFrontPage && layoutSections.length > 0;
+
+  // Render COLOR_THEMES lookup maps
+  const COLOR_THEMES: Record<string, any> = {
+    indigo: { text: 'text-indigo-650', bg: 'bg-indigo-50', border: 'border-indigo-200', btn: 'bg-[#6366f1]', hoverText: 'hover:text-indigo-650' },
+    zinc: { text: 'text-zinc-800', bg: 'bg-zinc-150', border: 'border-zinc-300', btn: 'bg-zinc-800', hoverText: 'hover:text-zinc-900' },
+    emerald: { text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-250', btn: 'bg-emerald-600', hoverText: 'hover:text-emerald-700' },
+    amber: { text: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-250', btn: 'bg-amber-600', hoverText: 'hover:text-amber-700' },
+    crimson: { text: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-250', btn: 'bg-rose-600', hoverText: 'hover:text-rose-700' }
+  };
 
   if (loading) {
     return (
@@ -512,11 +793,11 @@ export default function Home() {
             .map(section => {
               switch (section.id) {
                 case 'breaking-news':
-                  return <StockTicker key="breaking-news" />
+                  return renderBreakingNewsSection(section)
                 
                 case 'date-section':
                   return (
-                    <div key="date-section" className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs text-zinc-600 flex justify-between select-none tracking-wide font-mono uppercase bg-zinc-50/50">
+                    <div key="date-section" className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs text-zinc-650 flex justify-between select-none tracking-wide font-mono uppercase bg-zinc-50/50">
                       <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
                       <span>Washington, D.C.</span>
                     </div>
@@ -524,7 +805,7 @@ export default function Home() {
                 
                 case 'domain-header':
                   return (
-                    <div key="domain-header" className="w-full flex flex-col items-center justify-center pt-4 pb-6 md:pt-6 md:pb-10 border-b border-zinc-200 px-4 select-none">
+                    <div key="domain-header" className="w-full flex flex-col items-center justify-center pt-4 pb-6 md:pt-6 md:pb-10 border-b border-zinc-200 px-4 select-none animate-[admin-fade-in_0.3s_ease]">
                       <h1
                         className="font-editorial-title text-3xl sm:text-6xl md:text-8xl font-extrabold tracking-tighter text-black cursor-pointer text-center uppercase"
                         onClick={() => handleCategoryChange("All")}
@@ -539,7 +820,7 @@ export default function Home() {
                 
                 case 'category-nav':
                   return (
-                    <div key="category-nav" className="w-full border-b border-zinc-400 py-2 bg-white sticky top-0 z-30 shadow-sm select-none">
+                    <div key="category-nav" className="w-full border-b border-zinc-400 py-2 bg-white sticky top-0 z-30 shadow-sm select-none animate-[admin-fade-in_0.3s_ease]">
                       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
                         <nav className="flex items-center flex-nowrap md:flex-wrap justify-start md:justify-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto -mx-4 px-4 md:mx-0 md:px-0">
                           {categoriesList.map((cat) => (
@@ -577,47 +858,10 @@ export default function Home() {
                   )
                 
                 case 'first-hero':
-                  return (
-                    <LeadStory
-                      key="first-hero"
-                      leadArticle={leadArticleWithStats}
-                      secondaryArticles={breakingArticlesWithStats}
-                      subArticles={leadSubArticlesWithStats}
-                      onSelectArticle={setSelectedArticleId}
-                    />
-                  )
+                  return renderFirstHeroSection(section)
                 
                 case 'opinion-column':
-                  return (
-                    <div key="opinion-column" className="max-w-7xl mx-auto py-10 px-4 border-b border-zinc-200 bg-zinc-50/40 rounded-3xl my-6 select-none">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-editorial-title text-2xl font-bold tracking-tight text-[#0f172a] border-l-3 border-[#0f172a] pl-3">
-                          {section.title}
-                        </h3>
-                        <span className="text-[10px] text-zinc-450 font-extrabold uppercase tracking-widest font-mono">Perspectives</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
-                          <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
-                            "The Grid Lock: Why rural grid upgrades will shape the digital agriculture boom over the next decade. Standard infrastructure yields multi-decade returns."
-                          </blockquote>
-                          <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Arthur Pendelton, D.C.</cite>
-                        </div>
-                        <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
-                          <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
-                            "Market Safety vs Innovation: The balancing act of monetary guidelines in high-tech startups. Higher yields could trigger venture cooling."
-                          </blockquote>
-                          <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Emily Davis, London</cite>
-                        </div>
-                        <div className="p-6 border border-zinc-200 rounded-2xl bg-white flex flex-col justify-between h-44 shadow-sm hover:shadow transition">
-                          <blockquote className="text-[13px] italic text-zinc-650 leading-relaxed">
-                            "Beyond GPU scarcity: Software efficiency and compiler improvements are emerging as the true scaling frontier of AI models in enterprise."
-                          </blockquote>
-                          <cite className="text-[11px] font-bold text-zinc-800 not-italic uppercase tracking-widest block mt-4">— Michael Chen, Tech Analyst</cite>
-                        </div>
-                      </div>
-                    </div>
-                  )
+                  return renderOpinionSection(section)
                 
                 case 'trending-columns':
                   return renderTrendingSection(section)

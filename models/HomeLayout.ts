@@ -6,7 +6,9 @@ const LayoutSectionSchema = new Schema({
   isVisible: { type: Boolean, default: true },
   categorySource: { type: String, default: 'All' },
   order: { type: Number, required: true },
-  limit: { type: Number, default: 5 }
+  limit: { type: Number, default: 5 },
+  designStyle: { type: String, default: 'grid' },
+  colorTheme: { type: String, default: 'indigo' }
 }, { _id: false });
 
 const HomeLayoutSchema = new Schema({
