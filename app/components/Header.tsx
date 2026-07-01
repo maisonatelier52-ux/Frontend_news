@@ -125,37 +125,56 @@ export default function Header({
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
-          <h1 
-            className="font-editorial-title text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tight cursor-pointer m-0 leading-tight"
-            style={{ fontSize: logoSize, color: logoColor }}
-            onClick={() => {
-              setActiveCategory("All");
-              setSearchQuery("");
-              setLocalSearch("");
-              setShowBookmarksOnly(false);
-            }}
-          >
-            DOMAIN NAME
-          </h1>
+          <div className="flex flex-col items-center select-none w-full">
+            <h1 
+              className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none relative flex justify-center text-center select-none"
+              style={{ fontSize: logoSize, color: logoColor }}
+              onClick={() => {
+                setActiveCategory("All");
+                setSearchQuery("");
+                setLocalSearch("");
+                setShowBookmarksOnly(false);
+              }}
+            >
+              <span>D</span>
+              <span className="relative inline-flex justify-center select-none">
+                <span>OMAIN NAM</span>
+                <span 
+                  className="absolute top-full left-0 right-0 flex justify-between select-none pointer-events-none whitespace-nowrap"
+                  style={{ transform: 'translateY(4px)' }}
+                >
+                  {tagline.toUpperCase().split('').map((char: string, i: number) => (
+                    <span key={i} style={{ fontSize: tagSize, color: tagColor }} className="font-sans font-bold uppercase leading-none tracking-normal">
+                      {char === ' ' ? '\u00A0' : char}
+                    </span>
+                  ))}
+                </span>
+              </span>
+              <span>E</span>
+            </h1>
+            <div style={{ height: `calc(${tagSize} + 8px)` }} />
+          </div>
         ) : (
-          <img 
-            src={logoImg} 
-            alt="Logo" 
-            className="object-contain cursor-pointer max-h-16"
-            onClick={() => {
-              setActiveCategory("All");
-              setSearchQuery("");
-              setLocalSearch("");
-              setShowBookmarksOnly(false);
-            }}
-          />
+          <div className="flex flex-col items-center">
+            <img 
+              src={logoImg} 
+              alt="Logo" 
+              className="object-contain cursor-pointer max-h-16"
+              onClick={() => {
+                setActiveCategory("All");
+                setSearchQuery("");
+                setLocalSearch("");
+                setShowBookmarksOnly(false);
+              }}
+            />
+            <p 
+              className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center m-0 font-sans"
+              style={{ fontSize: tagSize, color: tagColor }}
+            >
+              {tagline}
+            </p>
+          </div>
         )}
-        <p 
-          className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center m-0 font-sans"
-          style={{ fontSize: tagSize, color: tagColor }}
-        >
-          {tagline}
-        </p>
       </div>
     );
   };

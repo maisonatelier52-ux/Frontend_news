@@ -59,6 +59,57 @@ function getDesignOptions(sectionId: string) {
   ]
 }
 
+// SimulatorViewport — renders children at NATURAL_WIDTH px, scaled down to fill container width.
+// Uses ResizeObserver on both the outer (width) and inner (height) to compute correct dimensions.
+function SimulatorViewport({ children }: { children: React.ReactNode }) {
+  const outerRef = React.useRef<HTMLDivElement>(null)
+  const innerRef = React.useRef<HTMLDivElement>(null)
+  const [scale, setScale] = React.useState(1)
+  const [innerH, setInnerH] = React.useState(0)
+  const NATURAL_WIDTH = 960
+
+  React.useEffect(() => {
+    function measure() {
+      if (!outerRef.current || !innerRef.current) return
+      const availW = outerRef.current.getBoundingClientRect().width
+      const newScale = availW > 0 ? availW / NATURAL_WIDTH : 1
+      // scrollHeight gives the real layout height before transform is applied
+      const h = innerRef.current.scrollHeight
+      setScale(newScale)
+      if (h > 0) setInnerH(h)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (outerRef.current) ro.observe(outerRef.current)
+    if (innerRef.current) ro.observe(innerRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  // The outer container must be exactly the scaled visual height so nothing below shifts up.
+  const outerHeight = innerH > 0 ? Math.round(innerH * scale) : undefined
+
+  return (
+    <div
+      ref={outerRef}
+      className="w-full overflow-hidden"
+      style={{ height: outerHeight }}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          width: `${NATURAL_WIDTH}px`,
+          transformOrigin: 'top left',
+          transform: `scale(${scale})`,
+          // prevent the un-scaled layout height from pushing the outer div taller
+          ...(scale < 1 ? { marginBottom: `-${Math.round(innerH * (1 - scale))}px` } : {}),
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function HomeLayoutConfigPage() {
   const [sections, setSections] = useState<LayoutSection[]>([])
   const [originalSections, setOriginalSections] = useState<LayoutSection[]>([])
@@ -71,6 +122,7 @@ export default function HomeLayoutConfigPage() {
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
   const [previewTab, setPreviewTab] = useState<'draft' | 'live'>('draft')
+  const [editTab, setEditTab] = useState<'draft' | 'live'>('draft')
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -98,10 +150,54 @@ export default function HomeLayoutConfigPage() {
     loadData()
   }, [])
 
+  // Helper to deterministically sort the 4 header items based on presets:
+  // breaking-news, date-section, domain-header, category-nav
+  function sortHeaderSections(headerSecs: LayoutSection[]) {
+    const breaking = headerSecs.find(s => s.id === 'breaking-news') || headerSecs[0]
+    const date = headerSecs.find(s => s.id === 'date-section') || headerSecs[1]
+    const logo = headerSecs.find(s => s.id === 'domain-header') || headerSecs[2]
+    const nav = headerSecs.find(s => s.id === 'category-nav') || headerSecs[3]
+
+    const breakingPreset = breaking?.settings?.verticalPreset || 'above-header'
+    const datePreset = date?.settings?.verticalPreset || 'above-header'
+
+    const buckets: { id: string; section: LayoutSection }[] = []
+
+    // 1. above-header
+    if (breakingPreset === 'above-header') buckets.push({ id: 'breaking-news', section: breaking })
+    if (datePreset === 'above-header') buckets.push({ id: 'date-section', section: date })
+
+    // 2. logo
+    buckets.push({ id: 'domain-header', section: logo })
+
+    // 3. below-header
+    if (breakingPreset === 'below-header') buckets.push({ id: 'breaking-news', section: breaking })
+    if (datePreset === 'below-header') buckets.push({ id: 'date-section', section: date })
+
+    // 4. nav
+    buckets.push({ id: 'category-nav', section: nav })
+
+    // 5. below-nav
+    if (breakingPreset === 'below-nav') buckets.push({ id: 'breaking-news', section: breaking })
+    if (datePreset === 'below-nav') buckets.push({ id: 'date-section', section: date })
+
+    // Deduplicate and re-map
+    const seen = new Set<string>()
+    const sorted: LayoutSection[] = []
+    buckets.forEach(b => {
+      if (b.section && !seen.has(b.id)) {
+        seen.add(b.id)
+        sorted.push(b.section)
+      }
+    })
+    return sorted
+  }
+
   // Enter sub-page customization edit mode
   function enterEditMode(section: LayoutSection) {
     setActiveEditId(section.id)
     setDraftSection(JSON.parse(JSON.stringify(section)))
+    setEditTab('draft')
   }
 
   // Save current section draft edits and exit back to main board
@@ -109,66 +205,15 @@ export default function HomeLayoutConfigPage() {
     if (draftSection) {
       let nextSections = sections.map(s => s.id === draftSection.id ? draftSection : s)
 
-      // If this is date-section and vertical placement preset changed, let's adjust array position!
-      if (draftSection.id === 'date-section') {
-        const preset = draftSection.settings?.verticalPreset || 'above-header'
-        const filtered = nextSections.filter(s => s.id !== 'date-section')
-        const headerIdx = filtered.findIndex(s => s.id === 'domain-header')
-        const navIdx = filtered.findIndex(s => s.id === 'category-nav')
+      // If the edited section is one of the header sections, sort them deterministically
+      const headerIds = ['breaking-news', 'date-section', 'domain-header', 'category-nav']
+      if (headerIds.includes(draftSection.id)) {
+        const headerSecs = nextSections.filter(s => headerIds.includes(s.id))
+        const nonHeaderSecs = nextSections.filter(s => !headerIds.includes(s.id))
 
-        if (preset === 'above-header') {
-          if (headerIdx !== -1) {
-            filtered.splice(headerIdx, 0, draftSection)
-          } else {
-            filtered.unshift(draftSection)
-          }
-        } else if (preset === 'below-header') {
-          if (headerIdx !== -1) {
-            filtered.splice(headerIdx + 1, 0, draftSection)
-          } else {
-            filtered.push(draftSection)
-          }
-        } else if (preset === 'below-nav') {
-          if (navIdx !== -1) {
-            const newNavIdx = filtered.findIndex(s => s.id === 'category-nav')
-            filtered.splice(newNavIdx + 1, 0, draftSection)
-          } else {
-            filtered.push(draftSection)
-          }
-        }
-
-        nextSections = filtered.map((s, idx) => ({ ...s, order: idx }))
-      }
-
-      // If this is breaking-news and vertical preset changed, let's adjust array position!
-      if (draftSection.id === 'breaking-news') {
-        const preset = draftSection.settings?.verticalPreset || 'above-header'
-        const filtered = nextSections.filter(s => s.id !== 'breaking-news')
-        const headerIdx = filtered.findIndex(s => s.id === 'domain-header')
-        const navIdx = filtered.findIndex(s => s.id === 'category-nav')
-
-        if (preset === 'above-header') {
-          if (headerIdx !== -1) {
-            filtered.splice(headerIdx, 0, draftSection)
-          } else {
-            filtered.unshift(draftSection)
-          }
-        } else if (preset === 'below-header') {
-          if (headerIdx !== -1) {
-            filtered.splice(headerIdx + 1, 0, draftSection)
-          } else {
-            filtered.push(draftSection)
-          }
-        } else if (preset === 'below-nav') {
-          if (navIdx !== -1) {
-            const newNavIdx = filtered.findIndex(s => s.id === 'category-nav')
-            filtered.splice(newNavIdx + 1, 0, draftSection)
-          } else {
-            filtered.push(draftSection)
-          }
-        }
-
-        nextSections = filtered.map((s, idx) => ({ ...s, order: idx }))
+        const sortedHeaders = sortHeaderSections(headerSecs)
+        const combined = [...sortedHeaders, ...nonHeaderSecs]
+        nextSections = combined.map((s, idx) => ({ ...s, order: idx }))
       }
 
       setSections(nextSections)
@@ -725,26 +770,45 @@ export default function HomeLayoutConfigPage() {
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
-          <h1 
-            className="font-editorial-title text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-black cursor-pointer text-center m-0 leading-tight"
-            style={{ fontSize: logoSize, color: logoColor }}
-          >
-            DOMAIN NAME
-          </h1>
+          <div className="flex flex-col items-center select-none w-full">
+            <h1 
+              className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none relative flex justify-center text-center select-none"
+              style={{ fontSize: logoSize, color: logoColor }}
+            >
+              <span>D</span>
+              <span className="relative inline-flex justify-center select-none">
+                <span>OMAIN NAM</span>
+                <span 
+                  className="absolute top-full left-0 right-0 flex justify-between select-none pointer-events-none whitespace-nowrap"
+                  style={{ transform: 'translateY(4px)' }}
+                >
+                  {(tagline || "TRUTH, CLARITY, AND PERSPECTIVE • INDEPENDENT JOURNALISM").toUpperCase().split('').map((char: string, i: number) => (
+                    <span key={i} style={{ fontSize: tagSize, color: tagColor }} className="font-sans font-bold uppercase leading-none tracking-normal">
+                      {char === ' ' ? '\u00A0' : char}
+                    </span>
+                  ))}
+                </span>
+              </span>
+              <span>E</span>
+            </h1>
+            <div style={{ height: `calc(${tagSize} + 8px)` }} />
+          </div>
         ) : (
-          <div 
-            className="border border-dashed border-slate-300 rounded flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
-            style={{ width: '200px', height: '42px' }}
-          >
-            🖼️ {logoImg ? 'Loaded Logo' : 'Upload Image Logo'}
+          <div className="flex flex-col items-center select-none">
+            <div 
+              className="border border-dashed border-slate-300 rounded flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
+              style={{ width: '200px', height: '42px' }}
+            >
+              🖼️ {logoImg ? 'Loaded Logo' : 'Upload Image Logo'}
+            </div>
+            <p 
+              className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center"
+              style={{ fontSize: tagSize, color: tagColor }}
+            >
+              {tagline}
+            </p>
           </div>
         )}
-        <p 
-          className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center"
-          style={{ fontSize: tagSize, color: tagColor }}
-        >
-          {tagline}
-        </p>
       </div>
     )
   }
@@ -798,7 +862,7 @@ export default function HomeLayoutConfigPage() {
   }
 
   // Render standard mock components
-  const renderPreviewMock = (section: LayoutSection) => {
+  const renderPreviewMock = (section: LayoutSection, isSubColumn = false) => {
     if (section.id === 'breaking-news') return renderBreakingNewsPreview(section)
     if (section.id === 'domain-header') return renderDomainHeaderPreview(section)
     if (section.id === 'category-nav') return renderCategoryNavPreview(section)
@@ -840,7 +904,7 @@ export default function HomeLayoutConfigPage() {
       }
       case 'first-hero':
         return (
-          <section key={section.id} className="w-full py-6 px-4 sm:px-6 max-w-7xl mx-auto text-left border-t border-zinc-200 transition-all" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+          <section key={section.id} className="w-full py-6 px-4 sm:px-6 max-w-7xl mx-auto text-left border-t border-zinc-200 transition-all font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Side: Lead Story + Sub-articles */}
               <div className="lg:col-span-8 flex flex-col justify-start">
@@ -863,8 +927,12 @@ export default function HomeLayoutConfigPage() {
                         Senate committee members have voted to approve a packaging agreement to boost enterprise growth and infrastructure funding across rural states.
                       </p>
                     </div>
-                    <div className="mt-4 border-t border-zinc-150 pt-2 flex items-center text-[10px] text-zinc-400">
-                      By <span className="font-semibold text-zinc-700 ml-1">Staff Reporter</span>
+                    <div className="mt-4 border-t border-zinc-150 pt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                      <div>
+                        By <span className="font-semibold text-zinc-750">Staff Reporter</span>
+                        <span className="text-zinc-400"> • July 1, 2026</span>
+                      </div>
+                      <span className="font-semibold text-zinc-700">5 mins</span>
                     </div>
                   </div>
                   {/* Lead image placeholder */}
@@ -882,12 +950,24 @@ export default function HomeLayoutConfigPage() {
                     <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
                       Stocks Rally Following Fed Policy Announcement
                     </h3>
+                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>
+                        By <span className="text-zinc-500 font-medium">Market Correspondent</span> • Today
+                      </span>
+                      <span className="font-semibold text-zinc-700">3 mins</span>
+                    </div>
                   </div>
                   <div>
                     <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Technology</div>
                     <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
                       Enterprise Custom AI Models Latency Optimization
                     </h3>
+                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>
+                        By <span className="text-zinc-500 font-medium">Tech Editor</span> • Today
+                      </span>
+                      <span className="font-semibold text-zinc-700">4 mins</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -900,15 +980,23 @@ export default function HomeLayoutConfigPage() {
                 <div className="space-y-3">
                   <div>
                     <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">World</span>
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
                       Global Climate Summit Reaches Agreement
                     </h3>
+                    <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>By World Desk • Yesterday</span>
+                      <span className="font-semibold text-zinc-700">5 mins</span>
+                    </div>
                   </div>
                   <div className="border-t pt-2">
                     <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">Science</span>
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
                       JWST Reveals Atmospheric Findings on Exoplanet
                     </h3>
+                    <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>By Space Desk • June 30, 2026</span>
+                      <span className="font-semibold text-zinc-700">4 mins</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -917,7 +1005,7 @@ export default function HomeLayoutConfigPage() {
         )
       case 'opinion-column':
         return (
-          <div key={section.id} className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm text-left max-w-7xl mx-auto" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+          <div key={section.id} className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm text-left max-w-7xl mx-auto font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
             <div className="border-b border-zinc-800 pb-1 mb-4 text-center">
               <h2 className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Opinion & Columns</h2>
             </div>
@@ -931,7 +1019,7 @@ export default function HomeLayoutConfigPage() {
                     <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Arthur Pendelton</h4>
                   </div>
                 </div>
-                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
                   "Upgrading Rural Power Grids is Critical for AgTech Growth"
                 </h3>
               </div>
@@ -944,7 +1032,7 @@ export default function HomeLayoutConfigPage() {
                     <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Gary Reynolds</h4>
                   </div>
                 </div>
-                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
                   "Why Fed Rate Strategy Remains Cautious But Decisive"
                 </h3>
               </div>
@@ -957,128 +1045,396 @@ export default function HomeLayoutConfigPage() {
                     <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Sophia Martinez</h4>
                   </div>
                 </div>
-                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
                   "Urban Drainage Investments and Commuter Realities"
                 </h3>
               </div>
             </div>
           </div>
         )
-      case 'us-politics':
-      case 'finance-markets':
-      case 'technology-section':
-      case 'world-affairs': {
-        const gridTitle = section.title
+      case 'us-politics': {
+        const usArticlesMock = [
+          {
+            title: "Bipartisan Infrastructure Funding Bill Passes Committee",
+            excerpt: "Senate committee members have voted to approve a packaging agreement to boost enterprise growth and infrastructure funding across rural states.",
+            author: "Political Correspondent",
+            date: "July 1, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "White House Outlines New Legislative Strategy Priorities",
+            excerpt: "Officials detailed upcoming structural changes to support clean energy initiatives and grid resilience programs.",
+            author: "Staff Reporter",
+            date: "June 30, 2026",
+            readTime: "3 mins",
+          },
+          {
+            title: "State Department Reinforces Bilateral Accord Commitments",
+            excerpt: "Diplomatic frameworks are set to be renewed to stabilize trade agreements and secure crucial mineral resources.",
+            author: "Staff Writer",
+            date: "June 29, 2026",
+            readTime: "5 mins",
+          }
+        ]
         return (
-          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
-            <div className="border-b-2 border-zinc-900 pb-1 mb-3">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-950">{gridTitle}</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex gap-4 items-start">
-                <div className="flex-1">
-                  <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
-                    Bipartisan Infrastructure Funding Bill Passes Committee
-                  </h3>
-                  <div className="mt-1 text-[9px] text-zinc-400">By Reporter • Today</div>
-                </div>
-                <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] text-zinc-450">📸 Image</div>
+          <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
+            {!isSubColumn && (
+              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
               </div>
-              <div className="flex gap-4 items-start">
-                <div className="flex-1">
-                  <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
-                    Committee Outlines Legislative Blueprint for Development Boost
-                  </h3>
-                  <div className="mt-1 text-[9px] text-zinc-400">By Reporter • Yesterday</div>
+            )}
+            {isSubColumn && (
+              <div className="border-b border-zinc-950 pb-1 mb-4">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
+              </div>
+            )}
+            <div className="space-y-4">
+              {usArticlesMock.map((article, idx) => (
+                <div key={idx} className="flex gap-4 items-start py-1 border-b border-zinc-100 last:border-0 pb-3 last:pb-0">
+                  <div className="flex-1">
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
+                      {article.title}
+                    </h3>
+                    <p className="mt-1 text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                    </div>
+                  </div>
+                  <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] font-semibold text-zinc-450">
+                    📸 Image
+                  </div>
                 </div>
-                <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] text-zinc-455">📸 Image</div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'finance-markets': {
+        const financeArticlesMock = [
+          {
+            title: "Stocks Rally Following Fed Policy Announcement",
+            excerpt: "Market indexes climb as the Federal Reserve indicates plans to maintain interest rate stability for the upcoming quarters.",
+            author: "Market Correspondent",
+            date: "July 1, 2026",
+            readTime: "3 mins",
+          },
+          {
+            title: "Treasury Yields Ease as Inflation Metrics Cool",
+            excerpt: "Government bonds see increased demand following the release of favorable wholesale consumer pricing indices.",
+            author: "Finance Writer",
+            date: "June 30, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "Global Supply Chains Stabilize Amid Port Labor Agreement",
+            excerpt: "Shipping logistics and container congestion clear after key terminals sign multi-year operating covenants.",
+            author: "Staff Reporter",
+            date: "June 29, 2026",
+            readTime: "5 mins",
+          }
+        ]
+        return (
+          <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
+            {!isSubColumn && (
+              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
+              </div>
+            )}
+            {isSubColumn && (
+              <div className="border-b border-zinc-950 pb-1 mb-4">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
+              </div>
+            )}
+            <div className="space-y-4">
+              {financeArticlesMock.map((article, idx) => (
+                <div key={idx} className="flex gap-4 items-start py-1 border-b border-zinc-100 last:border-0 pb-3 last:pb-0">
+                  <div className="flex-1">
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
+                      {article.title}
+                    </h3>
+                    <p className="mt-1 text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                    </div>
+                  </div>
+                  <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] font-semibold text-zinc-450">
+                    📸 Image
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'technology-section': {
+        const techArticlesMock = [
+          {
+            title: "Enterprise Custom AI Models Latency Optimization",
+            excerpt: "Developers achieve significant speedups by using localized quantized model architectures.",
+            author: "Tech Desk",
+            date: "July 1, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "Next-Gen Solid State Batteries Reach Testing Phase",
+            excerpt: "Automotive partners begin testing high-capacity cells with improved thermal safety.",
+            author: "Science Editor",
+            date: "June 30, 2026",
+            readTime: "6 mins",
+          },
+          {
+            title: "Quantum Encryption Standard Approved by NIST",
+            excerpt: "NIST completes review of post-quantum cryptographic primitives for enterprise adoption.",
+            author: "Security Lead",
+            date: "June 29, 2026",
+            readTime: "5 mins",
+          }
+        ]
+        return (
+          <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
+            {!isSubColumn && (
+              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
+              </div>
+            )}
+            {isSubColumn && (
+              <div className="border-b border-zinc-955 pb-1 mb-4">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {techArticlesMock.map((article, idx) => (
+                <div key={idx} className="space-y-2">
+                  <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                    📸 Tech Image
+                  </div>
+                  <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                    {article.title}
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                  <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-450 font-sans border-t pt-1">
+                    <span>By <span className="text-zinc-505 font-medium">{article.author}</span></span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'world-affairs': {
+        const worldArticlesMock = [
+          {
+            title: "Global Climate Summit Reaches Accord Consensus",
+            excerpt: "Nearly 200 nations sign the final framework to phase down emission targets.",
+            author: "World Desk",
+            date: "July 1, 2026",
+            readTime: "5 mins",
+          },
+          {
+            title: "Maritime Security Alliance Formed in Indian Ocean",
+            excerpt: "Joint taskforce begins patrolling shipping lanes to secure supply routes.",
+            author: "Staff Correspondent",
+            date: "June 30, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "European Trade Delegation Secures Mineral Contracts",
+            excerpt: "Agreement ensures supply chains for critical raw materials over the next decade.",
+            author: "Europe Correspondent",
+            date: "June 29, 2026",
+            readTime: "3 mins",
+          }
+        ]
+        return (
+          <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
+            {!isSubColumn && (
+              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
+              </div>
+            )}
+            {isSubColumn && (
+              <div className="border-b border-zinc-955 pb-1 mb-4">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {worldArticlesMock.map((article, idx) => (
+                <div key={idx} className="space-y-2">
+                  <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                    📸 World Image
+                  </div>
+                  <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                    {article.title}
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+                  <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-450 font-sans border-t pt-1">
+                    <span>By <span className="text-zinc-505 font-medium">{article.author}</span></span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'trending-columns': {
+        const trendingArticlesMock = [
+          { category: "US", title: "Energy Electrification Strategy Reaches Bipartisan Consensus", author: "Arthur Pendelton", date: "July 1, 2026", readTime: "5 mins" },
+          { category: "Finance", title: "Why Fed Rates Strategy Remains Cautious But Decisive", author: "Gary Reynolds", date: "July 1, 2026", readTime: "4 mins" },
+          { category: "US", title: "Urban Drainage Infrastructure Under Commuter Realities", author: "Sophia Martinez", date: "June 30, 2026", readTime: "6 mins" },
+          { category: "Technology", title: "The Latency Benchmark Battle for Quantum Cloud Services", author: "Dev Architect", date: "June 30, 2026", readTime: "3 mins" },
+          { category: "World", title: "Global Shipping Routes Security Framework Under Pressure", author: "Maritime Lead", date: "June 29, 2026", readTime: "5 mins" },
+        ]
+        return (
+          <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
+            {!isSubColumn && (
+              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
+              </div>
+            )}
+            {isSubColumn && (
+              <div className="border-b border-zinc-955 pb-1 mb-3">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
+              </div>
+            )}
+            <div className="space-y-4">
+              {trendingArticlesMock.map((article, idx) => (
+                <div key={idx} className="flex gap-4 items-start pt-3 first:pt-0 border-t first:border-t-0 border-zinc-100">
+                  <div className="font-mono text-xl sm:text-2xl font-black text-zinc-200 leading-none">
+                    0{idx + 1}
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">{article.category}</span>
+                    <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug mt-0.5">
+                      {article.title}
+                    </h3>
+                    <div className="flex items-center justify-between text-[9px] text-zinc-400 font-sans mt-1.5">
+                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'arts-marketing-pr': {
+        const columnsData = [
+          {
+            title: "Arts & Entertainment",
+            articles: [
+              { title: "Opera House Reopens Following Landmark Restoration", readTime: "4 mins" },
+              { title: "Indie Film Festival Showcases Rising Directors", readTime: "5 mins" },
+              { title: "Classic Betty Boop Enters Public Domain", readTime: "3 mins" }
+            ]
+          },
+          {
+            title: "Marketing & Strategy",
+            articles: [
+              { title: "Brand Tactics Adapt to Digital First Audiences", readTime: "4 mins" },
+              { title: "Social Platforms Update Enterprise Analytics Tools", readTime: "3 mins" },
+              { title: "Retailers Test Interactive Visual Placement Tech", readTime: "5 mins" }
+            ]
+          },
+          {
+            title: "Press Releases & News",
+            articles: [
+              { title: "Corporate Rebranding Announcements Surge in Q2", readTime: "3 mins" },
+              { title: "AI Infrastructure Firm Secures Series B Funding", readTime: "5 mins" },
+              { title: "National Trade Council Hosts Global Commerce Summit", readTime: "4 mins" }
+            ]
+          }
+        ]
+        return (
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {columnsData.map((col, idx) => (
+                <div key={idx} className={`space-y-3 ${idx > 0 ? 'sm:border-l sm:border-zinc-200 sm:pl-4' : ''}`}>
+                  <div className="border-b border-zinc-200 pb-1 mb-2">
+                    <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{col.title}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {col.articles.map((art, aIdx) => (
+                      <div key={aIdx} className="flex gap-3 items-center py-0.5 border-b border-zinc-100 last:border-0 pb-2 last:pb-0">
+                        <div className="flex-1">
+                          <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug">
+                            {art.title}
+                          </h3>
+                          <div className="mt-1 text-[8px] text-zinc-400 flex justify-between">
+                            <span>Staff Correspondent</span>
+                            <span className="font-semibold text-zinc-700">{art.readTime}</span>
+                          </div>
+                        </div>
+                        <div className="w-10 h-8 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0 flex items-center justify-center text-[6px] font-bold text-zinc-400">📸</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+      case 'latest-news': {
+        const wireArticles = [
+          { title: "New Infrastructure Packaging Reaches Final Approval Stages", category: "US", time: "Just Now", readTime: "3 mins" },
+          { title: "Global Stocks Advance Following Treasury Yield Easing", category: "Finance", time: "10m ago", readTime: "4 mins" },
+          { title: "Bilateral Trade Framework Guidelines Signed", category: "World", time: "30m ago", readTime: "5 mins" }
+        ]
+        const spotlightArticles = [
+          { title: "National grid upgrades boost rural connectivity metrics", category: "US", author: "Arthur Pendelton", date: "Today", readTime: "5 mins" },
+          { title: "NIST quantum cryptography standard clears review phases", category: "Technology", author: "Dev Architect", date: "Yesterday", readTime: "6 mins" }
+        ]
+        return (
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="border-b border-zinc-900 pb-1 mb-3 text-center">
+              <h2 className="text-xs font-black uppercase tracking-widest text-zinc-955">LATEST NEWS & WIRE FEED</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Timeline Feed */}
+              <div className="lg:col-span-7 space-y-3">
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">LIVE TIMELINE</h3>
+                </div>
+                {wireArticles.map((art, idx) => (
+                  <div key={idx} className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center border-b border-zinc-100 last:border-b-0 pb-2 last:pb-0">
+                    <div className="flex-1">
+                      <div className="text-[8px] text-red-700 font-bold uppercase mb-0.5">{art.category} • {art.time}</div>
+                      <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-955 leading-snug">{art.title}</h4>
+                      <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                        <span>By Staff Reporter</span>
+                        <span className="font-semibold text-zinc-700">{art.readTime}</span>
+                      </div>
+                    </div>
+                    <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0 flex items-center justify-center text-[7px] font-bold text-zinc-400">📸 Image</div>
+                  </div>
+                ))}
+              </div>
+              {/* Featured spotlights */}
+              <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
+                <div className="border-b border-zinc-200 pb-1">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">FEATURED STORIES</h3>
+                </div>
+                {spotlightArticles.map((art, idx) => (
+                  <div key={idx} className="space-y-1.5 border-b border-zinc-100 last:border-b-0 pb-3 last:pb-0">
+                    <div className="w-full aspect-[16/9] bg-zinc-100 border rounded flex items-center justify-center text-[8px] font-bold text-zinc-400">📸 Spotlight Photo</div>
+                    <div className="text-[8px] text-zinc-455 font-bold uppercase tracking-wider">{art.category}</div>
+                    <h4 className="font-editorial-title text-xs font-bold text-zinc-955 leading-snug">{art.title}</h4>
+                    <div className="flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>By <span className="text-zinc-500 font-medium">{art.author}</span> • {art.date}</span>
+                      <span className="font-semibold text-zinc-700">{art.readTime}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )
       }
-      case 'arts-marketing-pr':
-        return (
-          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
-            <div className="grid grid-cols-3 gap-6">
-              <div>
-                <div className="border-b border-zinc-200 pb-1 mb-2">
-                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Arts & Culture</h3>
-                </div>
-                <div className="flex gap-3 items-center">
-                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Opera House Reopens Following Restoration</span>
-                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
-                </div>
-              </div>
-              <div className="border-l border-zinc-200 pl-4">
-                <div className="border-b border-zinc-200 pb-1 mb-2">
-                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Marketing Strategy</h3>
-                </div>
-                <div className="flex gap-3 items-center">
-                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Brand Tactics Adapt to Digital Audiences</span>
-                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
-                </div>
-              </div>
-              <div className="border-l border-zinc-200 pl-4">
-                <div className="border-b border-zinc-200 pb-1 mb-2">
-                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Press Releases</h3>
-                </div>
-                <div className="flex gap-3 items-center">
-                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Announcements of Corporate Rebranding</span>
-                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      case 'trending-columns':
-        return (
-          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
-            <div className="border-b border-zinc-200 pb-1 mb-3">
-              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Trending Columns</h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex gap-3 items-start">
-                <span className="font-mono text-xl font-bold text-zinc-200 leading-none">01</span>
-                <div>
-                  <h4 className="font-editorial-title text-xs font-bold text-zinc-950 leading-tight">Energy Electrification Strategy Reaches Consensus</h4>
-                  <span className="text-[9px] text-zinc-400">By Reporter</span>
-                </div>
-              </div>
-              <div className="flex gap-3 items-start border-t pt-2">
-                <span className="font-mono text-xl font-bold text-zinc-200 leading-none">02</span>
-                <div>
-                  <h4 className="font-editorial-title text-xs font-bold text-zinc-950 leading-tight">Federal Policy Framework Guidelines and Market Realities</h4>
-                  <span className="text-[9px] text-zinc-400">By Reporter</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      case 'latest-news':
-        return (
-          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
-            <div className="border-b border-zinc-900 pb-1 mb-3 text-center">
-              <h2 className="text-xs font-black uppercase tracking-widest text-zinc-950">LATEST NEWS</h2>
-            </div>
-            <div className="space-y-3">
-              <div className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center">
-                <div className="flex-1">
-                  <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-950 leading-snug">New Infrastructure Packaging Reaches Final Approval Stages</h4>
-                  <span className="text-[9px] text-zinc-400">By Reporter • Just Now</span>
-                </div>
-                <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0" />
-              </div>
-              <div className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center border-t pt-2">
-                <div className="flex-1">
-                  <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-950 leading-snug">Global Stocks Advance Following Treasury Yield Easing</h4>
-                  <span className="text-[9px] text-zinc-400">By Reporter • 10m ago</span>
-                </div>
-                <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0" />
-              </div>
-            </div>
-          </div>
-        )
       default:
         return (
           <div key={section.id} className="w-full py-3 text-left border-t border-zinc-250" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
@@ -1139,7 +1495,7 @@ export default function HomeLayoutConfigPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start min-w-0 w-full">
           {/* LEFT COLUMN: OPTIONS CONTROLLER */}
           <div className="bg-white rounded-2xl border p-6 flex flex-col gap-5 shadow-xs">
             <div className="text-[13px] font-extrabold text-[#6366f1] border-b pb-2 tracking-wider uppercase font-sans">
@@ -1854,7 +2210,7 @@ export default function HomeLayoutConfigPage() {
 
   // MAIN DASHBOARD VIEW: Lists the sections and displays stacked dual previews
   return (
-    <div className="max-w-[1250px] animate-[admin-fade-in_0.4s_ease_both] pb-12">
+    <div className="max-w-[1250px] w-full min-w-0 animate-[admin-fade-in_0.4s_ease_both] pb-12">
       {/* Header board */}
       <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center text-white gap-4">
         <div>
@@ -1999,58 +2355,70 @@ export default function HomeLayoutConfigPage() {
           </div>
         </div>
 
-        {/* Sliding Canvas Container */}
-        <div className="relative w-full overflow-hidden border border-slate-200 bg-white rounded-3xl min-h-[500px] shadow-[0_8px_30px_rgba(15,23,42,0.01)]">
-          <div 
-            className="flex transition-transform duration-500 ease-in-out w-[200%]"
-            style={{ transform: previewTab === 'draft' ? 'translateX(0%)' : 'translateX(-50%)' }}
+        {/* Sliding Canvas Container — each slide uses a scaled viewport so content fits without overflow */}
+        <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+          {/* The track is 200% wide; each half is one slide */}
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{
+              width: '200%',
+              transform: previewTab === 'draft' ? 'translateX(0%)' : 'translateX(-50%)',
+            }}
           >
-            {/* Slide 1: Proposed Draft View */}
-            <div className="w-1/2 p-6 flex flex-col gap-4">
-              <div className="border-b pb-3 mb-2 flex justify-between items-center select-none">
-                <span className="text-xs font-extrabold uppercase tracking-widest text-[#6366f1]">
-                  Proposed Draft layout preview (Unsaved)
+            {/* ── Slide 1: Proposed Draft ── */}
+            <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white">
+              {/* Slide label bar */}
+              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#6366f1]">
+                  📝 Proposed Draft Layout Preview (Unsaved)
                 </span>
-                <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
-                  Interactive Draft Simulation
+                <span className="text-[9px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  Interactive Simulation
                 </span>
               </div>
-              <div className="w-full flex flex-col gap-0 bg-white">
-                {sections
-                  .filter(s => s.isVisible)
-                  .map(sec => (
-                    <div key={sec.id} className="relative group">
-                      <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide z-10 select-none">
-                        {sec.title}
+              {/* Scaled viewport — renders at 960px natural width, scaled to fit */}
+              <SimulatorViewport>
+                <div className="w-full flex flex-col gap-0 bg-white">
+                  {sections
+                    .filter(s => s.isVisible)
+                    .map(sec => (
+                      <div key={sec.id} className="relative group">
+                        <div className="absolute -top-2.5 left-3 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10 select-none pointer-events-none">
+                          {sec.title}
+                        </div>
+                        {renderPreviewMock(sec)}
                       </div>
-                      {renderPreviewMock(sec)}
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              </SimulatorViewport>
             </div>
 
-            {/* Slide 2: Current Live View */}
-            <div className="w-1/2 p-6 flex flex-col gap-4">
-              <div className="border-b pb-3 mb-2 flex justify-between items-center select-none">
-                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
-                  Current Live layout view (Active)
+            {/* ── Slide 2: Current Live View ── */}
+            <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white border-l border-slate-100">
+              {/* Slide label bar */}
+              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
+                  🌐 Current Live Layout View (Active)
                 </span>
-                <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded-full">
                   Active DB State
                 </span>
               </div>
-              <div className="w-full flex flex-col gap-0 bg-white">
-                {originalSections
-                  .filter(s => s.isVisible)
-                  .map(sec => (
-                    <div key={sec.id} className="relative group">
-                      <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide z-10 select-none">
-                        {sec.title}
+              {/* Scaled viewport */}
+              <SimulatorViewport>
+                <div className="w-full flex flex-col gap-0 bg-white">
+                  {originalSections
+                    .filter(s => s.isVisible)
+                    .map(sec => (
+                      <div key={sec.id} className="relative group">
+                        <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10 select-none pointer-events-none">
+                          {sec.title}
+                        </div>
+                        {renderPreviewMock(sec)}
                       </div>
-                      {renderPreviewMock(sec)}
-                    </div>
-                  ))}
-              </div>
+                    ))}
+                </div>
+              </SimulatorViewport>
             </div>
           </div>
         </div>

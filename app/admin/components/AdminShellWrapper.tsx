@@ -49,13 +49,13 @@ export default function AdminShellWrapper({ children }: { children: React.ReactN
       <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} user={user} />
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'ml-[72px]' : 'ml-[232px]'}`}>
+      <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${collapsed ? 'ml-[72px]' : 'ml-[232px]'}`}>
         
         {/* Top Header */}
         <AdminTopBar collapsed={collapsed} setCollapsed={setCollapsed} user={user} />
         
         {/* Main Body */}
-        <main className="mt-[58px] p-[28px_30px] flex-1">
+        <main className="mt-[58px] p-[28px_30px] flex-1 min-w-0">
           {children}
         </main>
         
