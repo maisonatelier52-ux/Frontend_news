@@ -291,64 +291,96 @@ export default function Home() {
     const hidePrefix = section.settings?.hidePrefix === true;
     const prefixText = section.settings?.prefixText || 'BREAKING';
     const isBlinking = section.settings?.isBlinking !== false;
-    const containerStyle = section.settings?.containerStyle || 'capsule';
+    const containerStyle = section.settings?.containerStyle || 'original';
     const animation = section.settings?.animation || 'scroll';
     
     const borderStyle = section.settings?.borderStyle || 'none';
     const borderColor = section.settings?.borderColor || '#e2e8f0';
 
     const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none';
-    
+    const blinkClass = isBlinking ? 'animate-pulse' : '';
+    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : '';
+
+    // Original News Site Design Case: flat bar, flush red block on left, no margins/space
+    if (containerStyle === 'original') {
+      return (
+        <div 
+          key={section.id}
+          className="w-full flex items-stretch text-[11px] font-mono overflow-hidden transition-all p-0 rounded-none"
+          style={{ 
+            backgroundColor: bgColor, 
+            color: textColor,
+            border: borderCss
+          }}
+        >
+          {!hidePrefix && prefixText && (
+            <div 
+              className={`bg-red-700 text-white font-bold px-4 py-2.5 uppercase tracking-wider text-[10px] flex items-center justify-center shrink-0 ${blinkClass}`}
+              style={{ backgroundColor: '#b91c1c' }}
+            >
+              {prefixText}
+            </div>
+          )}
+          <div className="flex-grow px-4 py-2 flex items-center overflow-hidden">
+            {animation === 'scroll' ? (
+              <div className="relative w-full overflow-hidden flex items-center">
+                {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)}
+              </div>
+            ) : (
+              <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
     let containerClass = '';
     let containerStyleInline: React.CSSProperties = {};
 
     switch (containerStyle) {
       case 'capsule':
-        containerClass = 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2';
+        containerClass = 'rounded-full px-5 py-2.5 w-full my-2';
         break;
       case 'sharp-bar':
-        containerClass = 'rounded-none px-4 py-2.5';
+        containerClass = 'rounded-none px-4 py-2.5 w-full';
         break;
       case 'soft-box':
-        containerClass = 'rounded-xl px-4 py-2.5 mx-auto max-w-7xl my-2';
+        containerClass = 'rounded-xl px-4 py-2.5 w-full my-2';
         break;
       case 'framed-box':
-        containerClass = 'rounded-xl border-2 px-4 py-2.5 mx-auto max-w-7xl my-2';
+        containerClass = 'rounded-xl border-2 px-4 py-2.5 w-full my-2';
         containerStyleInline.backgroundColor = 'transparent';
         break;
       case 'left-accent':
-        containerClass = 'rounded-none px-4 py-2.5';
+        containerClass = 'rounded-none px-4 py-2.5 w-full';
         containerStyleInline.borderLeft = `8px solid ${borderColor || '#dc2626'}`;
         break;
       case 'dotted-panel':
-        containerClass = 'rounded-lg border-2 border-dotted px-4 py-2.5 mx-auto max-w-7xl my-2';
+        containerClass = 'rounded-lg border-2 border-dotted px-4 py-2.5 w-full my-2';
         break;
       case 'glassmorphism':
-        containerClass = 'backdrop-blur-md border border-white/20 rounded-2xl px-5 py-2.5 shadow-sm mx-auto max-w-7xl my-2';
+        containerClass = 'backdrop-blur-md border border-white/20 rounded-2xl px-5 py-2.5 shadow-sm w-full my-2';
         containerStyleInline.backgroundColor = 'rgba(255, 255, 255, 0.12)';
         break;
       case 'diagonal-gradient':
-        containerClass = 'rounded-none px-4 py-2.5';
+        containerClass = 'rounded-none px-4 py-2.5 w-full';
         containerStyleInline.backgroundImage = `linear-gradient(135deg, ${bgColor} 0%, #db2777 50%, #f97316 100%)`;
         break;
       case 'dual-border-slate':
-        containerClass = 'rounded-none px-4 py-2.5';
+        containerClass = 'rounded-none px-4 py-2.5 w-full';
         containerStyleInline.borderTop = `2px solid ${borderColor || '#64748b'}`;
         containerStyleInline.borderBottom = `2px solid ${borderColor || '#64748b'}`;
         break;
       case 'shadow-glow':
-        containerClass = 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2';
+        containerClass = 'rounded-full px-5 py-2.5 w-full my-2';
         containerStyleInline.boxShadow = `0 0 15px ${(borderColor !== '#e2e8f0' ? borderColor : bgColor)}40`;
         break;
       case 'minimal':
       default:
-        containerClass = 'bg-transparent border-0 px-2 py-1';
+        containerClass = 'bg-transparent border-0 px-2 py-1 w-full';
         containerStyleInline.backgroundColor = 'transparent';
         break;
     }
-
-    const blinkClass = isBlinking ? 'animate-pulse' : '';
-    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : '';
 
     return (
       <div 

@@ -269,7 +269,7 @@ export default function HomeLayoutConfigPage() {
     const hidePrefix = sec.settings?.hidePrefix === true
     const prefixText = sec.settings?.prefixText || 'BREAKING'
     const isBlinking = sec.settings?.isBlinking !== false
-    const containerStyle = sec.settings?.containerStyle || 'capsule'
+    const containerStyle = sec.settings?.containerStyle || 'original'
     const animation = sec.settings?.animation || 'scroll'
     
     const borderStyle = sec.settings?.borderStyle || 'none'
@@ -683,10 +683,11 @@ export default function HomeLayoutConfigPage() {
                 <div className="border-t pt-3">
                   <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Container Shape Style</label>
                   <select
-                    value={draftSection.settings?.containerStyle || 'capsule'}
+                    value={draftSection.settings?.containerStyle || 'original'}
                     onChange={(e) => updateDraftSetting('containerStyle', e.target.value)}
                     className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
                   >
+                    <option value="original">0. Original News Ticker Design (Flush Red Block on Left)</option>
                     <option value="capsule">1. Classic Capsule Pill</option>
                     <option value="sharp-bar">2. Sharp Rectangular Bar</option>
                     <option value="soft-box">3. Soft Rounded Box</option>
