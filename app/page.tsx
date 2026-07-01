@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Article } from "./data/news";
 import Header from "./components/Header";
-import { StockTicker } from "./components/Widgets";
+import { StockTicker, DynamicBreakingNewsTicker } from "./components/Widgets";
 import LeadStory from "./components/LeadStory";
 import NewsGrid from "./components/NewsGrid";
 import ArticleReader from "./components/ArticleReader";
@@ -267,8 +267,8 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
 
-      {/* 1. Live Stocks Ticker */}
-      <StockTicker />
+      {/* 1. Breaking News Ticker — reads saved settings from Admin › Home Layout */}
+      <DynamicBreakingNewsTicker />
 
       {/* 2. Main Editorial Header */}
       <Header

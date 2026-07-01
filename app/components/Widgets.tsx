@@ -35,6 +35,191 @@ export function StockTicker() {
   );
 }
 
+// --- Dynamic Breaking News Ticker ---
+// Reads settings saved in admin → Home Layout → Breaking News Ticker
+// Falls back to the original StockTicker design if no custom settings exist.
+export function DynamicBreakingNewsTicker() {
+  const [settings, setSettings] = useState<Record<string, any> | null>(null)
+  const [breakingArticles, setBreakingArticles] = useState<string[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        // Load layout settings from DB
+        const layoutRes = await fetch('/api/home-layout')
+        if (layoutRes.ok) {
+          const layout = await layoutRes.json()
+          const breakingSec = (layout.sections || []).find((s: any) => s.id === 'breaking-news')
+          if (breakingSec) {
+            setSettings(breakingSec.settings || {})
+          }
+        }
+
+        // Load live breaking news articles from DB
+        const newsRes = await fetch('/api/news?activeOnly=true')
+        if (newsRes.ok) {
+          const articles = await newsRes.json()
+          const titles = articles
+            .filter((a: any) => a.options?.breakingNews)
+            .map((a: any) => a.title as string)
+          setBreakingArticles(titles)
+        }
+      } catch (err) {
+        console.error('Failed to load breaking news settings:', err)
+      } finally {
+        setLoaded(true)
+      }
+    }
+    loadSettings()
+  }, [])
+
+  // While loading, render invisible placeholder so there's no layout shift
+  if (!loaded) {
+    return (
+      <div className="w-full bg-zinc-950 text-white overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none opacity-0 h-[33px]" />
+    )
+  }
+
+  // ── Resolve all settings, falling back to original design defaults ──
+  const bgColor      = settings?.bgColor       || '#09090b'
+  const textColor    = settings?.textColor     || '#ffffff'
+  const prefixText   = settings?.prefixText    || 'BREAKING NEWS'
+  const hidePrefix   = settings?.hidePrefix    === true
+  const isBlinking   = settings?.isBlinking    !== false
+  const cStyle       = settings?.containerStyle || 'original'
+  const animation    = settings?.animation     || 'scroll'
+  const borderStyle  = settings?.borderStyle   || 'none'
+  const borderColor  = settings?.borderColor   || '#e2e8f0'
+  const customText   = settings?.customText    || ''
+
+  // Fall back to static articles if none from DB
+  const fallback = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => a.title)
+  const tickerItems = breakingArticles.length > 0 ? breakingArticles : fallback
+  const alertText   = customText || tickerItems.join('   •   ')
+
+  const borderCss = borderStyle === 'thin'
+    ? `1px solid ${borderColor}`
+    : borderStyle === 'thick'
+    ? `3px solid ${borderColor}`
+    : 'none'
+
+  const blinkClass    = isBlinking ? 'animate-pulse' : ''
+  const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
+
+  // ── ORIGINAL design (default) — exact same as StockTicker ──
+  if (cStyle === 'original') {
+    return (
+      <div
+        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none"
+        style={{ backgroundColor: bgColor, color: textColor, border: borderCss || undefined }}
+      >
+        <div className="flex items-center">
+          {!hidePrefix && (
+            <div
+              className={`text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 ${blinkClass}`}
+              style={{ backgroundColor: '#b91c1c' }}
+            >
+              {prefixText}
+            </div>
+          )}
+          <div className="relative w-full overflow-hidden flex items-center">
+            <div className="animate-ticker flex items-center whitespace-nowrap gap-12">
+              {[...tickerItems, ...tickerItems, ...tickerItems].map((title, idx) => (
+                <span key={idx} className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
+                  <span className="font-semibold" style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}>
+                    {title}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── OTHER container styles ──
+  let containerClass = ''
+  const containerStyleInline: React.CSSProperties = {}
+
+  switch (cStyle) {
+    case 'capsule':
+      containerClass = 'rounded-full px-5 py-2.5 w-full'
+      break
+    case 'sharp-bar':
+      containerClass = 'rounded-none px-4 py-2.5 w-full'
+      break
+    case 'soft-box':
+      containerClass = 'rounded-xl px-4 py-2.5 w-full'
+      break
+    case 'framed-box':
+      containerClass = 'rounded-xl border-2 px-4 py-2.5 w-full'
+      containerStyleInline.backgroundColor = 'transparent'
+      break
+    case 'left-accent':
+      containerClass = 'rounded-none px-4 py-2.5 w-full'
+      containerStyleInline.borderLeft = `8px solid ${borderColor || '#dc2626'}`
+      break
+    case 'dotted-panel':
+      containerClass = 'rounded-lg border-2 border-dotted px-4 py-2.5 w-full'
+      break
+    case 'glassmorphism':
+      containerClass = 'backdrop-blur-md border border-white/20 rounded-2xl px-5 py-2.5 shadow-sm w-full'
+      containerStyleInline.backgroundColor = 'rgba(255,255,255,0.12)'
+      break
+    case 'diagonal-gradient':
+      containerClass = 'rounded-none px-4 py-2.5 w-full'
+      containerStyleInline.backgroundImage = `linear-gradient(135deg, ${bgColor} 0%, #db2777 50%, #f97316 100%)`
+      break
+    case 'dual-border-slate':
+      containerClass = 'rounded-none px-4 py-2.5 w-full'
+      containerStyleInline.borderTop    = `2px solid ${borderColor || '#64748b'}`
+      containerStyleInline.borderBottom = `2px solid ${borderColor || '#64748b'}`
+      break
+    case 'shadow-glow':
+      containerClass = 'rounded-full px-5 py-2.5 w-full'
+      containerStyleInline.boxShadow = `0 0 15px ${borderColor !== '#e2e8f0' ? borderColor : bgColor}40`
+      break
+    case 'minimal':
+    default:
+      containerClass = 'bg-transparent border-0 px-2 py-1 w-full'
+      containerStyleInline.backgroundColor = 'transparent'
+      break
+  }
+
+  return (
+    <div
+      className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
+      style={{ backgroundColor: bgColor, color: textColor, border: borderCss, ...containerStyleInline }}
+    >
+      {!hidePrefix && prefixText && (
+        <span
+          className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
+          style={{ color: cStyle === 'minimal' ? '#dc2626' : bgColor }}
+        >
+          {prefixText}
+        </span>
+      )}
+      {animation === 'scroll' ? (
+        <div className="relative w-full overflow-hidden flex items-center">
+          <div className="animate-ticker flex items-center whitespace-nowrap gap-12">
+            {[...tickerItems, ...tickerItems].map((title, idx) => (
+              <span key={idx} className="flex items-center gap-2 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
+                {title}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
+      )}
+    </div>
+  )
+}
+
 // --- Weather Widget Sub-component ---
 const WEATHER_DATA = {
   "Washington D.C.": { temp: "74°F", status: "Sunny", wind: "8 mph", humidity: "45%", forecast: ["76°F Sunny", "78°F Partly Cloudy", "72°F Light Rain"] },

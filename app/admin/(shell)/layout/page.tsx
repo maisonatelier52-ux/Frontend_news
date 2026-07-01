@@ -259,6 +259,55 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
+  // Render EXACT live StockTicker replica — pixel-perfect match of what appears on the news site
+  // Uses the same classes, colors, structure as Widgets.tsx StockTicker
+  const renderExactLiveTicker = (sec: LayoutSection) => {
+    const savedBg = sec.settings?.bgColor || '#09090b'
+    const savedTextColor = sec.settings?.textColor || '#ffffff'
+    const savedPrefix = sec.settings?.prefixText || 'BREAKING NEWS'
+    const hidePrefix = sec.settings?.hidePrefix === true
+    const isBlinking = sec.settings?.isBlinking !== false
+    const sampleHeadlines = [
+      'Federal Grid Expansion Accord Reaches Funding Settlement',
+      'Stock Indexes Climb Amid Fed Rate Decision',
+      'Supreme Court Issues Landmark Rulings on Digital Privacy',
+      'Tech Giants Report Record Quarterly Earnings',
+      'International Climate Summit Reaches Agreement'
+    ]
+    const tickerText = sec.settings?.customText ||
+      sampleHeadlines.map(h => h).join('   ·   ')
+
+    return (
+      <div
+        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none"
+        style={{ backgroundColor: savedBg, color: savedTextColor }}
+      >
+        <div className="flex items-center">
+          {!hidePrefix && (
+            <div
+              className={`bg-red-700 text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 ${isBlinking ? 'animate-pulse' : ''}`}
+              style={{ backgroundColor: '#b91c1c' }}
+            >
+              {savedPrefix}
+            </div>
+          )}
+          <div className="relative w-full overflow-hidden flex items-center">
+            <div className="flex items-center whitespace-nowrap gap-12" style={{ animation: 'ticker 28s linear infinite' }}>
+              {[...sampleHeadlines, ...sampleHeadlines].map((headline, idx) => (
+                <span key={idx} className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
+                  <span className="font-semibold" style={{ color: savedTextColor === '#ffffff' ? '#f4f4f5' : savedTextColor }}>
+                    {headline}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Render mock of breaking-news section preview
   const renderBreakingNewsPreview = (sec: LayoutSection) => {
     const bgColor = sec.settings?.bgColor || '#09090b'
@@ -279,6 +328,35 @@ export default function HomeLayoutConfigPage() {
     
     let containerClass = ''
     let containerStyleInline: React.CSSProperties = {}
+
+    const blinkClass = isBlinking ? 'animate-pulse' : ''
+    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
+
+    // Original flush design — exactly matches the live news site ticker
+    if (containerStyle === 'original') {
+      return (
+        <div
+          className="w-full flex items-stretch text-[11px] font-mono overflow-hidden rounded-none"
+          style={{ backgroundColor: bgColor, color: textColor, border: borderCss }}
+        >
+          {!hidePrefix && prefixText && (
+            <div
+              className={`text-white font-bold px-4 py-2 uppercase tracking-wider text-[10px] flex items-center justify-center shrink-0 ${blinkClass}`}
+              style={{ backgroundColor: '#b91c1c' }}
+            >
+              {prefixText}
+            </div>
+          )}
+          <div className="flex-grow px-4 py-2 flex items-center overflow-hidden">
+            {animation === 'scroll' ? (
+              React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)
+            ) : (
+              <div className={`flex-1 font-medium truncate ${textAnimClass}`}>{alertText}</div>
+            )}
+          </div>
+        </div>
+      )
+    }
 
     switch (containerStyle) {
       case 'capsule':
@@ -325,21 +403,18 @@ export default function HomeLayoutConfigPage() {
         break
     }
 
-    const blinkClass = isBlinking ? 'animate-pulse' : ''
-    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
-
     return (
-      <div 
+      <div
         className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
-        style={{ 
-          backgroundColor: bgColor, 
+        style={{
+          backgroundColor: bgColor,
           color: textColor,
           border: borderCss,
           ...containerStyleInline
         }}
       >
         {!hidePrefix && prefixText && (
-          <span 
+          <span
             className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
             style={{ color: containerStyle === 'minimal' ? '#dc2626' : bgColor }}
           >
@@ -1181,29 +1256,92 @@ export default function HomeLayoutConfigPage() {
             )}
           </div>
 
-          {/* RIGHT COLUMN: FOCOCUSED SECTION PREVIEW */}
-          <div className="flex flex-col gap-3">
-            <div className="bg-[#eff6ff] p-3 px-4 border rounded-xl border-blue-200 select-none">
-              <span className="text-[12.5px] font-extrabold text-blue-800 tracking-wide uppercase font-sans">
-                👁️ Live Section Preview Mockup
+          {/* RIGHT COLUMN: DUAL PREVIEW PANELS — full width for breaking news for accurate representation */}
+          <div className="flex flex-col gap-6">
+
+            {/* PANEL 1 — EXACT replica of current live news site design (read-only) */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_rgba(34,197,94,0.5)]"></span>
+                <span className="text-[12px] font-extrabold text-emerald-700 uppercase tracking-widest font-sans">
+                  Current Live Design
+                </span>
+                <span className="ml-auto text-[10px] text-slate-400 font-mono uppercase tracking-wide bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                  Live on news site right now
+                </span>
+              </div>
+              <div className="rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-[0_0_0_4px_rgba(134,239,172,0.15)] relative">
+                {/* Decorative label */}
+                <div className="absolute top-0 right-0 z-10 bg-emerald-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider select-none">
+                  LIVE
+                </div>
+                <div className="pointer-events-none select-none">
+                  {isBreaking
+                    ? renderExactLiveTicker(originalSections.find(s => s.id === draftSection.id) || draftSection)
+                    : (() => {
+                        const origSec = originalSections.find(s => s.id === draftSection.id) || draftSection
+                        const cs = origSec.settings?.containerStyle || 'original'
+                        const isFlush = cs === 'original' || cs === 'sharp-bar' || cs === 'left-accent' || cs === 'dual-border-slate' || cs === 'diagonal-gradient' || draftSection.id === 'domain-header' || draftSection.id === 'category-nav' || draftSection.id === 'date-section'
+                        return (
+                          <div className={isFlush ? 'p-0' : 'p-5 bg-slate-50'}>
+                            {renderPreviewMock(origSec)}
+                          </div>
+                        )
+                      })()
+                  }
+                </div>
+              </div>
+              <p className="text-[10px] text-emerald-600 font-semibold px-1">
+                ↑ This is exactly how the Breaking News Ticker appears on your live news site right now.
+              </p>
+            </div>
+
+            {/* DIVIDER */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 border-t border-slate-200" />
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                Edit Preview
               </span>
+              <div className="flex-1 border-t border-slate-200" />
             </div>
-            <div 
-              className={`bg-slate-100/50 border border-slate-200 rounded-3xl min-h-[220px] flex flex-col justify-center gap-3 transition-all ${
-                draftSection.settings?.containerStyle === 'original' ||
-                draftSection.settings?.containerStyle === 'sharp-bar' ||
-                draftSection.settings?.containerStyle === 'left-accent' ||
-                draftSection.settings?.containerStyle === 'dual-border-slate' ||
-                draftSection.settings?.containerStyle === 'diagonal-gradient' ||
-                draftSection.id === 'domain-header' ||
-                draftSection.id === 'category-nav' ||
-                draftSection.id === 'date-section'
-                  ? 'p-0 overflow-hidden'
-                  : 'p-6'
-              }`}
-            >
-              {renderPreviewMock(draftSection)}
+
+            {/* PANEL 2 — Live-updating draft preview (updates as you change settings) */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block animate-pulse"></span>
+                <span className="text-[12px] font-extrabold text-indigo-700 uppercase tracking-widest font-sans">
+                  Preview with Your Changes
+                </span>
+                <span className="ml-auto text-[10px] text-slate-400 font-mono uppercase tracking-wide bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                  Updates as you edit
+                </span>
+              </div>
+              <div
+                className={`rounded-2xl overflow-hidden border-2 border-indigo-300 shadow-[0_0_0_4px_rgba(165,180,252,0.15)] relative ${
+                  isBreaking || draftSection.settings?.containerStyle === 'original' ||
+                  draftSection.settings?.containerStyle === 'sharp-bar' ||
+                  draftSection.settings?.containerStyle === 'left-accent' ||
+                  draftSection.settings?.containerStyle === 'dual-border-slate' ||
+                  draftSection.settings?.containerStyle === 'diagonal-gradient' ||
+                  draftSection.id === 'domain-header' ||
+                  draftSection.id === 'category-nav' ||
+                  draftSection.id === 'date-section'
+                    ? 'p-0'
+                    : 'p-5 bg-slate-50'
+                }`}
+              >
+                {/* Decorative label */}
+                <div className="absolute top-0 right-0 z-10 bg-indigo-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider select-none">
+                  PREVIEW
+                </div>
+                {renderPreviewMock(draftSection)}
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium leading-relaxed px-1">
+                ✦ Adjust settings on the left and watch this preview update instantly.
+                Click <strong className="text-[#6366f1]">Apply Section Edits</strong> above to confirm and save to the homepage.
+              </p>
             </div>
+
           </div>
         </div>
       </div>
