@@ -70,6 +70,7 @@ export default function HomeLayoutConfigPage() {
   // Navigation / Customizer sub-page state
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
+  const [showComparisonModal, setShowComparisonModal] = useState(false)
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -708,24 +709,24 @@ export default function HomeLayoutConfigPage() {
   const renderDomainHeaderPreview = (sec: LayoutSection) => {
     const isText = sec.settings?.logoType !== 'image'
     const alignment = sec.settings?.alignment || 'center'
-    const logoSize = sec.settings?.logoSize || '36px'
+    const logoSize = sec.settings?.logoSize || '48px'
     const logoColor = sec.settings?.logoColor || '#000000'
     const logoImg = sec.settings?.logoImage || ''
     const tagline = sec.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism'
-    const tagSize = sec.settings?.taglineSize || '11px'
-    const tagColor = sec.settings?.taglineColor || '#64748b'
+    const tagSize = sec.settings?.taglineSize || '12px'
+    const tagColor = sec.settings?.taglineColor || '#71717a'
     const bgColor = sec.settings?.bgColor || '#ffffff'
 
     const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center'
 
     return (
       <div 
-        className={`p-6 rounded-2xl flex flex-col justify-center border shadow-xs select-none transition-all ${alignClass}`}
+        className={`w-full flex flex-col justify-center pt-2 pb-4 md:pt-4 md:pb-8 border-b border-zinc-200 px-4 select-none transition-all ${alignClass}`}
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
           <h1 
-            className="font-serif font-extrabold tracking-tighter uppercase m-0 leading-tight"
+            className="font-editorial-title font-extrabold tracking-tight text-center text-black"
             style={{ fontSize: logoSize, color: logoColor }}
           >
             DOMAIN NAME
@@ -739,7 +740,7 @@ export default function HomeLayoutConfigPage() {
           </div>
         )}
         <p 
-          className="mt-2 uppercase tracking-widest font-bold font-sans m-0"
+          className="mt-1 uppercase tracking-widest text-center"
           style={{ fontSize: tagSize, color: tagColor }}
         >
           {tagline}
@@ -762,30 +763,40 @@ export default function HomeLayoutConfigPage() {
 
     return (
       <div 
-        className="p-3 rounded-2xl border flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs select-none"
+        className="w-full border-b border-zinc-400 py-1.5 md:py-0 select-none transition-all"
         style={{ backgroundColor: bgColor }}
       >
-        <nav className={`flex items-center gap-4 text-[12px] font-bold text-slate-800 flex-1 ${alignClass}`}>
-          <span className={activeDesign === 'underline' ? 'border-b-2 border-slate-900 pb-0.5' : 'bg-slate-900 text-white px-2 py-0.5 rounded'}>
-            All News
-          </span>
-          <span className="text-slate-500 font-medium hover:text-slate-800">Politics</span>
-          <span className="text-slate-500 font-medium hover:text-slate-800">Technology</span>
-          <span className="text-slate-500 font-medium hover:text-slate-800">Business</span>
-        </nav>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
+          <nav className={`flex items-center flex-nowrap md:flex-wrap gap-0 overflow-x-auto no-scrollbar w-full md:w-auto ${alignClass}`}>
+            <span className={`py-2 px-3 text-xs md:text-sm font-medium transition-all ${
+              activeDesign === 'underline' 
+                ? 'text-black border-b-2 border-black font-semibold' 
+                : 'bg-zinc-900 text-white px-3 py-1 rounded-full'
+            }`}>
+              All News
+            </span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Politics</span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Technology</span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Business</span>
+          </nav>
 
-        {searchPlacement !== 'hidden' && (
-          <div className={`relative flex items-center w-40 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
-            <input
-              type="text"
-              readOnly
-              placeholder={searchPlaceholder}
-              className="w-full bg-slate-50 px-2.5 py-1 text-[11px] rounded outline-none cursor-default font-semibold text-slate-400"
-              style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
-            />
-            <span className="absolute right-2 text-slate-350 text-[10px]">🔍</span>
-          </div>
-        )}
+          {searchPlacement !== 'hidden' && (
+            <div className={`relative flex items-center w-full max-w-[200px] md:w-44 lg:w-56 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+              <input
+                type="text"
+                readOnly
+                placeholder={searchPlaceholder}
+                className="w-full bg-zinc-50 border rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 cursor-default"
+                style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
+              />
+              <span className="absolute right-2 text-zinc-400 cursor-pointer">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -803,22 +814,26 @@ export default function HomeLayoutConfigPage() {
 
     switch (section.id) {
       case 'date-section':
-        const dateBg = section.settings?.bgColor || '#f8fafc'
-        const dateCol = section.settings?.textColor || '#64748b'
-        const dateAlign = section.settings?.alignment || 'spaced'
+        const dateBg = section.settings?.bgColor || '#ffffff'
+        const dateCol = section.settings?.textColor || '#52525b'
+        const dateAlign = section.settings?.alignment || 'left'
         const dateBorder = section.settings?.borderStyle || 'none'
-        const dateBorderCol = section.settings?.borderColor || '#e2e8f0'
+        const dateBorderCol = section.settings?.borderColor || '#e4e4e7'
         const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : 'none'
 
         const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
         return (
           <div 
             key={section.id} 
-            className={`p-1.5 px-3 rounded-lg text-[10px] font-bold flex tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
-            style={{ backgroundColor: dateBg, color: dateCol, border: dateBorderCss }}
+            className={`w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex items-center gap-1.5 transition-all ${dateAlignClass}`}
+            style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
           >
-            <span>Wednesday, July 1, 2026</span>
-            <span>Washington, D.C.</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Wednesday, July 1, 2026
+            </span>
           </div>
         )
       case 'first-hero':
@@ -1774,60 +1789,123 @@ export default function HomeLayoutConfigPage() {
         </div>
       </div>
 
-      {/* DUAL COMPILATION PREVIEWS */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
-        {/* LEFT: CURRENT LAYOUT PREVIEW */}
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
-            <span className="text-[12.5px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
-              ⏮️ BEFORE: Live Website View
-            </span>
-            <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
-              Active DB State
-            </span>
-          </div>
-
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
-            {originalSections
-              .filter(s => s.isVisible)
-              .map(sec => (
-                <div key={sec.id} className="relative group">
-                  <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
-                    {sec.title}
-                  </div>
-                  {renderPreviewMock(sec)}
-                </div>
-              ))}
-          </div>
+      {/* DUAL COMPILATION PREVIEWS COMPACT BLOCK */}
+      <div className="bg-[#eff6ff] border border-blue-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center gap-4 shadow-sm mb-8 animate-[admin-fade-in_0.4s_ease]">
+        <div className="max-w-md">
+          <h3 className="text-[16px] font-bold text-blue-900 flex items-center justify-center gap-2">
+            <span>👁️</span> Live Side-by-Side Layout Comparison
+          </h3>
+          <p className="text-[12.5px] text-blue-700 mt-1">
+            Compare the current live news site design side-by-side with your draft customization changes before saving them.
+          </p>
         </div>
-
-        {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
-            <span className="text-[12.5px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
-              ⏭️ AFTER: Proposed Draft View (Unsaved)
-            </span>
-            <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
-              Interactive Draft Simulation
-            </span>
-          </div>
-
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
-            {sections
-              .filter(s => s.isVisible)
-              .map(sec => (
-                <div key={sec.id} className="relative group">
-                  <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
-                    {sec.title}
-                  </div>
-                  {renderPreviewMock(sec)}
-                </div>
-              ))}
-          </div>
-        </div>
-
+        <button
+          onClick={() => setShowComparisonModal(true)}
+          className="p-3 px-7 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[13px] font-bold transition cursor-pointer shadow-md flex items-center gap-2 border-0"
+        >
+          <span>🖥️ Open Live Preview Comparison</span>
+        </button>
       </div>
+
+      {/* FULLSCREEN PREVIEW COMPARISON MODAL */}
+      {showComparisonModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 md:p-8 animate-[admin-fade-in_0.2s_ease_both]">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 animate-[admin-slide-up_0.3s_ease_both]">
+            {/* Modal Header */}
+            <div className="p-4 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div>
+                <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+                  <span>🖥️</span> Live Website Layout Comparison
+                </h2>
+                <p className="text-[11.5px] text-slate-500">Compare your active configurations with unsaved draft changes</p>
+              </div>
+              <button
+                onClick={() => setShowComparisonModal(false)}
+                className="p-2 px-4 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 cursor-pointer transition"
+              >
+                ✕ Close Preview
+              </button>
+            </div>
+
+            {/* Modal Content - scrollable side-by-side comparison */}
+            <div className="p-6 overflow-y-auto flex-grow bg-slate-50">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                
+                {/* LEFT: CURRENT LAYOUT PREVIEW */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
+                    <span className="text-[12px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
+                      ⏮️ BEFORE: Live Website View
+                    </span>
+                    <span className="text-[9.5px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
+                      Active DB State
+                    </span>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 p-0 flex flex-col gap-0 min-h-[500px] shadow-sm overflow-hidden">
+                    {originalSections
+                      .filter(s => s.isVisible)
+                      .map(sec => (
+                        <div key={sec.id} className="relative group">
+                          <div className="absolute top-2.5 left-3 bg-slate-500/80 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none z-10 pointer-events-none">
+                            {sec.title}
+                          </div>
+                          {renderPreviewMock(sec)}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
+                    <span className="text-[12px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
+                      ⏭️ AFTER: Proposed Draft View (Unsaved)
+                    </span>
+                    <span className="text-[9.5px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
+                      Interactive Draft Simulation
+                    </span>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 p-0 flex flex-col gap-0 min-h-[500px] shadow-sm overflow-hidden">
+                    {sections
+                      .filter(s => s.isVisible)
+                      .map(sec => (
+                        <div key={sec.id} className="relative group">
+                          <div className="absolute top-2.5 left-3 bg-indigo-650/80 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none z-10 pointer-events-none">
+                            {sec.title}
+                          </div>
+                          {renderPreviewMock(sec)}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 px-6 border-t border-slate-200 flex justify-end gap-2 bg-slate-50">
+              <button
+                onClick={() => setShowComparisonModal(false)}
+                className="p-2 px-5 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-xl hover:bg-slate-100 cursor-pointer transition"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  saveLayout();
+                  setShowComparisonModal(false);
+                }}
+                disabled={saving}
+                className="p-2 px-6 bg-[#6366f1] text-white text-[12.5px] font-bold rounded-xl hover:bg-[#4f46e5] cursor-pointer shadow-md transition"
+              >
+                {saving ? 'Publishing...' : '💾 Save & Publish Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
