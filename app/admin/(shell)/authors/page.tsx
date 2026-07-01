@@ -222,21 +222,41 @@ export default function AuthorsPage() {
   const saveAuthor = async () => {
     // Basic validation
     const errors: Record<string, string> = {}
-    if (!name.trim()) {
+    const trimmedName = name.trim()
+    const trimmedSlug = slug.trim()
+    const trimmedRole = role.trim()
+    const trimmedBio = bio.trim()
+
+    if (!trimmedName) {
       errors.name = 'Author name is required.'
+    } else if (trimmedName.length < 3 || trimmedName.length > 50) {
+      errors.name = 'Author name must be between 3 and 50 characters.'
+    } else if ((trimmedName.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.name = 'Author name must contain at least 3 letters.'
     }
     
     const duplicateSlug = authors.find(
-      a => a.slug.trim().toLowerCase() === slug.trim().toLowerCase() && a._id !== editingAuthorId
+      a => a.slug.trim().toLowerCase() === trimmedSlug.toLowerCase() && a._id !== editingAuthorId
     )
-    if (!slug.trim()) {
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+    if (!trimmedSlug) {
       errors.slug = 'Slug is required.'
+    } else if (trimmedSlug.length < 3 || trimmedSlug.length > 50) {
+      errors.slug = 'Slug must be between 3 and 50 characters.'
+    } else if (!slugRegex.test(trimmedSlug)) {
+      errors.slug = 'Slug must contain only lowercase letters, numbers, and single hyphens, with no leading/trailing/consecutive hyphens.'
+    } else if ((trimmedSlug.match(/[a-z]/g) || []).length < 3) {
+      errors.slug = 'Slug must contain at least 3 letters.'
     } else if (duplicateSlug) {
       errors.slug = 'This slug is already taken by another author.'
     }
 
-    if (!role.trim()) {
+    if (!trimmedRole) {
       errors.role = 'Role is required.'
+    } else if (trimmedRole.length < 3 || trimmedRole.length > 50) {
+      errors.role = 'Role must be between 3 and 50 characters.'
+    } else if ((trimmedRole.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.role = 'Role must contain at least 3 letters.'
     }
     
     if (!email.trim()) {
@@ -249,8 +269,14 @@ export default function AuthorsPage() {
       errors.category = 'Primary category is required.'
     }
 
-    if (!bio.trim()) {
+    if (!trimmedBio) {
       errors.bio = 'Author bio/biography is required.'
+    } else if (trimmedBio.length < 20 || trimmedBio.length > 300) {
+      errors.bio = 'Author bio must be between 20 and 300 characters.'
+    } else if ((trimmedBio.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.bio = 'Author bio must contain at least 3 letters.'
+    } else if (!/[.!?]$/.test(trimmedBio)) {
+      errors.bio = 'Author bio must end with a punctuation mark (., !, or ?) to be a complete sentence.'
     }
 
     if (Object.keys(errors).length > 0) {

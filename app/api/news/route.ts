@@ -23,6 +23,18 @@ export async function GET(request: Request) {
     }
     if (activeOnly) {
       query.status = 'published';
+      
+      // Filter news belonging to hidden categories
+      const visibleCategories = await CategoryModel.find({ isVisible: { $ne: false } }).select('name');
+      const visibleCategoryNames = visibleCategories.map(c => c.name);
+      
+      if (query.category) {
+        if (!visibleCategoryNames.includes(query.category)) {
+          return NextResponse.json([]);
+        }
+      } else {
+        query.category = { $in: visibleCategoryNames };
+      }
     }
 
     const news = await NewsModel.find(query).sort({ date: -1 });

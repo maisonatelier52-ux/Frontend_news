@@ -81,9 +81,15 @@ export default function CategoriesPage() {
 
     const nameVal = newCat.name.trim()
     const slugVal = newCat.slug.trim()
+    const descVal = newCat.description.trim()
+    const altVal = newCat.bannerImageAlt.trim()
 
     if (!nameVal) {
       errors.name = "Category Name is required."
+    } else if (nameVal.length < 3 || nameVal.length > 30) {
+      errors.name = "Category Name must be between 3 and 30 characters."
+    } else if ((nameVal.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.name = "Category Name must contain at least 3 letters."
     } else {
       const duplicateName = categories.find(
         c => c.name.trim().toLowerCase() === nameVal.toLowerCase() && c._id !== editCatId
@@ -93,8 +99,15 @@ export default function CategoriesPage() {
       }
     }
 
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
     if (!slugVal) {
       errors.slug = "Slug is required."
+    } else if (slugVal.length < 3 || slugVal.length > 30) {
+      errors.slug = "Slug must be between 3 and 30 characters."
+    } else if (!slugRegex.test(slugVal)) {
+      errors.slug = "Slug must contain only lowercase letters, numbers, and single hyphens, with no leading/trailing/consecutive hyphens."
+    } else if ((slugVal.match(/[a-z]/g) || []).length < 3) {
+      errors.slug = "Slug must contain at least 3 letters."
     } else {
       const duplicateSlug = categories.find(
         c => c.slug.trim().toLowerCase() === slugVal.toLowerCase() && c._id !== editCatId
@@ -104,8 +117,14 @@ export default function CategoriesPage() {
       }
     }
 
-    if (!newCat.description.trim()) {
+    if (!descVal) {
       errors.description = "Description is required."
+    } else if (descVal.length < 10 || descVal.length > 200) {
+      errors.description = "Description must be between 10 and 200 characters."
+    } else if ((descVal.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.description = "Description must contain at least 3 letters."
+    } else if (!/[.!?]$/.test(descVal)) {
+      errors.description = "Description must end with a punctuation mark (., !, or ?) to be a complete sentence."
     }
 
     if (existingImageWarning) {
@@ -114,8 +133,12 @@ export default function CategoriesPage() {
       errors.bannerImage = "Category Banner Image is required."
     }
 
-    if (!newCat.bannerImageAlt.trim()) {
+    if (!altVal) {
       errors.bannerImageAlt = "Image Alt Text description is required."
+    } else if (altVal.length < 5 || altVal.length > 100) {
+      errors.bannerImageAlt = "Image Alt Text must be between 5 and 100 characters."
+    } else if ((altVal.match(/[a-zA-Z]/g) || []).length < 3) {
+      errors.bannerImageAlt = "Image Alt Text must contain at least 3 letters."
     }
 
     setValidationErrors(errors)
@@ -246,7 +269,10 @@ export default function CategoriesPage() {
       description: newCat.description.trim(),
       bannerImage: finalImageUrl,
       bannerImageAlt: newCat.bannerImageAlt.trim(),
-      color: '#6366f1' // default indigo
+      color: '#6366f1', // default indigo
+      isVisible: newCat.isVisible,
+      showInNav: newCat.showInNav,
+      position: Number(newCat.position)
     }
 
     try {
@@ -303,6 +329,26 @@ export default function CategoriesPage() {
       }
     } catch (err) {
       console.error('Delete category error:', err)
+    }
+  }
+
+  async function toggleVisibility(category: Category) {
+    const newVisibility = !(category.isVisible ?? true);
+    try {
+      const res = await fetch(`/api/categories/${category._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isVisible: newVisibility })
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setCategories(prev => prev.map(c => c._id === category._id ? updated : c))
+      } else {
+        const errData = await res.json()
+        alert(errData.error || 'Failed to update visibility')
+      }
+    } catch (err) {
+      console.error('Toggle visibility error:', err)
     }
   }
 
@@ -393,12 +439,18 @@ export default function CategoriesPage() {
               <div className="p-8 text-center text-slate-400 text-[13px] font-semibold">No categories found.</div>
             ) : (
               leftColumnCats.map((cat) => (
-                <div key={cat._id} className="p-4 px-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                <div key={cat._id} className={`p-4 px-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors ${cat.isVisible === false ? 'opacity-70 bg-slate-50/30' : ''}`}>
                   <div className="flex items-center gap-3.5 min-w-[200px] flex-1">
-                    <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm" style={{ background: cat.color }} />
+                    <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm transition-all" style={{ background: cat.color, opacity: cat.isVisible === false ? 0.5 : 1 }} />
                     <div className="flex-1">
-                      <div className="text-[13.5px] font-bold text-[#0f172a] flex items-center gap-2">
+                      <div className={`text-[13.5px] font-bold text-[#0f172a] flex items-center gap-2 ${cat.isVisible === false ? 'text-slate-400 font-medium' : ''}`}>
                         {cat.name}
+                        {cat.isVisible === false && (
+                          <span className="text-[10px] bg-slate-100 text-slate-500 font-extrabold px-1.5 py-0.5 rounded border border-slate-200 flex items-center gap-1 select-none">
+                            🚫 Hidden
+                          </span>
+                        )}
+
                       </div>
                       <div className="text-[11.5px] text-slate-400 font-semibold mt-0.5">
                         /{cat.slug} · <span className="text-slate-500">{cat.articles} articles</span>
@@ -406,6 +458,16 @@ export default function CategoriesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <button 
+                      onClick={() => toggleVisibility(cat)} 
+                      className={`p-1.5 px-3 border rounded-lg cursor-pointer text-[11.5px] font-bold transition-all active:translate-y-[1px] ${
+                        cat.isVisible !== false 
+                          ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-650' 
+                          : 'border-indigo-300 bg-indigo-100/80 hover:bg-indigo-200/90 text-indigo-800 font-extrabold shadow-sm'
+                      }`}
+                    >
+                      {cat.isVisible !== false ? 'Hide' : 'Show'}
+                    </button>
                     <button 
                       onClick={() => {
                         setEditCatId(cat._id)
@@ -453,12 +515,18 @@ export default function CategoriesPage() {
               <div className="p-8 text-center text-slate-400 text-[13px] font-semibold">No more categories.</div>
             ) : (
               rightColumnCats.map((cat) => (
-                <div key={cat._id} className="p-4 px-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                <div key={cat._id} className={`p-4 px-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors ${cat.isVisible === false ? 'opacity-70 bg-slate-50/30' : ''}`}>
                   <div className="flex items-center gap-3.5 min-w-[200px] flex-1">
-                    <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm" style={{ background: cat.color }} />
+                    <div className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm transition-all" style={{ background: cat.color, opacity: cat.isVisible === false ? 0.5 : 1 }} />
                     <div className="flex-1">
-                      <div className="text-[13.5px] font-bold text-[#0f172a] flex items-center gap-2">
+                      <div className={`text-[13.5px] font-bold text-[#0f172a] flex items-center gap-2 ${cat.isVisible === false ? 'text-slate-400 font-medium' : ''}`}>
                         {cat.name}
+                        {cat.isVisible === false && (
+                          <span className="text-[10px] bg-slate-100 text-slate-500 font-extrabold px-1.5 py-0.5 rounded border border-slate-200 flex items-center gap-1 select-none">
+                            🚫 Hidden
+                          </span>
+                        )}
+
                       </div>
                       <div className="text-[11.5px] text-slate-400 font-semibold mt-0.5">
                         /{cat.slug} · <span className="text-slate-500">{cat.articles} articles</span>
@@ -466,6 +534,16 @@ export default function CategoriesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <button 
+                      onClick={() => toggleVisibility(cat)} 
+                      className={`p-1.5 px-3 border rounded-lg cursor-pointer text-[11.5px] font-bold transition-all active:translate-y-[1px] ${
+                        cat.isVisible !== false 
+                          ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-650' 
+                          : 'border-indigo-300 bg-indigo-100/80 hover:bg-indigo-200/90 text-indigo-800 font-extrabold shadow-sm'
+                      }`}
+                    >
+                      {cat.isVisible !== false ? 'Hide' : 'Show'}
+                    </button>
                     <button 
                       onClick={() => {
                         setEditCatId(cat._id)
@@ -619,6 +697,32 @@ export default function CategoriesPage() {
                   {validationErrors.description && (
                     <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.description}</span>
                   )}
+                </div>
+
+                {/* VISIBILITY SETTINGS */}
+                <div className="flex flex-col gap-4 border-t border-slate-100 pt-5 font-sans">
+                  <div className="text-[12px] font-extrabold text-[#6366f1] tracking-wider uppercase">
+                    VISIBILITY SETTINGS
+                  </div>
+                  {/* Visibility Switch */}
+                  <div className="flex items-center justify-between p-3 border border-slate-200 rounded-xl bg-slate-50/30">
+                    <div>
+                      <div className="text-[12.5px] font-bold text-slate-800">Visible on Site</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 font-medium">Control if category is active</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={newCat.isVisible}
+                        onChange={(e) => {
+                          setNewCat(prev => ({ ...prev, isVisible: e.target.checked }))
+                          setIsDirty(true)
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -775,13 +879,9 @@ export default function CategoriesPage() {
               </button>
               <button 
                 type="button"
-                disabled={!hasChanges || isUploadingOnSave}
+                disabled={isUploadingOnSave}
                 onClick={handleSaveCategory}
-                className={`p-2.5 px-6 rounded-xl font-extrabold text-[13px] border transition-all ${
-                  hasChanges 
-                    ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white border-transparent cursor-pointer btn-3d-indigo'
-                    : 'bg-[#f1f5f9] text-[#94a3b8] border-[#e2e8f0] cursor-not-allowed opacity-60'
-                } flex items-center gap-1.5`}
+                className="p-2.5 px-6 bg-[#6366f1] hover:bg-[#4f46e5] text-white border-transparent cursor-pointer btn-3d-indigo rounded-xl font-extrabold text-[13px] flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploadingOnSave ? '⏳ Saving...' : (editCatId ? 'Update Category' : 'Save Category')}
               </button>

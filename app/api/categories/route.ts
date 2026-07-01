@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { CategoryModel } from '@/models/Category';
+import { NewsModel } from '@/models/News';
 
 export async function GET() {
   try {
     await connectToDatabase();
-    const categories = await CategoryModel.find().sort({ createdAt: -1 });
-    return NextResponse.json(categories);
+    const categories = await CategoryModel.find().sort({ position: 1, createdAt: -1 });
+    
+    const categoriesWithCounts = await Promise.all(
+      categories.map(async (cat) => {
+        const count = await NewsModel.countDocuments({ category: cat.name, status: 'published' });
+        const catObj = cat.toObject();
+        catObj.articles = count;
+        return catObj;
+      })
+    );
+    
+    return NextResponse.json(categoriesWithCounts);
   } catch (error: any) {
     console.error('Fetch categories error:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });

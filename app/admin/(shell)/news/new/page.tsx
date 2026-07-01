@@ -227,34 +227,66 @@ function NewArticleForm() {
     setBlocks(newBlocks)
   }
 
+  // Validation function
   function validateTab(tab: TabType): boolean {
     const errors: Record<string, string> = { ...validationErrors }
 
     if (tab === 'write') {
-      const normalizedTitle = form.title.trim().toLowerCase()
-      const normalizedSlug = form.slug.trim().toLowerCase()
+      const trimmedTitle = form.title.trim()
+      const trimmedSlug = form.slug.trim()
+      const trimmedExcerpt = form.excerpt.trim()
 
       const duplicateTitle = existingArticles.find(
-        art => art.title.trim().toLowerCase() === normalizedTitle && art.id !== articleId
+        art => art.title.trim().toLowerCase() === trimmedTitle.toLowerCase() && art.id !== articleId
       )
       const duplicateSlug = existingArticles.find(
-        art => art.slug.trim().toLowerCase() === normalizedSlug && art.id !== articleId
+        art => art.slug.trim().toLowerCase() === trimmedSlug.toLowerCase() && art.id !== articleId
       )
 
-      if (!form.title.trim()) {
+      // Article Title
+      if (!trimmedTitle) {
         errors.title = "Article Headline is required."
+      } else if (trimmedTitle.length < 10) {
+        errors.title = "Article Headline must be at least 10 characters."
+      } else if (trimmedTitle.length > 100) {
+        errors.title = "Article Headline cannot exceed 100 characters."
+      } else if ((trimmedTitle.match(/[a-zA-Z]/g) || []).length < 3) {
+        errors.title = "Article Headline must contain at least 3 letters."
       } else if (duplicateTitle) {
         errors.title = "A news article with this title already exists."
       } else {
         delete errors.title
       }
 
-      if (!form.slug.trim()) {
+      // Slug
+      const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+      if (!trimmedSlug) {
         errors.slug = "URL slug is required."
+      } else if (trimmedSlug.length < 5 || trimmedSlug.length > 100) {
+        errors.slug = "URL slug must be between 5 and 100 characters."
+      } else if (!slugRegex.test(trimmedSlug)) {
+        errors.slug = "Slug must contain only lowercase letters, numbers, and single hyphens, with no leading/trailing/consecutive hyphens."
+      } else if ((trimmedSlug.match(/[a-z]/g) || []).length < 3) {
+        errors.slug = "Slug must contain at least 3 letters."
       } else if (duplicateSlug) {
         errors.slug = "A news article with this slug already exists."
       } else {
         delete errors.slug
+      }
+
+      // Excerpt / Short Description
+      if (!trimmedExcerpt) {
+        errors.excerpt = "Excerpt description is required."
+      } else if (trimmedExcerpt.length < 50 || trimmedExcerpt.length > 200) {
+        errors.excerpt = "Excerpt description must be between 50 and 200 characters for SEO."
+      } else if ((trimmedExcerpt.match(/[a-zA-Z]/g) || []).length < 3) {
+        errors.excerpt = "Excerpt description must contain at least 3 letters."
+      } else if (trimmedExcerpt.toLowerCase() === trimmedTitle.toLowerCase()) {
+        errors.excerpt = "Excerpt description should not repeat the headline exactly."
+      } else if (!/[.!?]$/.test(trimmedExcerpt)) {
+        errors.excerpt = "Excerpt description must end with a punctuation mark (., !, or ?) to be a complete sentence."
+      } else {
+        delete errors.excerpt
       }
 
       if (!form.author) {
@@ -299,15 +331,41 @@ function NewArticleForm() {
         delete errors.category
       }
 
-      const rt = Number(form.readTime)
-      if (!form.readTime.trim()) {
+      const trimmedReadTime = form.readTime.trim()
+      if (!trimmedReadTime) {
         errors.readTime = "Read time is required."
-      } else if (isNaN(rt) || !Number.isInteger(rt)) {
-        errors.readTime = "Read time must be a whole number."
-      } else if (rt < 1 || rt > 60) {
-        errors.readTime = "Read time must be between 1 and 60 minutes."
+      } else if (!/^\d+$/.test(trimmedReadTime)) {
+        errors.readTime = "Read time must be a whole positive integer (no text, decimals, or negative numbers)."
       } else {
-        delete errors.readTime
+        const rt = Number(trimmedReadTime)
+        if (rt < 1 || rt > 60) {
+          errors.readTime = "Read time must be between 1 and 60 minutes."
+        } else {
+          delete errors.readTime
+        }
+      }
+
+      // Comma-separated Tags validation
+      if (form.tags.trim()) {
+        const tagList = form.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
+        
+        if (tagList.length > 15) {
+          errors.tags = "You cannot have more than 15 tags."
+        } else {
+          const uniqueTags = new Set(tagList.map(t => t.toLowerCase()))
+          if (uniqueTags.size !== tagList.length) {
+            errors.tags = "Duplicate tags are not allowed."
+          } else {
+            const invalidTag = tagList.find(t => t.length < 2 || t.length > 20 || !/^[a-zA-Z0-9-]+$/.test(t))
+            if (invalidTag) {
+              errors.tags = "Each tag must be 2-20 characters and contain only letters, numbers, and hyphens (no spaces or special symbols like @, #, $, %)."
+            } else {
+              delete errors.tags
+            }
+          }
+        }
+      } else {
+        delete errors.tags
       }
     }
 
@@ -318,22 +376,40 @@ function NewArticleForm() {
         delete errors.featuredImage
       }
 
-      if (!form.imageAltText.trim()) {
+      const trimmedAlt = form.imageAltText.trim()
+      if (!trimmedAlt) {
         errors.imageAltText = "Image Alt Text description is required."
+      } else if (trimmedAlt.length < 5 || trimmedAlt.length > 100) {
+        errors.imageAltText = "Image Alt Text must be between 5 and 100 characters."
+      } else if ((trimmedAlt.match(/[a-zA-Z]/g) || []).length < 3) {
+        errors.imageAltText = "Image Alt Text must contain at least 3 letters."
       } else {
         delete errors.imageAltText
       }
     }
 
     if (tab === 'seo') {
-      if (!form.seoTitle.trim()) {
+      const trimmedSeoTitle = form.seoTitle.trim()
+      const trimmedSeoDesc = form.seoMetaDescription.trim()
+
+      if (!trimmedSeoTitle) {
         errors.seoTitle = "SEO Title is required for search engines."
+      } else if (trimmedSeoTitle.length < 5 || trimmedSeoTitle.length > 70) {
+        errors.seoTitle = "SEO Title must be between 5 and 70 characters."
+      } else if ((trimmedSeoTitle.match(/[a-zA-Z]/g) || []).length < 3) {
+        errors.seoTitle = "SEO Title must contain at least 3 letters."
       } else {
         delete errors.seoTitle
       }
 
-      if (!form.seoMetaDescription.trim()) {
+      if (!trimmedSeoDesc) {
         errors.seoMetaDescription = "SEO Meta Description is required."
+      } else if (trimmedSeoDesc.length < 10 || trimmedSeoDesc.length > 160) {
+        errors.seoMetaDescription = "SEO Meta Description must be between 10 and 160 characters."
+      } else if ((trimmedSeoDesc.match(/[a-zA-Z]/g) || []).length < 3) {
+        errors.seoMetaDescription = "SEO Meta Description must contain at least 3 letters."
+      } else if (!/[.!?]$/.test(trimmedSeoDesc)) {
+        errors.seoMetaDescription = "SEO Meta Description must end with a punctuation mark (., !, or ?) to be a complete sentence."
       } else {
         delete errors.seoMetaDescription
       }
@@ -344,9 +420,9 @@ function NewArticleForm() {
     // Check if the current tab is valid
     let isTabValid = true
     if (tab === 'write') {
-      isTabValid = !errors.title && !errors.slug && !errors.author && !errors.date && !errors.status && !errors.content
+      isTabValid = !errors.title && !errors.slug && !errors.excerpt && !errors.author && !errors.date && !errors.status && !errors.content
     } else if (tab === 'meta') {
-      isTabValid = !errors.category && !errors.readTime
+      isTabValid = !errors.category && !errors.readTime && !errors.tags
     } else if (tab === 'visuals') {
       isTabValid = !errors.featuredImage && !errors.imageAltText
     } else if (tab === 'seo') {
@@ -739,7 +815,7 @@ function NewArticleForm() {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a]">Excerpt (Short Description)</label>
+                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a]">Excerpt (Short Description) *</label>
                     <span className={`text-[10px] font-semibold ${form.excerpt.length > 300 ? 'text-red-500' : 'text-slate-400'}`}>{form.excerpt.length}/300</span>
                   </div>
                   <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Brief summary for listings and SEO</div>
@@ -751,8 +827,11 @@ function NewArticleForm() {
                     maxLength={300}
                     placeholder="Write a short summary of your article..."
                     rows={3}
-                    className={`${fieldClass} resize-none leading-relaxed`}
+                    className={`${fieldClass} resize-none leading-relaxed ${validationErrors.excerpt ? 'border-red-500' : ''}`}
                   />
+                  {validationErrors.excerpt && (
+                    <div className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.excerpt}</div>
+                  )}
                   {form.excerpt.length >= 280 && (
                     <div className="text-[11px] text-amber-500 font-semibold mt-1 flex items-center gap-1">⚠️ {300 - form.excerpt.length} characters remaining</div>
                   )}
@@ -1057,8 +1136,14 @@ function NewArticleForm() {
                     maxLength={200}
                     onChange={handleChange}
                     placeholder="e.g. senate, updates, voting"
-                    className={fieldClass}
+                    className={`${fieldClass} ${validationErrors.tags ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
+                  <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Separate with commas. Maximum 15 tags, 2-20 characters per tag (letters, numbers, hyphens only).</div>
+                  {validationErrors.tags && (
+                    <div className="text-[12px] text-red-500 font-semibold mt-1 flex items-center gap-1">
+                      <span>⚠️</span> {validationErrors.tags}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

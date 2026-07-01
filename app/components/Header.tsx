@@ -30,9 +30,9 @@ export default function Header({
         const res = await fetch("/api/categories");
         if (res.ok) {
           const data = await res.json();
-          // Map to names, only include visible in navigation
+          // Map to names, only include categories with at least one published article and not hidden
           const visibleCats = data
-            .filter((c: any) => c.isVisible !== false && c.showInNav !== false)
+            .filter((c: any) => c.isVisible !== false && c.articles > 0)
             .map((c: any) => c.name);
           setCategories(["All", ...visibleCats]);
         }
