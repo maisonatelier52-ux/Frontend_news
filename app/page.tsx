@@ -267,9 +267,6 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
 
-      {/* 1. Breaking News Ticker — reads saved settings from Admin › Home Layout */}
-      <DynamicBreakingNewsTicker />
-
       {/* 2. Main Editorial Header */}
       <Header
         activeCategory={activeCategory}
