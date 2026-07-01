@@ -139,6 +139,37 @@ export default function HomeLayoutConfigPage() {
         nextSections = filtered.map((s, idx) => ({ ...s, order: idx }))
       }
 
+      // If this is breaking-news and vertical preset changed, let's adjust array position!
+      if (draftSection.id === 'breaking-news') {
+        const preset = draftSection.settings?.verticalPreset || 'above-header'
+        const filtered = nextSections.filter(s => s.id !== 'breaking-news')
+        const headerIdx = filtered.findIndex(s => s.id === 'domain-header')
+        const navIdx = filtered.findIndex(s => s.id === 'category-nav')
+
+        if (preset === 'above-header') {
+          if (headerIdx !== -1) {
+            filtered.splice(headerIdx, 0, draftSection)
+          } else {
+            filtered.unshift(draftSection)
+          }
+        } else if (preset === 'below-header') {
+          if (headerIdx !== -1) {
+            filtered.splice(headerIdx + 1, 0, draftSection)
+          } else {
+            filtered.push(draftSection)
+          }
+        } else if (preset === 'below-nav') {
+          if (navIdx !== -1) {
+            const newNavIdx = filtered.findIndex(s => s.id === 'category-nav')
+            filtered.splice(newNavIdx + 1, 0, draftSection)
+          } else {
+            filtered.push(draftSection)
+          }
+        }
+
+        nextSections = filtered.map((s, idx) => ({ ...s, order: idx }))
+      }
+
       setSections(nextSections)
     }
     setActiveEditId(null)
@@ -230,24 +261,46 @@ export default function HomeLayoutConfigPage() {
 
   // Render mock of breaking-news section preview
   const renderBreakingNewsPreview = (sec: LayoutSection) => {
-    const isScrolling = sec.settings?.isScrolling !== false
-    const bgColor = sec.settings?.bgColor || '#dc2626'
+    const bgColor = sec.settings?.bgColor || '#09090b'
     const textColor = sec.settings?.textColor || '#ffffff'
     const customText = sec.settings?.customText || ''
-    const alertText = customText || `Breaking News: Federal grid upgrades active • Stock indexes climb • Supreme Court issues rulings`
+    const alertText = customText || `Federal grid upgrades active • Stock indexes climb • Supreme Court issues rulings`
+
+    const hidePrefix = sec.settings?.hidePrefix === true
+    const prefixText = sec.settings?.prefixText || 'BREAKING'
+    const isBlinking = sec.settings?.isBlinking !== false
+    const containerStyle = sec.settings?.containerStyle || 'capsule'
+    const animation = sec.settings?.animation || 'scroll'
+    
+    const borderStyle = sec.settings?.borderStyle || 'none'
+    const borderColor = sec.settings?.borderColor || '#e2e8f0'
+
+    const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none'
+    const containerClass = containerStyle === 'capsule' ? 'rounded-full px-5 py-2.5' : containerStyle === 'bar' ? 'rounded-none px-4 py-2.5' : 'bg-transparent border-0 px-2 py-1'
+    const blinkClass = isBlinking ? 'animate-pulse' : ''
+    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
 
     return (
       <div 
-        className="p-2.5 px-4 rounded-xl flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden"
-        style={{ backgroundColor: bgColor, color: textColor }}
+        className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
+        style={{ 
+          backgroundColor: containerStyle === 'minimal' ? 'transparent' : bgColor, 
+          color: textColor,
+          border: borderCss
+        }}
       >
-        <span className="bg-white px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shadow-xs shrink-0" style={{ color: bgColor }}>
-          BREAKING
-        </span>
-        {isScrolling ? (
-          React.createElement('marquee', { className: 'cursor-default flex-1 font-medium' }, alertText)
+        {!hidePrefix && prefixText && (
+          <span 
+            className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
+            style={{ color: containerStyle === 'minimal' ? '#dc2626' : bgColor }}
+          >
+            {prefixText}
+          </span>
+        )}
+        {animation === 'scroll' ? (
+          React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)
         ) : (
-          <div className="flex-1 font-medium truncate animate-pulse select-text">{alertText}</div>
+          <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
         )}
       </div>
     )
@@ -355,12 +408,16 @@ export default function HomeLayoutConfigPage() {
         const dateBg = section.settings?.bgColor || '#f8fafc'
         const dateCol = section.settings?.textColor || '#64748b'
         const dateAlign = section.settings?.alignment || 'spaced'
+        const dateBorder = section.settings?.borderStyle || 'none'
+        const dateBorderCol = section.settings?.borderColor || '#e2e8f0'
+        const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : 'none'
+
         const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
         return (
           <div 
             key={section.id} 
-            className={`p-1.5 px-3 border rounded-lg text-[10px] font-bold flex tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
-            style={{ backgroundColor: dateBg, color: dateCol }}
+            className={`p-1.5 px-3 rounded-lg text-[10px] font-bold flex tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
+            style={{ backgroundColor: dateBg, color: dateCol, border: dateBorderCss }}
           >
             <span>Wednesday, July 1, 2026</span>
             <span>Washington, D.C.</span>
@@ -506,12 +563,13 @@ export default function HomeLayoutConfigPage() {
             {/* 1. BREAKING NEWS TICKER SETTINGS */}
             {isBreaking && (
               <div className="flex flex-col gap-4">
+                {/* Background & Text Colors */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Ticker Background Color</label>
                     <input
                       type="color"
-                      value={draftSection.settings?.bgColor || '#dc2626'}
+                      value={draftSection.settings?.bgColor || '#09090b'}
                       onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
                       className="w-full h-9 p-0.5 border rounded-lg cursor-pointer bg-white"
                     />
@@ -527,20 +585,139 @@ export default function HomeLayoutConfigPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <div>
-                    <div className="text-[12.5px] font-bold text-slate-800">Auto-Scroll Animation</div>
-                    <div className="text-[10px] text-slate-450 mt-0.5 font-medium">If disabled, the ticker remains stationary as a line alert.</div>
+                {/* Prefix Label Controls */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div>
+                      <div className="text-[12px] font-bold text-slate-700">Hide Prefix Badge Label</div>
+                      <div className="text-[9.5px] text-slate-400 font-medium">Remove the prefix tag completely. Only show news.</div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={draftSection.settings?.hidePrefix === true}
+                        onChange={(e) => updateDraftSetting('hidePrefix', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                    </label>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      checked={draftSection.settings?.isScrolling !== false}
-                      onChange={(e) => updateDraftSetting('isScrolling', e.target.checked)}
-                      className="sr-only peer"
+
+                  {!draftSection.settings?.hidePrefix && (
+                    <div className="grid grid-cols-2 gap-3 animate-[admin-fade-in_0.2s_ease]">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 block mb-1">Prefix Text Label</label>
+                        <input
+                          type="text"
+                          value={draftSection.settings?.prefixText || 'BREAKING'}
+                          onChange={(e) => updateDraftSetting('prefixText', e.target.value)}
+                          className="p-2 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none"
+                        />
+                      </div>
+                      <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <span className="text-[11px] font-bold text-slate-650">Blinking Effect</span>
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            checked={draftSection.settings?.isBlinking !== false}
+                            onChange={(e) => updateDraftSetting('isBlinking', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Box Container Design Options */}
+                <div className="border-t pt-3">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Container Shape Style</label>
+                  <select
+                    value={draftSection.settings?.containerStyle || 'capsule'}
+                    onChange={(e) => updateDraftSetting('containerStyle', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
+                  >
+                    <option value="capsule">Capsule Box (Pill Shape)</option>
+                    <option value="bar">Rectangular Bar (Sharp Corners)</option>
+                    <option value="minimal">Minimal Plain Line (No Background Box)</option>
+                  </select>
+                </div>
+
+                {/* Animation Options */}
+                <div className="border-t pt-3">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Animation & Scrolling Design</label>
+                  <select
+                    value={draftSection.settings?.animation || 'scroll'}
+                    onChange={(e) => updateDraftSetting('animation', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
+                  >
+                    <option value="scroll">Classic Smooth Scrolling Marquee</option>
+                    <option value="fade">Slide & Fade-in Pulse (Stationary Loop)</option>
+                    <option value="static">Static Stationary Text Alert</option>
+                  </select>
+                </div>
+
+                {/* Border Options */}
+                <div className="border-t pt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Thickness Style</label>
+                    <select
+                      value={draftSection.settings?.borderStyle || 'none'}
+                      onChange={(e) => updateDraftSetting('borderStyle', e.target.value)}
+                      className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
+                    >
+                      <option value="none">No Border</option>
+                      <option value="thin">Thin Border (1px)</option>
+                      <option value="thick">Thick Border (3px)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.borderColor || '#e2e8f0'}
+                      onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
                     />
-                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
-                  </label>
+                  </div>
+                </div>
+
+                {/* Vertical Position Presets */}
+                <div className="border-t pt-3">
+                  <label className="text-[12px] font-extrabold text-[#6366f1] block mb-2 uppercase tracking-wide">Vertical Placement Preset</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'above-header')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        (draftSection.settings?.verticalPreset || 'above-header') === 'above-header'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Above Logo
+                    </button>
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'below-header')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.verticalPreset === 'below-header'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Below Logo
+                    </button>
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'below-nav')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.verticalPreset === 'below-nav'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Below Nav
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -562,7 +739,7 @@ export default function HomeLayoutConfigPage() {
                     placeholder="Enter manual text override. Leave empty to scroll live breaking articles automatically..."
                     value={draftSection.settings?.customText || ''}
                     onChange={(e) => updateDraftSetting('customText', e.target.value)}
-                    className="p-2.5 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none resize-none font-medium"
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white text-slate-755 outline-none resize-none font-medium"
                   />
                 </div>
               </div>
@@ -863,6 +1040,31 @@ export default function HomeLayoutConfigPage() {
                   <p className="text-[10px] text-slate-400 mt-1.5 font-medium leading-relaxed">
                     Choose relative position. The layout section sequence indexes will be automatically recalculated upon applying section edits.
                   </p>
+                </div>
+
+                {/* Border Options */}
+                <div className="border-t pt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Thickness Style</label>
+                    <select
+                      value={draftSection.settings?.borderStyle || 'none'}
+                      onChange={(e) => updateDraftSetting('borderStyle', e.target.value)}
+                      className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
+                    >
+                      <option value="none">No Border</option>
+                      <option value="thin">Thin Border (1px)</option>
+                      <option value="thick">Thick Border (3px)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
+                    <input
+                      type="color"
+                      value={draftSection.settings?.borderColor || '#e2e8f0'}
+                      onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
+                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
             )}

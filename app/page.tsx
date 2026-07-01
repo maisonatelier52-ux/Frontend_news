@@ -279,7 +279,6 @@ export default function Home() {
 
   // Dynamic layout rendering components
   const renderBreakingNewsSection = (section: any) => {
-    const isScrolling = section.settings?.isScrolling !== false;
     const bgColor = section.settings?.bgColor || '#09090b';
     const textColor = section.settings?.textColor || '#ffffff';
     const customText = section.settings?.customText || '';
@@ -289,21 +288,44 @@ export default function Home() {
       ? breakingList.map(a => `🚨 ${a.title}`).join('   •   ')
       : `📢 Federal Reserve Rates Hold • New Infrastructure Funding Active • Tech Shares Surge`);
 
+    const hidePrefix = section.settings?.hidePrefix === true;
+    const prefixText = section.settings?.prefixText || 'BREAKING';
+    const isBlinking = section.settings?.isBlinking !== false;
+    const containerStyle = section.settings?.containerStyle || 'capsule';
+    const animation = section.settings?.animation || 'scroll';
+    
+    const borderStyle = section.settings?.borderStyle || 'none';
+    const borderColor = section.settings?.borderColor || '#e2e8f0';
+
+    const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none';
+    const containerClass = containerStyle === 'capsule' ? 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2' : containerStyle === 'bar' ? 'rounded-none px-4 py-2.5' : 'bg-transparent border-0 px-2 py-1';
+    const blinkClass = isBlinking ? 'animate-pulse' : '';
+    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : '';
+
     return (
       <div 
         key={section.id} 
-        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none flex items-center"
-        style={{ backgroundColor: bgColor, color: textColor }}
+        className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
+        style={{ 
+          backgroundColor: containerStyle === 'minimal' ? 'transparent' : bgColor, 
+          color: textColor,
+          border: borderCss
+        }}
       >
-        <div className="bg-red-750 text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 animate-pulse animate-[pulse_1.5s_infinite]">
-          BREAKING NEWS
-        </div>
-        {isScrolling ? (
+        {!hidePrefix && prefixText && (
+          <span 
+            className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
+            style={{ color: containerStyle === 'minimal' ? '#dc2626' : bgColor }}
+          >
+            {prefixText}
+          </span>
+        )}
+        {animation === 'scroll' ? (
           <div className="relative w-full overflow-hidden flex items-center">
-            {React.createElement('marquee', { className: 'cursor-default flex-1 font-medium' }, alertText)}
+            {React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)}
           </div>
         ) : (
-          <div className="flex-grow font-semibold truncate px-2 select-text">{alertText}</div>
+          <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
         )}
       </div>
     );
@@ -928,12 +950,16 @@ export default function Home() {
                   const dateBg = section.settings?.bgColor || '#f8fafc';
                   const dateCol = section.settings?.textColor || '#64748b';
                   const dateAlign = section.settings?.alignment || 'spaced';
+                  const dateBorder = section.settings?.borderStyle || 'none';
+                  const dateBorderCol = section.settings?.borderColor || '#e2e8f0';
+                  const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : 'none';
+
                   const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between';
                   return (
                     <div 
                       key="date-section" 
                       className={`w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex select-none tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
-                      style={{ backgroundColor: dateBg, color: dateCol }}
+                      style={{ backgroundColor: dateBg, color: dateCol, border: dateBorderCss }}
                     >
                       <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
                       <span>Washington, D.C.</span>
