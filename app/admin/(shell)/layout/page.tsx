@@ -259,6 +259,55 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
+  // Helper to determine animation speed and Tailwind/CSS anim class
+  const getAnimationClassAndStyles = (animation: string, speedSetting?: number) => {
+    let animClass = ''
+    let defaultSpeed = 28
+    if (animation === 'flash-fast' || animation === 'glitch-shiver') {
+      defaultSpeed = 0.8
+    } else if (animation === 'fade' || animation === 'zoom-pulse' || animation === 'vertical-roll') {
+      defaultSpeed = 3
+    } else if (animation === 'bounce-reveal' || animation === 'shimmer') {
+      defaultSpeed = 2
+    }
+    const speed = speedSetting || defaultSpeed
+
+    switch (animation) {
+      case 'fade':
+        animClass = 'animate-custom-fade'
+        break
+      case 'vertical-roll':
+        animClass = 'animate-vertical-roll'
+        break
+      case 'zoom-pulse':
+        animClass = 'animate-zoom-pulse'
+        break
+      case 'flash-fast':
+        animClass = 'animate-flash-fast'
+        break
+      case 'glitch-shiver':
+        animClass = 'animate-glitch-shiver'
+        break
+      case 'slide-reveal':
+        animClass = 'animate-slide-reveal'
+        break
+      case 'bounce-reveal':
+        animClass = 'animate-bounce-reveal'
+        break
+      case 'shimmer':
+        animClass = 'animate-shimmer'
+        break
+      case 'static':
+        animClass = ''
+        break
+      case 'scroll':
+      default:
+        animClass = 'animate-custom-scroll'
+        break
+    }
+    return { animClass, speed }
+  }
+
   // Render EXACT live StockTicker replica — pixel-perfect match of what appears on the news site
   // Uses the same classes, colors, structure as Widgets.tsx StockTicker
   const renderExactLiveTicker = (sec: LayoutSection) => {
@@ -267,6 +316,12 @@ export default function HomeLayoutConfigPage() {
     const savedPrefix = sec.settings?.prefixText || 'BREAKING NEWS'
     const hidePrefix = sec.settings?.hidePrefix === true
     const isBlinking = sec.settings?.isBlinking !== false
+    const animation = sec.settings?.animation || 'scroll'
+    const scrollSpeed = sec.settings?.scrollSpeed
+    const borderStyle = sec.settings?.borderStyle || 'none'
+    const borderColor = sec.settings?.borderColor || '#e2e8f0'
+    const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none'
+
     const sampleHeadlines = [
       'Federal Grid Expansion Accord Reaches Funding Settlement',
       'Stock Indexes Climb Amid Fed Rate Decision',
@@ -274,26 +329,97 @@ export default function HomeLayoutConfigPage() {
       'Tech Giants Report Record Quarterly Earnings',
       'International Climate Summit Reaches Agreement'
     ]
-    const tickerText = sec.settings?.customText ||
-      sampleHeadlines.map(h => h).join('   ·   ')
+    const alertText = sec.settings?.customText || sampleHeadlines.join('   •   ')
 
-    return (
-      <div
-        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none"
-        style={{ backgroundColor: savedBg, color: savedTextColor }}
-      >
-        <div className="flex items-center">
-          {!hidePrefix && (
-            <div
-              className={`bg-red-700 text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 ${isBlinking ? 'animate-pulse' : ''}`}
-              style={{ backgroundColor: '#b91c1c' }}
-            >
-              {savedPrefix}
-            </div>
-          )}
+    const blinkClass = isBlinking ? 'animate-pulse' : ''
+    const { animClass, speed } = getAnimationClassAndStyles(animation, scrollSpeed)
+
+    const styleBlock = (
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes ticker-scroll {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes custom-fade {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 1; }
+        }
+        @keyframes vertical-roll {
+          0%, 100% { transform: translateY(100%); opacity: 0; }
+          10%, 90% { transform: translateY(0); opacity: 1; }
+          95% { transform: translateY(-100%); opacity: 0; }
+        }
+        @keyframes zoom-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes flash-fast {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.05; }
+        }
+        @keyframes glitch-shiver {
+          0%, 100% { transform: translate(0, 0); }
+          20% { transform: translate(-1.5px, 0.5px); }
+          40% { transform: translate(1px, -1px); }
+          60% { transform: translate(-1px, -0.5px); }
+          80% { transform: translate(1.5px, 1px); }
+        }
+        @keyframes slide-reveal {
+          0% { transform: translateX(-30px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes bounce-reveal {
+          0%, 100%, 20%, 50%, 80% { transform: translateY(0); }
+          40% { transform: translateY(-5px); }
+          60% { transform: translateY(-2.5px); }
+        }
+        @keyframes shimmer-sweep {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .animate-custom-scroll {
+          animation: ticker-scroll var(--ticker-duration, 28s) linear infinite;
+        }
+        .animate-custom-fade {
+          animation: custom-fade var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-vertical-roll {
+          animation: vertical-roll var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-zoom-pulse {
+          animation: zoom-pulse var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-flash-fast {
+          animation: flash-fast var(--ticker-duration, 0.8s) steps(2, start) infinite;
+        }
+        .animate-glitch-shiver {
+          animation: glitch-shiver var(--ticker-duration, 0.5s) linear infinite;
+        }
+        .animate-slide-reveal {
+          animation: slide-reveal var(--ticker-duration, 0.8s) ease-out forwards;
+        }
+        .animate-bounce-reveal {
+          animation: bounce-reveal var(--ticker-duration, 2s) ease infinite;
+        }
+        .animate-shimmer {
+          background: linear-gradient(90deg, currentColor 25%, #a855f7 50%, currentColor 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmer-sweep var(--ticker-duration, 2.5s) linear infinite;
+        }
+      `}} />
+    )
+
+    const renderTextContent = () => {
+      if (animation === 'scroll') {
+        return (
           <div className="relative w-full overflow-hidden flex items-center">
-            <div className="flex items-center whitespace-nowrap gap-12" style={{ animation: 'ticker 28s linear infinite' }}>
-              {[...sampleHeadlines, ...sampleHeadlines].map((headline, idx) => (
+            <div 
+              className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
+              style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+            >
+              {[...sampleHeadlines, ...sampleHeadlines, ...sampleHeadlines].map((headline, idx) => (
                 <span key={idx} className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
                   <span className="font-semibold" style={{ color: savedTextColor === '#ffffff' ? '#f4f4f5' : savedTextColor }}>
@@ -303,6 +429,35 @@ export default function HomeLayoutConfigPage() {
               ))}
             </div>
           </div>
+        )
+      }
+
+      return (
+        <div 
+          className={`flex-1 font-medium truncate ${animClass}`}
+          style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+        >
+          {alertText}
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none"
+        style={{ backgroundColor: savedBg, color: savedTextColor, border: borderCss }}
+      >
+        {styleBlock}
+        <div className="flex items-center">
+          {!hidePrefix && (
+            <div
+              className={`bg-red-700 text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 ${blinkClass}`}
+              style={{ backgroundColor: '#b91c1c' }}
+            >
+              {savedPrefix}
+            </div>
+          )}
+          {renderTextContent()}
         </div>
       </div>
     )
@@ -320,17 +475,121 @@ export default function HomeLayoutConfigPage() {
     const isBlinking = sec.settings?.isBlinking !== false
     const containerStyle = sec.settings?.containerStyle || 'original'
     const animation = sec.settings?.animation || 'scroll'
+    const scrollSpeed = sec.settings?.scrollSpeed
     
     const borderStyle = sec.settings?.borderStyle || 'none'
     const borderColor = sec.settings?.borderColor || '#e2e8f0'
 
     const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none'
-    
+    const blinkClass = isBlinking ? 'animate-pulse' : ''
+
+    const { animClass, speed } = getAnimationClassAndStyles(animation, scrollSpeed)
+
+    const styleBlock = (
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes ticker-scroll {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes custom-fade {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 1; }
+        }
+        @keyframes vertical-roll {
+          0%, 100% { transform: translateY(100%); opacity: 0; }
+          10%, 90% { transform: translateY(0); opacity: 1; }
+          95% { transform: translateY(-100%); opacity: 0; }
+        }
+        @keyframes zoom-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes flash-fast {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.05; }
+        }
+        @keyframes glitch-shiver {
+          0%, 100% { transform: translate(0, 0); }
+          20% { transform: translate(-1.5px, 0.5px); }
+          40% { transform: translate(1px, -1px); }
+          60% { transform: translate(-1px, -0.5px); }
+          80% { transform: translate(1.5px, 1px); }
+        }
+        @keyframes slide-reveal {
+          0% { transform: translateX(-30px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes bounce-reveal {
+          0%, 100%, 20%, 50%, 80% { transform: translateY(0); }
+          40% { transform: translateY(-5px); }
+          60% { transform: translateY(-2.5px); }
+        }
+        @keyframes shimmer-sweep {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .animate-custom-scroll {
+          animation: ticker-scroll var(--ticker-duration, 28s) linear infinite;
+        }
+        .animate-custom-fade {
+          animation: custom-fade var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-vertical-roll {
+          animation: vertical-roll var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-zoom-pulse {
+          animation: zoom-pulse var(--ticker-duration, 3s) ease-in-out infinite;
+        }
+        .animate-flash-fast {
+          animation: flash-fast var(--ticker-duration, 0.8s) steps(2, start) infinite;
+        }
+        .animate-glitch-shiver {
+          animation: glitch-shiver var(--ticker-duration, 0.5s) linear infinite;
+        }
+        .animate-slide-reveal {
+          animation: slide-reveal var(--ticker-duration, 0.8s) ease-out forwards;
+        }
+        .animate-bounce-reveal {
+          animation: bounce-reveal var(--ticker-duration, 2s) ease infinite;
+        }
+        .animate-shimmer {
+          background: linear-gradient(90deg, currentColor 25%, #a855f7 50%, currentColor 75%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmer-sweep var(--ticker-duration, 2.5s) linear infinite;
+        }
+      `}} />
+    )
+
+    const renderTextContent = () => {
+      if (animation === 'scroll') {
+        return (
+          <div className="relative w-full overflow-hidden flex items-center">
+            <div 
+              className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
+              style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+            >
+              <span className="flex items-center gap-2 font-medium">{alertText}</span>
+              <span className="flex items-center gap-2 font-medium">{alertText}</span>
+              <span className="flex items-center gap-2 font-medium">{alertText}</span>
+            </div>
+          </div>
+        )
+      }
+
+      return (
+        <div 
+          className={`flex-1 font-medium truncate select-text ${animClass}`}
+          style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+        >
+          {alertText}
+        </div>
+      )
+    }
+
     let containerClass = ''
     let containerStyleInline: React.CSSProperties = {}
-
-    const blinkClass = isBlinking ? 'animate-pulse' : ''
-    const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
 
     // Original flush design — exactly matches the live news site ticker
     if (containerStyle === 'original') {
@@ -339,6 +598,7 @@ export default function HomeLayoutConfigPage() {
           className="w-full flex items-stretch text-[11px] font-mono overflow-hidden rounded-none"
           style={{ backgroundColor: bgColor, color: textColor, border: borderCss }}
         >
+          {styleBlock}
           {!hidePrefix && prefixText && (
             <div
               className={`text-white font-bold px-4 py-2 uppercase tracking-wider text-[10px] flex items-center justify-center shrink-0 ${blinkClass}`}
@@ -348,11 +608,7 @@ export default function HomeLayoutConfigPage() {
             </div>
           )}
           <div className="flex-grow px-4 py-2 flex items-center overflow-hidden">
-            {animation === 'scroll' ? (
-              React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)
-            ) : (
-              <div className={`flex-1 font-medium truncate ${textAnimClass}`}>{alertText}</div>
-            )}
+            {renderTextContent()}
           </div>
         </div>
       )
@@ -413,6 +669,7 @@ export default function HomeLayoutConfigPage() {
           ...containerStyleInline
         }}
       >
+        {styleBlock}
         {!hidePrefix && prefixText && (
           <span
             className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
@@ -421,11 +678,7 @@ export default function HomeLayoutConfigPage() {
             {prefixText}
           </span>
         )}
-        {animation === 'scroll' ? (
-          React.createElement('marquee', { className: 'cursor-default flex-grow font-medium' }, alertText)
-        ) : (
-          <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
-        )}
+        {renderTextContent()}
       </div>
     )
   }
@@ -785,11 +1038,46 @@ export default function HomeLayoutConfigPage() {
                     onChange={(e) => updateDraftSetting('animation', e.target.value)}
                     className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
                   >
-                    <option value="scroll">Classic Smooth Scrolling Marquee</option>
-                    <option value="fade">Slide & Fade-in Pulse (Stationary Loop)</option>
-                    <option value="static">Static Stationary Text Alert</option>
+                    <option value="scroll">1. Classic Smooth Scrolling Marquee</option>
+                    <option value="fade">2. Stationary Fade Loop (Stationary)</option>
+                    <option value="static">3. Static Stationary Text Alert (No Animation)</option>
+                    <option value="vertical-roll">4. Vertical Flip & Roll Scroll (Bottom-to-Top)</option>
+                    <option value="zoom-pulse">5. Zoom In-Out Soft Pulse</option>
+                    <option value="flash-fast">6. Fast Flash Warning Alert (Blinker)</option>
+                    <option value="glitch-shiver">7. Glitch Tech Horizontal Shiver</option>
+                    <option value="slide-reveal">8. Slide & Lock Left-to-Right Reveal</option>
+                    <option value="bounce-reveal">9. Bounce Reveal Up & Down Loop</option>
+                    <option value="shimmer">10. Wave Shimmer Highlight Sweep</option>
                   </select>
                 </div>
+
+                {/* Animation Speed Option */}
+                {['scroll', 'fade', 'vertical-roll', 'zoom-pulse', 'flash-fast', 'glitch-shiver', 'slide-reveal', 'bounce-reveal', 'shimmer'].includes(draftSection.settings?.animation || 'scroll') && (
+                  <div className="border-t pt-3 animate-[admin-fade-in_0.2s_ease]">
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block">Animation Speed / Duration</label>
+                      <span className="text-[10px] text-indigo-600 font-bold font-mono">
+                        {draftSection.settings?.scrollSpeed || (draftSection.settings?.animation === 'flash-fast' || draftSection.settings?.animation === 'glitch-shiver' ? '0.8' : '28')}s
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-slate-400 font-semibold font-mono">Fast</span>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="60"
+                        step="0.5"
+                        value={draftSection.settings?.scrollSpeed || (draftSection.settings?.animation === 'flash-fast' || draftSection.settings?.animation === 'glitch-shiver' ? '0.8' : '28')}
+                        onChange={(e) => updateDraftSetting('scrollSpeed', parseFloat(e.target.value))}
+                        className="flex-grow accent-[#6366f1] cursor-pointer"
+                      />
+                      <span className="text-[10px] text-slate-400 font-semibold font-mono">Slow</span>
+                    </div>
+                    <p className="text-[9.5px] text-slate-400 mt-1">
+                      Control the movement speed or cycle duration (lower is faster, higher is slower).
+                    </p>
+                  </div>
+                )}
 
                 {/* Border Options */}
                 <div className="border-t pt-3 grid grid-cols-2 gap-3">
@@ -1270,7 +1558,14 @@ export default function HomeLayoutConfigPage() {
                   Live on news site right now
                 </span>
               </div>
-              <div className="rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-[0_0_0_4px_rgba(134,239,172,0.15)] relative">
+              <div className={`overflow-hidden border-2 border-emerald-300 shadow-[0_0_0_4px_rgba(134,239,172,0.15)] relative ${
+                (() => {
+                  const origSec = originalSections.find(s => s.id === draftSection.id) || draftSection
+                  const cs = origSec.settings?.containerStyle || 'original'
+                  const isFlush = cs === 'original' || cs === 'sharp-bar' || cs === 'left-accent' || cs === 'dual-border-slate' || cs === 'diagonal-gradient' || draftSection.id === 'domain-header' || draftSection.id === 'category-nav' || draftSection.id === 'date-section'
+                  return isFlush ? 'rounded-none' : 'rounded-2xl'
+                })()
+              }`}>
                 {/* Decorative label */}
                 <div className="absolute top-0 right-0 z-10 bg-emerald-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider select-none">
                   LIVE
@@ -1317,7 +1612,7 @@ export default function HomeLayoutConfigPage() {
                 </span>
               </div>
               <div
-                className={`rounded-2xl overflow-hidden border-2 border-indigo-300 shadow-[0_0_0_4px_rgba(165,180,252,0.15)] relative ${
+                className={`overflow-hidden border-2 border-indigo-300 shadow-[0_0_0_4px_rgba(165,180,252,0.15)] relative ${
                   isBreaking || draftSection.settings?.containerStyle === 'original' ||
                   draftSection.settings?.containerStyle === 'sharp-bar' ||
                   draftSection.settings?.containerStyle === 'left-accent' ||
@@ -1326,8 +1621,8 @@ export default function HomeLayoutConfigPage() {
                   draftSection.id === 'domain-header' ||
                   draftSection.id === 'category-nav' ||
                   draftSection.id === 'date-section'
-                    ? 'p-0'
-                    : 'p-5 bg-slate-50'
+                    ? 'p-0 rounded-none'
+                    : 'p-5 bg-slate-50 rounded-2xl'
                 }`}
               >
                 {/* Decorative label */}

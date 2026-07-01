@@ -92,6 +92,7 @@ export function DynamicBreakingNewsTicker() {
   const borderStyle  = settings?.borderStyle   || 'none'
   const borderColor  = settings?.borderColor   || '#e2e8f0'
   const customText   = settings?.customText    || ''
+  const scrollSpeed  = settings?.scrollSpeed
 
   // Fall back to static articles if none from DB
   const fallback = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => a.title)
@@ -104,8 +105,161 @@ export function DynamicBreakingNewsTicker() {
     ? `3px solid ${borderColor}`
     : 'none'
 
-  const blinkClass    = isBlinking ? 'animate-pulse' : ''
-  const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : ''
+  const blinkClass = isBlinking ? 'animate-pulse' : ''
+
+  // Determine animation speed and class
+  let animClass = ''
+  let defaultSpeed = 28
+  if (animation === 'flash-fast' || animation === 'glitch-shiver') {
+    defaultSpeed = 0.8
+  } else if (animation === 'fade' || animation === 'zoom-pulse' || animation === 'vertical-roll') {
+    defaultSpeed = 3
+  } else if (animation === 'bounce-reveal' || animation === 'shimmer') {
+    defaultSpeed = 2
+  }
+  const speed = scrollSpeed || defaultSpeed
+
+  switch (animation) {
+    case 'fade':
+      animClass = 'animate-custom-fade'
+      break
+    case 'vertical-roll':
+      animClass = 'animate-vertical-roll'
+      break
+    case 'zoom-pulse':
+      animClass = 'animate-zoom-pulse'
+      break
+    case 'flash-fast':
+      animClass = 'animate-flash-fast'
+      break
+    case 'glitch-shiver':
+      animClass = 'animate-glitch-shiver'
+      break
+    case 'slide-reveal':
+      animClass = 'animate-slide-reveal'
+      break
+    case 'bounce-reveal':
+      animClass = 'animate-bounce-reveal'
+      break
+    case 'shimmer':
+      animClass = 'animate-shimmer'
+      break
+    case 'static':
+      animClass = ''
+      break
+    case 'scroll':
+    default:
+      animClass = 'animate-custom-scroll'
+      break
+  }
+
+  const styleBlock = (
+    <style dangerouslySetInnerHTML={{ __html: `
+      @keyframes ticker-scroll {
+        0% { transform: translate3d(0, 0, 0); }
+        100% { transform: translate3d(-50%, 0, 0); }
+      }
+      @keyframes custom-fade {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 1; }
+      }
+      @keyframes vertical-roll {
+        0%, 100% { transform: translateY(100%); opacity: 0; }
+        10%, 90% { transform: translateY(0); opacity: 1; }
+        95% { transform: translateY(-100%); opacity: 0; }
+      }
+      @keyframes zoom-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes flash-fast {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.05; }
+      }
+      @keyframes glitch-shiver {
+        0%, 100% { transform: translate(0, 0); }
+        20% { transform: translate(-1.5px, 0.5px); }
+        40% { transform: translate(1px, -1px); }
+        60% { transform: translate(-1px, -0.5px); }
+        80% { transform: translate(1.5px, 1px); }
+      }
+      @keyframes slide-reveal {
+        0% { transform: translateX(-30px); opacity: 0; }
+        100% { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes bounce-reveal {
+        0%, 100%, 20%, 50%, 80% { transform: translateY(0); }
+        40% { transform: translateY(-5px); }
+        60% { transform: translateY(-2.5px); }
+      }
+      @keyframes shimmer-sweep {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .animate-custom-scroll {
+        animation: ticker-scroll var(--ticker-duration, 28s) linear infinite;
+      }
+      .animate-custom-fade {
+        animation: custom-fade var(--ticker-duration, 3s) ease-in-out infinite;
+      }
+      .animate-vertical-roll {
+        animation: vertical-roll var(--ticker-duration, 3s) ease-in-out infinite;
+      }
+      .animate-zoom-pulse {
+        animation: zoom-pulse var(--ticker-duration, 3s) ease-in-out infinite;
+      }
+      .animate-flash-fast {
+        animation: flash-fast var(--ticker-duration, 0.8s) steps(2, start) infinite;
+      }
+      .animate-glitch-shiver {
+        animation: glitch-shiver var(--ticker-duration, 0.5s) linear infinite;
+      }
+      .animate-slide-reveal {
+        animation: slide-reveal var(--ticker-duration, 0.8s) ease-out forwards;
+      }
+      .animate-bounce-reveal {
+        animation: bounce-reveal var(--ticker-duration, 2s) ease infinite;
+      }
+      .animate-shimmer {
+        background: linear-gradient(90deg, currentColor 25%, #a855f7 50%, currentColor 75%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer-sweep var(--ticker-duration, 2.5s) linear infinite;
+      }
+    `}} />
+  )
+
+  const renderTextContent = () => {
+    if (animation === 'scroll') {
+      return (
+        <div className="relative w-full overflow-hidden flex items-center">
+          <div 
+            className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
+            style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+          >
+            {[...tickerItems, ...tickerItems, ...tickerItems].map((title, idx) => (
+              <span key={idx} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
+                <span className="font-semibold" style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}>
+                  {title}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div 
+        className={`flex-1 font-medium truncate select-text ${animClass}`}
+        style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+      >
+        {alertText}
+      </div>
+    )
+  }
 
   // ── ORIGINAL design (default) — exact same as StockTicker ──
   if (cStyle === 'original') {
@@ -114,6 +268,7 @@ export function DynamicBreakingNewsTicker() {
         className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono select-none"
         style={{ backgroundColor: bgColor, color: textColor, border: borderCss || undefined }}
       >
+        {styleBlock}
         <div className="flex items-center">
           {!hidePrefix && (
             <div
@@ -123,18 +278,7 @@ export function DynamicBreakingNewsTicker() {
               {prefixText}
             </div>
           )}
-          <div className="relative w-full overflow-hidden flex items-center">
-            <div className="animate-ticker flex items-center whitespace-nowrap gap-12">
-              {[...tickerItems, ...tickerItems, ...tickerItems].map((title, idx) => (
-                <span key={idx} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
-                  <span className="font-semibold" style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}>
-                    {title}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
+          {renderTextContent()}
         </div>
       </div>
     )
@@ -194,6 +338,7 @@ export function DynamicBreakingNewsTicker() {
       className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
       style={{ backgroundColor: bgColor, color: textColor, border: borderCss, ...containerStyleInline }}
     >
+      {styleBlock}
       {!hidePrefix && prefixText && (
         <span
           className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase select-none tracking-wider shrink-0 bg-white ${blinkClass}`}
@@ -202,20 +347,7 @@ export function DynamicBreakingNewsTicker() {
           {prefixText}
         </span>
       )}
-      {animation === 'scroll' ? (
-        <div className="relative w-full overflow-hidden flex items-center">
-          <div className="animate-ticker flex items-center whitespace-nowrap gap-12">
-            {[...tickerItems, ...tickerItems].map((title, idx) => (
-              <span key={idx} className="flex items-center gap-2 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
-                {title}
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className={`flex-1 font-medium truncate select-text ${textAnimClass}`}>{alertText}</div>
-      )}
+      {renderTextContent()}
     </div>
   )
 }
