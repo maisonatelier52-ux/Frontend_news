@@ -298,7 +298,55 @@ export default function Home() {
     const borderColor = section.settings?.borderColor || '#e2e8f0';
 
     const borderCss = borderStyle === 'thin' ? `1px solid ${borderColor}` : borderStyle === 'thick' ? `3px solid ${borderColor}` : 'none';
-    const containerClass = containerStyle === 'capsule' ? 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2' : containerStyle === 'bar' ? 'rounded-none px-4 py-2.5' : 'bg-transparent border-0 px-2 py-1';
+    
+    let containerClass = '';
+    let containerStyleInline: React.CSSProperties = {};
+
+    switch (containerStyle) {
+      case 'capsule':
+        containerClass = 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2';
+        break;
+      case 'sharp-bar':
+        containerClass = 'rounded-none px-4 py-2.5';
+        break;
+      case 'soft-box':
+        containerClass = 'rounded-xl px-4 py-2.5 mx-auto max-w-7xl my-2';
+        break;
+      case 'framed-box':
+        containerClass = 'rounded-xl border-2 px-4 py-2.5 mx-auto max-w-7xl my-2';
+        containerStyleInline.backgroundColor = 'transparent';
+        break;
+      case 'left-accent':
+        containerClass = 'rounded-none px-4 py-2.5';
+        containerStyleInline.borderLeft = `8px solid ${borderColor || '#dc2626'}`;
+        break;
+      case 'dotted-panel':
+        containerClass = 'rounded-lg border-2 border-dotted px-4 py-2.5 mx-auto max-w-7xl my-2';
+        break;
+      case 'glassmorphism':
+        containerClass = 'backdrop-blur-md border border-white/20 rounded-2xl px-5 py-2.5 shadow-sm mx-auto max-w-7xl my-2';
+        containerStyleInline.backgroundColor = 'rgba(255, 255, 255, 0.12)';
+        break;
+      case 'diagonal-gradient':
+        containerClass = 'rounded-none px-4 py-2.5';
+        containerStyleInline.backgroundImage = `linear-gradient(135deg, ${bgColor} 0%, #db2777 50%, #f97316 100%)`;
+        break;
+      case 'dual-border-slate':
+        containerClass = 'rounded-none px-4 py-2.5';
+        containerStyleInline.borderTop = `2px solid ${borderColor || '#64748b'}`;
+        containerStyleInline.borderBottom = `2px solid ${borderColor || '#64748b'}`;
+        break;
+      case 'shadow-glow':
+        containerClass = 'rounded-full px-5 py-2.5 mx-auto max-w-7xl my-2';
+        containerStyleInline.boxShadow = `0 0 15px ${(borderColor !== '#e2e8f0' ? borderColor : bgColor)}40`;
+        break;
+      case 'minimal':
+      default:
+        containerClass = 'bg-transparent border-0 px-2 py-1';
+        containerStyleInline.backgroundColor = 'transparent';
+        break;
+    }
+
     const blinkClass = isBlinking ? 'animate-pulse' : '';
     const textAnimClass = animation === 'fade' ? 'animate-[pulse_2s_infinite]' : '';
 
@@ -307,9 +355,10 @@ export default function Home() {
         key={section.id} 
         className={`flex items-center gap-3 text-[11.5px] font-bold font-sans overflow-hidden transition-all ${containerClass}`}
         style={{ 
-          backgroundColor: containerStyle === 'minimal' ? 'transparent' : bgColor, 
+          backgroundColor: bgColor, 
           color: textColor,
-          border: borderCss
+          border: borderCss,
+          ...containerStyleInline
         }}
       >
         {!hidePrefix && prefixText && (
