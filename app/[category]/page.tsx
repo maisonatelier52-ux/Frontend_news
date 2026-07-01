@@ -370,8 +370,8 @@ export default function CategoryPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-zinc-100 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
-                      <span>By {article.author}</span>
-                      <span>{article.date}</span>
+                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
                     </div>
                   </div>
                 ))}
@@ -427,8 +427,8 @@ export default function CategoryPage() {
                         </p>
                       </div>
                       <div className="mt-6 border-t border-zinc-100 pt-3 flex items-center justify-between text-[11px] text-zinc-400 font-sans">
-                        <span>By <span className="font-semibold text-zinc-700">{heroArticle.author}</span></span>
-                        <span>{heroArticle.date}</span>
+                        <span>By <span className="font-semibold text-zinc-700">{heroArticle.author}</span> • {heroArticle.date}</span>
+                        <span className="font-semibold text-zinc-700">{heroArticle.readTime}</span>
                       </div>
                     </div>
                   </div>
@@ -454,8 +454,9 @@ export default function CategoryPage() {
                               <p className="mt-1.5 text-xs text-zinc-600 line-clamp-2 leading-relaxed">
                                 {article.excerpt}
                               </p>
-                              <div className="mt-2.5 text-[10px] text-zinc-400 font-sans">
-                                By {article.author} &bull; {article.date}
+                              <div className="mt-2.5 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                                <span>By <span className="text-zinc-500 font-medium">{article.author}</span> &bull; {article.date}</span>
+                                <span className="font-semibold text-zinc-700">{article.readTime}</span>
                               </div>
                             </div>
 
@@ -488,8 +489,9 @@ export default function CategoryPage() {
                             <h4 className="font-editorial-title text-sm font-bold text-zinc-900 group-hover:text-zinc-650 transition leading-snug">
                               {article.title}
                             </h4>
-                            <div className="mt-1 text-[10px] text-zinc-400">
-                              By {article.author}
+                            <div className="mt-1 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                              <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                              <span className="font-semibold text-zinc-700">{article.readTime}</span>
                             </div>
                           </div>
                         ))}

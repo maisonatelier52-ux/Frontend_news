@@ -143,8 +143,9 @@ export default function NewsGrid({
                     {article.title}
                   </h3>
                   <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{article.excerpt}</p>
-                  <div className="mt-2 text-[10px] text-zinc-400 font-sans">
-                    By {article.author} • {article.date}
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                    <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
                   </div>
                 </div>
                 <div className="w-20 sm:w-28 overflow-hidden rounded-sm aspect-[4/3] bg-zinc-100 flex-shrink-0 relative">
@@ -173,8 +174,9 @@ export default function NewsGrid({
                     {article.title}
                   </h3>
                   <p className="mt-1 text-xs text-zinc-500 line-clamp-2">{article.excerpt}</p>
-                  <div className="mt-2 text-[10px] text-zinc-400 font-sans">
-                    By {article.author} • {article.date}
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                    <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
                   </div>
                 </div>
                 <div className="w-20 sm:w-28 overflow-hidden rounded-sm aspect-[4/3] bg-zinc-100 flex-shrink-0 relative">
@@ -299,7 +301,10 @@ export default function NewsGrid({
                   <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition mt-0.5">
                     {article.title}
                   </h3>
-                  <span className="text-[10px] text-zinc-400">By {article.author}</span>
+                  <div className="flex items-center justify-between text-[10px] text-zinc-400 font-sans mt-1">
+                    <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -428,8 +433,9 @@ export default function NewsGrid({
                           {article.excerpt}
                         </p>
                       </div>
-                      <div className="mt-2.5 flex justify-between items-center text-[9px] text-zinc-400 font-mono">
-                        <span>By {article.author}</span>
+                      <div className="mt-2.5 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                        <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                        <span className="font-semibold text-zinc-700">{article.readTime}</span>
                       </div>
                     </div>
                     <div className="w-20 h-16 sm:w-28 sm:h-20 overflow-hidden rounded bg-zinc-100 relative flex-shrink-0 self-center">
@@ -485,8 +491,9 @@ export default function NewsGrid({
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-zinc-150 flex justify-between items-center text-[10px] text-zinc-400 font-mono">
-                    <span>By {article.author}</span>
+                  <div className="mt-4 pt-3 border-t border-zinc-150 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                    <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
                   </div>
                 </div>
               ))}

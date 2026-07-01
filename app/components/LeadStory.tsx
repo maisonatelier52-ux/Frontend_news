@@ -68,9 +68,10 @@ export default function LeadStory({
               {/* Author Details and Read info */}
               <div className="mt-5 border-t border-zinc-150 pt-3 flex items-center justify-between text-[11px] text-zinc-500 font-sans">
                 <div>
-                  By <span className="font-semibold text-zinc-800">{leadArticle.author}</span>
-                  <span className="text-zinc-400"> • {leadArticle.authorTitle}</span>
+                  By <span className="font-semibold text-zinc-850">{leadArticle.author}</span>
+                  <span className="text-zinc-400"> • {leadArticle.date}</span>
                 </div>
+                <span className="font-semibold text-zinc-700">{leadArticle.readTime}</span>
               </div>
             </div>
 
@@ -106,8 +107,11 @@ export default function LeadStory({
                   <p className="mt-1.5 text-xs text-zinc-500 line-clamp-2 leading-relaxed font-sans">
                     {article.excerpt}
                   </p>
-                  <div className="mt-2 text-[10px] text-zinc-400 font-sans">
-                    By {article.author}
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                    <span>
+                      By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}
+                    </span>
+                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
                   </div>
                 </div>
               </div>
@@ -143,8 +147,11 @@ export default function LeadStory({
                   </p>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between text-[10px] text-zinc-400">
-                  <span>By {article.author}</span>
+                <div className="mt-3 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                  <span>
+                    By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}
+                  </span>
+                  <span className="font-semibold text-zinc-700">{article.readTime}</span>
                 </div>
                 {idx < secondaryArticles.length - 1 && (
                   <div className="border-b border-zinc-200 mt-4" />
