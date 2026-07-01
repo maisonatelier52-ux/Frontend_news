@@ -70,6 +70,7 @@ export default function HomeLayoutConfigPage() {
   // Navigation / Customizer sub-page state
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
+  const [previewTab, setPreviewTab] = useState<'draft' | 'live'>('draft')
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -1961,59 +1962,98 @@ export default function HomeLayoutConfigPage() {
         </div>
       </div>
 
-      {/* DUAL COMPILATION PREVIEWS */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
-        {/* LEFT: CURRENT LAYOUT PREVIEW */}
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
-            <span className="text-[12.5px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
-              ⏮️ BEFORE: Live Website View
+      {/* HOMEPAGE LAYOUT PREVIEW SIMULATOR */}
+      <div className="flex flex-col gap-4">
+        {/* Toggle bar */}
+        <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs select-none">
+          <div className="flex flex-col text-left">
+            <span className="text-[13.5px] font-extrabold text-slate-800 uppercase tracking-wider font-sans flex items-center gap-2">
+              🖥️ Homepage Live Preview Simulator
             </span>
-            <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
-              Active DB State
-            </span>
-          </div>
-
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
-            {originalSections
-              .filter(s => s.isVisible)
-              .map(sec => (
-                <div key={sec.id} className="relative group">
-                  <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
-                    {sec.title}
-                  </div>
-                  {renderPreviewMock(sec)}
-                </div>
-              ))}
-          </div>
-        </div>
-
-        {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
-            <span className="text-[12.5px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
-              ⏭️ AFTER: Proposed Draft View (Unsaved)
-            </span>
-            <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
-              Interactive Draft Simulation
+            <span className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+              Toggle tabs to compare live website view and proposed draft preview with animation
             </span>
           </div>
 
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
-            {sections
-              .filter(s => s.isVisible)
-              .map(sec => (
-                <div key={sec.id} className="relative group">
-                  <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
-                    {sec.title}
-                  </div>
-                  {renderPreviewMock(sec)}
-                </div>
-              ))}
+          <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+            <button
+              onClick={() => setPreviewTab('draft')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                previewTab === 'draft'
+                  ? 'bg-[#6366f1] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              <span>✨ Draft Preview (With Changes)</span>
+            </button>
+            <button
+              onClick={() => setPreviewTab('live')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                previewTab === 'live'
+                  ? 'bg-slate-500 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              <span>🌐 Live Website View (Current)</span>
+            </button>
           </div>
         </div>
 
+        {/* Sliding Canvas Container */}
+        <div className="relative w-full overflow-hidden border border-slate-200 bg-white rounded-3xl min-h-[500px] shadow-[0_8px_30px_rgba(15,23,42,0.01)]">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out w-[200%]"
+            style={{ transform: previewTab === 'draft' ? 'translateX(0%)' : 'translateX(-50%)' }}
+          >
+            {/* Slide 1: Proposed Draft View */}
+            <div className="w-1/2 p-6 flex flex-col gap-4">
+              <div className="border-b pb-3 mb-2 flex justify-between items-center select-none">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-[#6366f1]">
+                  Proposed Draft layout preview (Unsaved)
+                </span>
+                <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
+                  Interactive Draft Simulation
+                </span>
+              </div>
+              <div className="w-full flex flex-col gap-0 bg-white">
+                {sections
+                  .filter(s => s.isVisible)
+                  .map(sec => (
+                    <div key={sec.id} className="relative group">
+                      <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide z-10 select-none">
+                        {sec.title}
+                      </div>
+                      {renderPreviewMock(sec)}
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Slide 2: Current Live View */}
+            <div className="w-1/2 p-6 flex flex-col gap-4">
+              <div className="border-b pb-3 mb-2 flex justify-between items-center select-none">
+                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
+                  Current Live layout view (Active)
+                </span>
+                <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
+                  Active DB State
+                </span>
+              </div>
+              <div className="w-full flex flex-col gap-0 bg-white">
+                {originalSections
+                  .filter(s => s.isVisible)
+                  .map(sec => (
+                    <div key={sec.id} className="relative group">
+                      <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide z-10 select-none">
+                        {sec.title}
+                      </div>
+                      {renderPreviewMock(sec)}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
