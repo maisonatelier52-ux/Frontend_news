@@ -70,7 +70,6 @@ export default function HomeLayoutConfigPage() {
   // Navigation / Customizer sub-page state
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
-  const [showComparisonModal, setShowComparisonModal] = useState(false)
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -709,38 +708,38 @@ export default function HomeLayoutConfigPage() {
   const renderDomainHeaderPreview = (sec: LayoutSection) => {
     const isText = sec.settings?.logoType !== 'image'
     const alignment = sec.settings?.alignment || 'center'
-    const logoSize = sec.settings?.logoSize || '48px'
+    const logoSize = sec.settings?.logoSize || '36px'
     const logoColor = sec.settings?.logoColor || '#000000'
     const logoImg = sec.settings?.logoImage || ''
     const tagline = sec.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism'
-    const tagSize = sec.settings?.taglineSize || '12px'
-    const tagColor = sec.settings?.taglineColor || '#71717a'
+    const tagSize = sec.settings?.taglineSize || '11px'
+    const tagColor = sec.settings?.taglineColor || '#64748b'
     const bgColor = sec.settings?.bgColor || '#ffffff'
 
     const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center'
 
     return (
       <div 
-        className={`w-full flex flex-col justify-center pt-2 pb-4 md:pt-4 md:pb-8 border-b border-zinc-200 px-4 select-none transition-all ${alignClass}`}
+        className={`w-full flex flex-col items-center justify-center pt-2 pb-4 md:pt-4 md:pb-6 border-b border-zinc-200 px-4 select-none transition-all ${alignClass}`}
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
           <h1 
-            className="font-editorial-title font-extrabold tracking-tight text-center text-black"
+            className="font-editorial-title text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-black cursor-pointer text-center m-0 leading-tight"
             style={{ fontSize: logoSize, color: logoColor }}
           >
             DOMAIN NAME
           </h1>
         ) : (
           <div 
-            className="border-2 border-dashed border-slate-350 rounded-lg flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
-            style={{ width: '200px', height: '50px' }}
+            className="border border-dashed border-slate-300 rounded flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
+            style={{ width: '200px', height: '42px' }}
           >
-            🖼️ {logoImg ? 'Loaded: ' + logoImg.substring(0, 15) + '...' : 'Upload Image Logo'}
+            🖼️ {logoImg ? 'Loaded Logo' : 'Upload Image Logo'}
           </div>
         )}
         <p 
-          className="mt-1 uppercase tracking-widest text-center"
+          className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center"
           style={{ fontSize: tagSize, color: tagColor }}
         >
           {tagline}
@@ -767,12 +766,8 @@ export default function HomeLayoutConfigPage() {
         style={{ backgroundColor: bgColor }}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
-          <nav className={`flex items-center flex-nowrap md:flex-wrap gap-0 overflow-x-auto no-scrollbar w-full md:w-auto ${alignClass}`}>
-            <span className={`py-2 px-3 text-xs md:text-sm font-medium transition-all ${
-              activeDesign === 'underline' 
-                ? 'text-black border-b-2 border-black font-semibold' 
-                : 'bg-zinc-900 text-white px-3 py-1 rounded-full'
-            }`}>
+          <nav className={`flex items-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 ${alignClass}`}>
+            <span className={`py-2 px-3 text-xs md:text-sm font-medium transition-all ${activeDesign === 'underline' ? 'text-black border-b-2 border-black font-semibold' : 'bg-zinc-950 text-white px-3 py-1 rounded font-semibold'}`}>
               All News
             </span>
             <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Politics</span>
@@ -781,16 +776,16 @@ export default function HomeLayoutConfigPage() {
           </nav>
 
           {searchPlacement !== 'hidden' && (
-            <div className={`relative flex items-center w-full max-w-[200px] md:w-44 lg:w-56 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+            <div className={`relative flex items-center w-full max-w-[160px] md:w-40 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
               <input
                 type="text"
                 readOnly
                 placeholder={searchPlaceholder}
-                className="w-full bg-zinc-50 border rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 cursor-default"
+                className="w-full bg-zinc-50 border px-2.5 py-1 text-[11px] rounded outline-none cursor-default font-sans text-zinc-500 pr-8"
                 style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
               />
-              <span className="absolute right-2 text-zinc-400 cursor-pointer">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="absolute right-2.5 text-zinc-450 text-xs">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </span>
@@ -813,109 +808,286 @@ export default function HomeLayoutConfigPage() {
     const customBg = section.settings?.bgColor || '#ffffff'
 
     switch (section.id) {
-      case 'date-section':
+      case 'date-section': {
         const dateBg = section.settings?.bgColor || '#ffffff'
         const dateCol = section.settings?.textColor || '#52525b'
-        const dateAlign = section.settings?.alignment || 'left'
+        const dateAlign = section.settings?.alignment || 'spaced'
         const dateBorder = section.settings?.borderStyle || 'none'
         const dateBorderCol = section.settings?.borderColor || '#e4e4e7'
-        const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : 'none'
+        const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : `1px solid #e4e4e7`
 
         const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
         return (
           <div 
             key={section.id} 
-            className={`w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex items-center gap-1.5 transition-all ${dateAlignClass}`}
+            className={`w-full py-2 px-4 sm:px-6 text-xs text-zinc-650 flex items-center transition-all ${dateAlignClass}`}
             style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
           >
-            <span className="flex items-center gap-1.5 font-medium">
-              <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span className="flex items-center gap-1.5 font-sans font-medium">
+              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Wednesday, July 1, 2026
             </span>
+            {dateAlign === 'spaced' && (
+              <span className="font-sans font-semibold text-zinc-500 text-[11px]">
+                Washington, D.C.
+              </span>
+            )}
           </div>
         )
+      }
       case 'first-hero':
-        if (section.designStyle === 'hero-full') {
-          return (
-            <div key={section.id} className="border rounded-2xl overflow-hidden shadow-xs flex flex-col gap-2" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <div className="h-32 bg-slate-200 flex items-center justify-center text-slate-400 font-bold text-[11px] uppercase">[Featured Image Hero]</div>
-              <div className="p-3">
-                <span className={`text-[8.5px] font-bold px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.title}</span>
-                <h4 className="font-serif font-extrabold text-[14px] mt-1 text-slate-800">Grid Expansion Accord Reaches Funding Settlement</h4>
+        return (
+          <section key={section.id} className="w-full py-6 px-4 sm:px-6 max-w-7xl mx-auto text-left border-t border-zinc-200 transition-all" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* Left Side: Lead Story + Sub-articles */}
+              <div className="lg:col-span-8 flex flex-col justify-start">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Lead story text */}
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-red-700 text-white font-extrabold px-2 py-0.5 text-[9px] uppercase tracking-wider">
+                          Lead Story
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                          US News
+                        </span>
+                      </div>
+                      <h2 className="font-editorial-title text-2xl sm:text-3xl font-extrabold text-zinc-900 leading-tight tracking-tight">
+                        Senate Committee Reaches Funding Package Settlement
+                      </h2>
+                      <p className="mt-2 text-xs text-zinc-500 leading-relaxed font-sans line-clamp-3">
+                        Senate committee members have voted to approve a packaging agreement to boost enterprise growth and infrastructure funding across rural states.
+                      </p>
+                    </div>
+                    <div className="mt-4 border-t border-zinc-150 pt-2 flex items-center text-[10px] text-zinc-400">
+                      By <span className="font-semibold text-zinc-700 ml-1">Staff Reporter</span>
+                    </div>
+                  </div>
+                  {/* Lead image placeholder */}
+                  <div className="flex-1 min-h-[140px] bg-zinc-100 rounded-sm relative overflow-hidden flex items-center justify-center text-zinc-400 font-sans text-[10px] font-bold border border-zinc-200">
+                    📸 FEATURED STORY IMAGE
+                  </div>
+                </div>
+
+                <div className="border-t border-zinc-200 mt-4 pt-3" />
+
+                {/* 2 sub-articles */}
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div>
+                    <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Finance</div>
+                    <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                      Stocks Rally Following Fed Policy Announcement
+                    </h3>
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Technology</div>
+                    <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                      Enterprise Custom AI Models Latency Optimization
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side: Column of Secondary/Breaking */}
+              <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
+                <div className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1">
+                  Breaking Updates
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">World</span>
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                      Global Climate Summit Reaches Agreement
+                    </h3>
+                  </div>
+                  <div className="border-t pt-2">
+                    <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">Science</span>
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                      JWST Reveals Atmospheric Findings on Exoplanet
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
-          )
-        }
-        if (section.designStyle === 'hero-minimal') {
-          return (
-            <div key={section.id} className="p-3 bg-white border rounded-xl text-center" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <h4 className="font-serif font-extrabold text-[14px] text-slate-900 leading-snug">"Infrastructure Expansion Finalized Under Senate Committee Vote"</h4>
-            </div>
-          )
-        }
+          </section>
+        )
+      case 'opinion-column':
         return (
-          <div key={section.id} className="grid grid-cols-3 gap-3">
-            <div className="col-span-2 border rounded-2xl p-3 flex flex-col justify-between" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <div className="h-16 bg-slate-200 rounded-lg" />
-              <div className="text-[11.5px] font-bold text-slate-800 mt-2 truncate">Grid Electrification Agreement Passed</div>
+          <div key={section.id} className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm text-left max-w-7xl mx-auto" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="border-b border-zinc-800 pb-1 mb-4 text-center">
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-zinc-900">Opinion & Columns</h2>
             </div>
-            <div className="bg-slate-50 border rounded-2xl p-3 text-[10px] font-medium text-slate-400">
-              <div className="font-bold border-b pb-0.5 mb-1 text-slate-600 uppercase">TRENDING</div>
-              <div className="truncate">Stocks Rally Following</div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-left">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-zinc-800 text-white font-mono flex items-center justify-center text-[9px] font-bold">
+                    AP
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Arthur Pendelton</h4>
+                  </div>
+                </div>
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                  "Upgrading Rural Power Grids is Critical for AgTech Growth"
+                </h3>
+              </div>
+              <div className="border-l border-zinc-200 pl-4 text-left">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-zinc-800 text-white font-mono flex items-center justify-center text-[9px] font-bold">
+                    GR
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Gary Reynolds</h4>
+                  </div>
+                </div>
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                  "Why Fed Rate Strategy Remains Cautious But Decisive"
+                </h3>
+              </div>
+              <div className="border-l border-zinc-200 pl-4 text-left">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-zinc-800 text-white font-mono flex items-center justify-center text-[9px] font-bold">
+                    SM
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-zinc-800 leading-none">Sophia Martinez</h4>
+                  </div>
+                </div>
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                  "Urban Drainage Investments and Commuter Realities"
+                </h3>
+              </div>
             </div>
           </div>
         )
-      case 'opinion-column':
-        if (section.designStyle === 'quote') {
-          return (
-            <div key={section.id} className="p-4 bg-[#faf8f5] border rounded-xl text-center" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <blockquote className="text-[11px] italic text-slate-650 leading-relaxed">"Electrifying rural grids will trigger agriculture growth..."</blockquote>
-              <cite className="text-[9px] font-bold text-slate-400 block mt-2">— Arthur Pendelton</cite>
-            </div>
-          )
-        }
+      case 'us-politics':
+      case 'finance-markets':
+      case 'technology-section':
+      case 'world-affairs': {
+        const gridTitle = section.title
         return (
-          <div key={section.id} className="border p-3 rounded-2xl shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-            <div className="text-[11px] font-bold text-slate-700 mb-1.5">{section.title}</div>
-            <div className="grid grid-cols-2 gap-2 text-[10.5px] italic">
-              <div className="bg-white p-2 rounded border">"Rural grid upgrades will shape digital agriculture..."</div>
-              <div className="bg-white p-2 rounded border">"STARTUPS: Balancing security vs scaling rules..."</div>
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="border-b-2 border-zinc-900 pb-1 mb-3">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-950">{gridTitle}</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="flex gap-4 items-start">
+                <div className="flex-1">
+                  <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                    Bipartisan Infrastructure Funding Bill Passes Committee
+                  </h3>
+                  <div className="mt-1 text-[9px] text-zinc-400">By Reporter • Today</div>
+                </div>
+                <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] text-zinc-450">📸 Image</div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="flex-1">
+                  <h3 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug">
+                    Committee Outlines Legislative Blueprint for Development Boost
+                  </h3>
+                  <div className="mt-1 text-[9px] text-zinc-400">By Reporter • Yesterday</div>
+                </div>
+                <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] text-zinc-455">📸 Image</div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+      case 'arts-marketing-pr':
+        return (
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Arts & Culture</h3>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Opera House Reopens Following Restoration</span>
+                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
+                </div>
+              </div>
+              <div className="border-l border-zinc-200 pl-4">
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Marketing Strategy</h3>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Brand Tactics Adapt to Digital Audiences</span>
+                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
+                </div>
+              </div>
+              <div className="border-l border-zinc-200 pl-4">
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Press Releases</h3>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <span className="font-editorial-title text-xs font-bold leading-snug flex-1">Announcements of Corporate Rebranding</span>
+                  <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'trending-columns':
+        return (
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="border-b border-zinc-200 pb-1 mb-3">
+              <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Trending Columns</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex gap-3 items-start">
+                <span className="font-mono text-xl font-bold text-zinc-200 leading-none">01</span>
+                <div>
+                  <h4 className="font-editorial-title text-xs font-bold text-zinc-950 leading-tight">Energy Electrification Strategy Reaches Consensus</h4>
+                  <span className="text-[9px] text-zinc-400">By Reporter</span>
+                </div>
+              </div>
+              <div className="flex gap-3 items-start border-t pt-2">
+                <span className="font-mono text-xl font-bold text-zinc-200 leading-none">02</span>
+                <div>
+                  <h4 className="font-editorial-title text-xs font-bold text-zinc-950 leading-tight">Federal Policy Framework Guidelines and Market Realities</h4>
+                  <span className="text-[9px] text-zinc-400">By Reporter</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'latest-news':
+        return (
+          <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+            <div className="border-b border-zinc-900 pb-1 mb-3 text-center">
+              <h2 className="text-xs font-black uppercase tracking-widest text-zinc-950">LATEST NEWS</h2>
+            </div>
+            <div className="space-y-3">
+              <div className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center">
+                <div className="flex-1">
+                  <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-950 leading-snug">New Infrastructure Packaging Reaches Final Approval Stages</h4>
+                  <span className="text-[9px] text-zinc-400">By Reporter • Just Now</span>
+                </div>
+                <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0" />
+              </div>
+              <div className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center border-t pt-2">
+                <div className="flex-1">
+                  <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-950 leading-snug">Global Stocks Advance Following Treasury Yield Easing</h4>
+                  <span className="text-[9px] text-zinc-400">By Reporter • 10m ago</span>
+                </div>
+                <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0" />
+              </div>
             </div>
           </div>
         )
       default:
-        // Category blocks
-        if (section.designStyle === 'magazine') {
-          return (
-            <div key={section.id} className="border p-3 rounded-2xl flex gap-3 shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <div className="w-14 h-14 bg-slate-150 rounded-lg shrink-0" />
-              <div className="flex-grow flex flex-col justify-center gap-1.5">
-                <span className={`text-[8px] font-bold w-max px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.categorySource}</span>
-                <div className="text-[12px] font-bold text-slate-800 line-clamp-1">{section.title} Row Entry</div>
-              </div>
-            </div>
-          )
-        }
-        if (section.designStyle === 'list') {
-          return (
-            <div key={section.id} className="border p-3 rounded-2xl flex flex-col gap-1.5 shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
-              <div className="text-[11.5px] font-bold text-slate-700 border-b pb-0.5">{section.title}</div>
-              <div className="text-[11px] text-slate-600 truncate">▪️ Representative article entry headline one ({section.categorySource})</div>
-              <div className="text-[11px] text-slate-600 truncate">▪️ Representative article entry headline two ({section.categorySource})</div>
-            </div>
-          )
-        }
         return (
-          <div key={section.id} className="border p-3 rounded-2xl shadow-xs" style={{ borderTop: borderStyle, backgroundColor: customBg }}>
+          <div key={section.id} className="w-full py-3 text-left border-t border-zinc-250" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
             <div className="flex justify-between items-center mb-2 border-b pb-0.5">
               <span className="text-[11.5px] font-extrabold text-slate-800">{section.title}</span>
               <span className={`text-[8px] font-bold px-1.5 py-0.25 rounded uppercase tracking-wider font-mono ${badgeStyle}`}>{section.categorySource}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="h-10 bg-slate-150 rounded" />
-              <div className="h-10 bg-slate-150 rounded" />
+              <div className="h-10 bg-slate-100 border rounded" />
+              <div className="h-10 bg-slate-100 border rounded" />
             </div>
           </div>
         )
@@ -1789,123 +1961,60 @@ export default function HomeLayoutConfigPage() {
         </div>
       </div>
 
-      {/* DUAL COMPILATION PREVIEWS COMPACT BLOCK */}
-      <div className="bg-[#eff6ff] border border-blue-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center gap-4 shadow-sm mb-8 animate-[admin-fade-in_0.4s_ease]">
-        <div className="max-w-md">
-          <h3 className="text-[16px] font-bold text-blue-900 flex items-center justify-center gap-2">
-            <span>👁️</span> Live Side-by-Side Layout Comparison
-          </h3>
-          <p className="text-[12.5px] text-blue-700 mt-1">
-            Compare the current live news site design side-by-side with your draft customization changes before saving them.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowComparisonModal(true)}
-          className="p-3 px-7 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[13px] font-bold transition cursor-pointer shadow-md flex items-center gap-2 border-0"
-        >
-          <span>🖥️ Open Live Preview Comparison</span>
-        </button>
-      </div>
+      {/* DUAL COMPILATION PREVIEWS */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        {/* LEFT: CURRENT LAYOUT PREVIEW */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
+            <span className="text-[12.5px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
+              ⏮️ BEFORE: Live Website View
+            </span>
+            <span className="text-[10px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
+              Active DB State
+            </span>
+          </div>
 
-      {/* FULLSCREEN PREVIEW COMPARISON MODAL */}
-      {showComparisonModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 md:p-8 animate-[admin-fade-in_0.2s_ease_both]">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[92vh] flex flex-col overflow-hidden border border-slate-100 animate-[admin-slide-up_0.3s_ease_both]">
-            {/* Modal Header */}
-            <div className="p-4 px-6 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div>
-                <h2 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
-                  <span>🖥️</span> Live Website Layout Comparison
-                </h2>
-                <p className="text-[11.5px] text-slate-500">Compare your active configurations with unsaved draft changes</p>
-              </div>
-              <button
-                onClick={() => setShowComparisonModal(false)}
-                className="p-2 px-4 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 cursor-pointer transition"
-              >
-                ✕ Close Preview
-              </button>
-            </div>
-
-            {/* Modal Content - scrollable side-by-side comparison */}
-            <div className="p-6 overflow-y-auto flex-grow bg-slate-50">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                
-                {/* LEFT: CURRENT LAYOUT PREVIEW */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center bg-slate-200/60 p-3 px-4 rounded-xl border border-slate-350 select-none">
-                    <span className="text-[12px] font-extrabold text-slate-700 tracking-wide uppercase font-sans">
-                      ⏮️ BEFORE: Live Website View
-                    </span>
-                    <span className="text-[9.5px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded">
-                      Active DB State
-                    </span>
+          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
+            {originalSections
+              .filter(s => s.isVisible)
+              .map(sec => (
+                <div key={sec.id} className="relative group">
+                  <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
+                    {sec.title}
                   </div>
-
-                  <div className="bg-white border border-slate-200 p-0 flex flex-col gap-0 min-h-[500px] shadow-sm overflow-hidden">
-                    {originalSections
-                      .filter(s => s.isVisible)
-                      .map(sec => (
-                        <div key={sec.id} className="relative group">
-                          <div className="absolute top-2.5 left-3 bg-slate-500/80 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none z-10 pointer-events-none">
-                            {sec.title}
-                          </div>
-                          {renderPreviewMock(sec)}
-                        </div>
-                      ))}
-                  </div>
+                  {renderPreviewMock(sec)}
                 </div>
-
-                {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
-                    <span className="text-[12px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
-                      ⏭️ AFTER: Proposed Draft View (Unsaved)
-                    </span>
-                    <span className="text-[9.5px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
-                      Interactive Draft Simulation
-                    </span>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 p-0 flex flex-col gap-0 min-h-[500px] shadow-sm overflow-hidden">
-                    {sections
-                      .filter(s => s.isVisible)
-                      .map(sec => (
-                        <div key={sec.id} className="relative group">
-                          <div className="absolute top-2.5 left-3 bg-indigo-650/80 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none z-10 pointer-events-none">
-                            {sec.title}
-                          </div>
-                          {renderPreviewMock(sec)}
-                        </div>
-                      ))}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 px-6 border-t border-slate-200 flex justify-end gap-2 bg-slate-50">
-              <button
-                onClick={() => setShowComparisonModal(false)}
-                className="p-2 px-5 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-xl hover:bg-slate-100 cursor-pointer transition"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  saveLayout();
-                  setShowComparisonModal(false);
-                }}
-                disabled={saving}
-                className="p-2 px-6 bg-[#6366f1] text-white text-[12.5px] font-bold rounded-xl hover:bg-[#4f46e5] cursor-pointer shadow-md transition"
-              >
-                {saving ? 'Publishing...' : '💾 Save & Publish Changes'}
-              </button>
-            </div>
+              ))}
           </div>
         </div>
-      )}
+
+        {/* RIGHT: PROPOSED DRAFT LAYOUT PREVIEW */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center bg-indigo-50 p-3 px-4 rounded-xl border border-indigo-200 select-none">
+            <span className="text-[12.5px] font-extrabold text-indigo-850 tracking-wide uppercase font-sans">
+              ⏭️ AFTER: Proposed Draft View (Unsaved)
+            </span>
+            <span className="text-[10px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded animate-pulse">
+              Interactive Draft Simulation
+            </span>
+          </div>
+
+          <div className="bg-[#f8fafc] border border-slate-200 rounded-3xl p-4 flex flex-col gap-3 min-h-[500px]">
+            {sections
+              .filter(s => s.isVisible)
+              .map(sec => (
+                <div key={sec.id} className="relative group">
+                  <div className="absolute -top-2.5 left-3 bg-indigo-650 text-white text-[8px] font-bold px-1.5 py-0.25 rounded opacity-0 group-hover:opacity-100 transition tracking-wide select-none">
+                    {sec.title}
+                  </div>
+                  {renderPreviewMock(sec)}
+                </div>
+              ))}
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }
