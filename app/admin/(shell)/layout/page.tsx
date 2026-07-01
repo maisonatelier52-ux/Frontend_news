@@ -471,7 +471,7 @@ export default function HomeLayoutConfigPage() {
     const alertText = customText || `Federal grid upgrades active • Stock indexes climb • Supreme Court issues rulings`
 
     const hidePrefix = sec.settings?.hidePrefix === true
-    const prefixText = sec.settings?.prefixText || 'BREAKING'
+    const prefixText = sec.settings?.prefixText || 'BREAKING NEWS'
     const isBlinking = sec.settings?.isBlinking !== false
     const containerStyle = sec.settings?.containerStyle || 'original'
     const animation = sec.settings?.animation || 'scroll'
@@ -591,24 +591,45 @@ export default function HomeLayoutConfigPage() {
     let containerClass = ''
     let containerStyleInline: React.CSSProperties = {}
 
-    // Original flush design — exactly matches the live news site ticker
+    // Original flush design — EXACT pixel-perfect match of the live StockTicker / renderExactLiveTicker
     if (containerStyle === 'original') {
+      const sampleItems = alertText
+        ? alertText.split('   •   ')
+        : [
+            'Federal grid upgrades active',
+            'Stock indexes climb',
+            'Supreme Court issues rulings',
+          ]
       return (
         <div
-          className="w-full flex items-stretch text-[11px] font-mono overflow-hidden rounded-none"
-          style={{ backgroundColor: bgColor, color: textColor, border: borderCss }}
+          className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono"
+          style={{ backgroundColor: bgColor, color: textColor, border: borderCss || undefined }}
         >
           {styleBlock}
-          {!hidePrefix && prefixText && (
-            <div
-              className={`text-white font-bold px-4 py-2 uppercase tracking-wider text-[10px] flex items-center justify-center shrink-0 ${blinkClass}`}
-              style={{ backgroundColor: '#b91c1c' }}
-            >
-              {prefixText}
+          <div className="flex items-center">
+            {!hidePrefix && prefixText && (
+              <div
+                className={`text-white font-bold px-3 py-0.5 uppercase tracking-wider text-[9px] mr-4 flex-shrink-0 ${blinkClass}`}
+                style={{ backgroundColor: '#b91c1c' }}
+              >
+                {prefixText}
+              </div>
+            )}
+            <div className="relative w-full overflow-hidden flex items-center">
+              <div
+                className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
+                style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+              >
+                {[...sampleItems, ...sampleItems, ...sampleItems].map((item, idx) => (
+                  <span key={idx} className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
+                    <span className="font-semibold" style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}>
+                      {item}
+                    </span>
+                  </span>
+                ))}
+              </div>
             </div>
-          )}
-          <div className="flex-grow px-4 py-2 flex items-center overflow-hidden">
-            {renderTextContent()}
           </div>
         </div>
       )
