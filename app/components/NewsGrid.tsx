@@ -187,11 +187,10 @@ export default function NewsGrid({
         </div>
       </div>
 
-      {/* Section 2: Opinion columns (Text-only print-style layout) */}
+      {/* Section 2: Opinion columns (Text-only print-style layout) - Commented out as requested
       <div className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm">
         <div className="border-b border-zinc-800 pb-1.5 mb-6 text-center">
           <h2 className="text-xs font-black uppercase tracking-widest text-zinc-900">Opinion & Columns</h2>
-          {/* <p className="text-[10px] text-zinc-400 mt-0.5">Letters, Ideas, and Analytical Commentary</p> */}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divider-y md:divider-y-0 md:divider-x divider-zinc-200">
           {opinionArticles.map((article, idx) => (
@@ -219,8 +218,8 @@ export default function NewsGrid({
               </div>
             </div>
           ))}
-        </div>
       </div>
+      */}
 
       {/* Section 3: Tech & Science (Split Layout with Sidebar Trending) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-8">

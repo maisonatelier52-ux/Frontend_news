@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 
+import { DynamicBreakingNewsTicker } from "./Widgets";
+
 interface HeaderProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
@@ -23,24 +25,32 @@ export default function Header({
 }: HeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categories, setCategories] = useState<string[]>(["All"]);
+  const [layoutSections, setLayoutSections] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadCats() {
+    async function loadCatsAndLayout() {
       try {
-        const res = await fetch("/api/categories");
-        if (res.ok) {
-          const data = await res.json();
-          // Map to names, only include categories with at least one published article and not hidden
+        const catRes = await fetch("/api/categories");
+        if (catRes.ok) {
+          const data = await catRes.json();
           const visibleCats = data
             .filter((c: any) => c.isVisible !== false && c.articles > 0)
             .map((c: any) => c.name);
           setCategories(["All", ...visibleCats]);
         }
+
+        const layoutRes = await fetch("/api/home-layout");
+        if (layoutRes.ok) {
+          const data = await layoutRes.json();
+          if (data && data.sections) {
+            setLayoutSections(data.sections);
+          }
+        }
       } catch (err) {
-        console.error("Failed to load header categories:", err);
+        console.error("Failed to load header data:", err);
       }
     }
-    loadCats();
+    loadCatsAndLayout();
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -64,43 +74,111 @@ export default function Header({
   };
   const formattedDate = today.toLocaleDateString("en-US", options);
 
-  return (
-    <header className="w-full bg-white select-none">
-      {/* Top Banner — date left on mobile, row on sm+ */}
-      <div className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs text-zinc-600 flex flex-row sm:flex-row justify-start sm:justify-between items-center gap-2">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {formattedDate}
-          </span>
-        </div>
-      </div>
+  const renderDateSection = (sec: any) => {
+    const dateBg = sec?.settings?.bgColor || '#ffffff';
+    const dateCol = sec?.settings?.textColor || '#52525b';
+    const dateAlign = sec?.settings?.alignment || 'spaced';
+    const dateBorder = sec?.settings?.borderStyle || 'none';
+    const dateBorderCol = sec?.settings?.borderColor || '#e4e4e7';
+    const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : `1px solid #e4e4e7`;
 
-      {/* Main Branding Logo — smaller on mobile */}
-      <div className="w-full flex flex-col items-center justify-center pt-2 pb-4 md:pt-4 md:pb-8 border-b border-zinc-200 px-4">
-        <h1
-          className="font-editorial-title text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-black cursor-pointer text-center"
-          onClick={() => {
-            setActiveCategory("All");
-            setSearchQuery("");
-            setLocalSearch("");
-            setShowBookmarksOnly(false);
-          }}
+    const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between';
+
+    return (
+      <div 
+        key="date-section"
+        className={`w-full py-2 px-4 sm:px-6 text-xs text-zinc-600 flex items-center transition-all ${dateAlignClass}`}
+        style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
+      >
+        <span className="flex items-center gap-1.5 font-sans font-medium">
+          <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          {formattedDate}
+        </span>
+        {dateAlign === 'spaced' && (
+          <span className="font-sans font-semibold text-zinc-500 text-[11px]">
+            Washington, D.C.
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const renderDomainHeader = (sec: any) => {
+    const isText = sec?.settings?.logoType !== 'image';
+    const alignment = sec?.settings?.alignment || 'center';
+    const logoSize = sec?.settings?.logoSize || '72px';
+    const logoColor = sec?.settings?.logoColor || '#000000';
+    const logoImg = sec?.settings?.logoImage || '';
+    const tagline = sec?.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism';
+    const tagSize = sec?.settings?.taglineSize || '12px';
+    const tagColor = sec?.settings?.taglineColor || '#71717a';
+    const bgColor = sec?.settings?.bgColor || '#ffffff';
+
+    const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center';
+
+    return (
+      <div 
+        key="domain-header"
+        className={`w-full flex flex-col pt-2 pb-4 md:pt-4 md:pb-6 border-b border-zinc-200 px-4 transition-all ${alignClass}`}
+        style={{ backgroundColor: bgColor }}
+      >
+        {isText ? (
+          <h1 
+            className="font-editorial-title text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tight cursor-pointer m-0 leading-tight"
+            style={{ fontSize: logoSize, color: logoColor }}
+            onClick={() => {
+              setActiveCategory("All");
+              setSearchQuery("");
+              setLocalSearch("");
+              setShowBookmarksOnly(false);
+            }}
+          >
+            DOMAIN NAME
+          </h1>
+        ) : (
+          <img 
+            src={logoImg} 
+            alt="Logo" 
+            className="object-contain cursor-pointer max-h-16"
+            onClick={() => {
+              setActiveCategory("All");
+              setSearchQuery("");
+              setLocalSearch("");
+              setShowBookmarksOnly(false);
+            }}
+          />
+        )}
+        <p 
+          className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center m-0 font-sans"
+          style={{ fontSize: tagSize, color: tagColor }}
         >
-          DOMAIN NAME
-        </h1>
-        <p className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center">
-          Truth, Clarity, and Perspective <span className="mx-1">•</span> Independent Journalism
+          {tagline}
         </p>
       </div>
+    );
+  };
 
-      {/* Navigation and Search Bar */}
-      <div className="w-full border-b border-zinc-400 py-1.5 md:py-0">
+  const renderCategoryNav = (sec: any) => {
+    const bgColor = sec?.settings?.bgColor || '#ffffff';
+    const alignment = sec?.settings?.alignment || 'center';
+    const searchPlacement = sec?.settings?.searchPlacement || 'right';
+    const activeDesign = sec?.settings?.activeLinkDesign || 'underline';
+    const searchPlaceholder = sec?.settings?.searchPlaceholder || 'Search articles...';
+    const searchBorderColor = sec?.settings?.searchBorderColor || '#e4e4e7';
+    const searchBorderThickness = sec?.settings?.searchBorderThickness || '1px';
+
+    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
+
+    return (
+      <div 
+        key="category-nav"
+        className="w-full border-b border-zinc-400 py-1.5 md:py-0 transition-all"
+        style={{ backgroundColor: bgColor }}
+      >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
-          {/* Categories — horizontal scroll on mobile with hidden scrollbar */}
-          <nav className="flex items-center flex-nowrap md:flex-wrap justify-start md:justify-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <nav className={`flex items-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 ${alignClass}`}>
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -108,50 +186,85 @@ export default function Header({
                   setActiveCategory(cat);
                   setShowBookmarksOnly(false);
                 }}
-                className={`py-2 px-3 text-xs md:text-sm font-medium transition-all hover:bg-zinc-50 cursor-pointer whitespace-nowrap flex-shrink-0 ${activeCategory === cat && !showBookmarksOnly
-                  ? "text-black border-b-2 border-black font-semibold"
-                  : "text-zinc-600 hover:text-black"
-                  }`}
+                className={`py-2 px-3 text-xs md:text-sm font-medium transition-all hover:bg-zinc-50 cursor-pointer whitespace-nowrap flex-shrink-0 ${
+                  activeCategory === cat && !showBookmarksOnly
+                    ? activeDesign === 'underline'
+                      ? "text-black border-b-2 border-black font-semibold"
+                      : "bg-zinc-950 text-white px-3 py-1 rounded font-semibold"
+                    : "text-zinc-600 hover:text-black font-medium"
+                }`}
               >
                 {cat}
               </button>
             ))}
           </nav>
 
-          {/* Search Input & Bookmarks shortcut */}
-          <div className="flex items-center justify-end gap-4 w-full md:w-auto">
-            {/* Search form */}
-            <form className="relative flex items-center w-full max-w-[200px] md:w-44 lg:w-56">
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 focus:bg-white focus:border-zinc-500 transition-all"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              {localSearch && (
+          {searchPlacement !== 'hidden' && (
+            <div className={`relative flex items-center w-full max-w-[200px] md:w-44 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+              <form onSubmit={handleSearchSubmit} className="w-full relative flex items-center">
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded py-1 pl-3 pr-8 text-xs text-zinc-900 placeholder-zinc-400 focus:bg-white focus:border-zinc-500 transition-all"
+                  style={{ borderColor: searchBorderColor, borderWidth: searchBorderThickness, borderStyle: 'solid' }}
+                />
                 <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-7 text-zinc-300 hover:text-zinc-600 cursor-pointer"
+                  type="submit"
+                  className="absolute right-2 text-zinc-400 hover:text-zinc-700 cursor-pointer"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
-              )}
-            </form>
-          </div>
+                {localSearch && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-7 text-zinc-300 hover:text-zinc-650 cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </form>
+            </div>
+          )}
         </div>
       </div>
+    );
+  };
+
+  const headerIds = ["breaking-news", "date-section", "domain-header", "category-nav"];
+  
+  const sortedHeaderSections = layoutSections.length > 0
+    ? layoutSections.filter((s: any) => headerIds.includes(s.id) && s.isVisible !== false).sort((a: any, b: any) => a.order - b.order)
+    : [
+        { id: "breaking-news", order: 0 },
+        { id: "date-section", order: 1 },
+        { id: "domain-header", order: 2 },
+        { id: "category-nav", order: 3 }
+      ];
+
+  return (
+    <header className="w-full bg-white select-none">
+      {sortedHeaderSections.map((section: any) => {
+        if (section.id === "breaking-news") {
+          return <DynamicBreakingNewsTicker key="breaking-news" />;
+        }
+        if (section.id === "date-section") {
+          return renderDateSection(section);
+        }
+        if (section.id === "domain-header") {
+          return renderDomainHeader(section);
+        }
+        if (section.id === "category-nav") {
+          return renderCategoryNav(section);
+        }
+        return null;
+      })}
     </header>
   );
 }

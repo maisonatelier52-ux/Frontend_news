@@ -311,10 +311,7 @@ export default function CategoryPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
 
-      {/* 1. Live Stocks Ticker */}
-      <StockTicker />
-
-      {/* 2. Main Editorial Header */}
+      {/* Main Editorial Header */}
       <Header
         activeCategory={decodedCategory}
         setActiveCategory={handleCategoryChange}
