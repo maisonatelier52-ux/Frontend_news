@@ -52,6 +52,7 @@ async function seedDatabase() {
     const { AuthorModel } = await import('@/models/Author');
     const { NewsModel } = await import('@/models/News');
     const { UserModel } = await import('@/models/User');
+    const { HomeLayoutModel } = await import('@/models/HomeLayout');
     const bcrypt = await import('bcryptjs');
 
     // 0. Seed Admin User (removed, admin is now created dynamically on first login)
@@ -185,6 +186,31 @@ async function seedDatabase() {
 
       await NewsModel.insertMany(formattedArticles);
       console.log('Seeded news articles successfully!');
+    }
+
+    // 4. Seed HomeLayout if empty
+    const layoutCount = await HomeLayoutModel.countDocuments();
+    if (layoutCount === 0) {
+      const defaultLayout = {
+        templateName: 'default',
+        sections: [
+          { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5 },
+          { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1 },
+          { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1 },
+          { id: 'category-nav', title: 'Categories Navigation', isVisible: true, categorySource: 'All', order: 3, limit: 1 },
+          { id: 'first-hero', title: 'Main Hero Story', isVisible: true, categorySource: 'All', order: 4, limit: 5 },
+          { id: 'us-politics', title: 'U.S. News & Politics', isVisible: true, categorySource: 'Politics', order: 5, limit: 4 },
+          { id: 'finance-markets', title: 'Finance & Markets', isVisible: true, categorySource: 'Business', order: 6, limit: 4 },
+          { id: 'opinion-column', title: 'Opinions & Perspectives', isVisible: true, categorySource: 'All', order: 7, limit: 3 },
+          { id: 'technology-section', title: 'Tech Pulse', isVisible: true, categorySource: 'Technology', order: 8, limit: 4 },
+          { id: 'trending-columns', title: 'Trending Columns', isVisible: true, categorySource: 'All', order: 9, limit: 5 },
+          { id: 'world-affairs', title: 'World Affairs', isVisible: true, categorySource: 'World', order: 10, limit: 5 },
+          { id: 'arts-marketing-pr', title: 'Culture & Press Spotlight', isVisible: true, categorySource: 'Entertainment,Sports', order: 11, limit: 6 },
+          { id: 'latest-news', title: 'The Latest Chronicle Feed', isVisible: true, categorySource: 'All', order: 12, limit: 10 }
+        ]
+      };
+      await HomeLayoutModel.create(defaultLayout);
+      console.log('Seeded default home layout successfully!');
     }
   } catch (err) {
     console.error('Database seeding failed:', err);
