@@ -106,9 +106,40 @@ export default function HomeLayoutConfigPage() {
   // Save current section draft edits and exit back to main board
   function saveSectionDraft() {
     if (draftSection) {
-      setSections(prev => 
-        prev.map(s => s.id === draftSection.id ? draftSection : s)
-      )
+      let nextSections = sections.map(s => s.id === draftSection.id ? draftSection : s)
+
+      // If this is date-section and vertical placement preset changed, let's adjust array position!
+      if (draftSection.id === 'date-section') {
+        const preset = draftSection.settings?.verticalPreset || 'above-header'
+        const filtered = nextSections.filter(s => s.id !== 'date-section')
+        const headerIdx = filtered.findIndex(s => s.id === 'domain-header')
+        const navIdx = filtered.findIndex(s => s.id === 'category-nav')
+
+        if (preset === 'above-header') {
+          if (headerIdx !== -1) {
+            filtered.splice(headerIdx, 0, draftSection)
+          } else {
+            filtered.unshift(draftSection)
+          }
+        } else if (preset === 'below-header') {
+          if (headerIdx !== -1) {
+            filtered.splice(headerIdx + 1, 0, draftSection)
+          } else {
+            filtered.push(draftSection)
+          }
+        } else if (preset === 'below-nav') {
+          if (navIdx !== -1) {
+            const newNavIdx = filtered.findIndex(s => s.id === 'category-nav')
+            filtered.splice(newNavIdx + 1, 0, draftSection)
+          } else {
+            filtered.push(draftSection)
+          }
+        }
+
+        nextSections = filtered.map((s, idx) => ({ ...s, order: idx }))
+      }
+
+      setSections(nextSections)
     }
     setActiveEditId(null)
     setDraftSection(null)
@@ -323,10 +354,12 @@ export default function HomeLayoutConfigPage() {
       case 'date-section':
         const dateBg = section.settings?.bgColor || '#f8fafc'
         const dateCol = section.settings?.textColor || '#64748b'
+        const dateAlign = section.settings?.alignment || 'spaced'
+        const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
         return (
           <div 
             key={section.id} 
-            className="p-1 px-3 border rounded-lg text-[10px] font-bold flex justify-between tracking-wide font-mono uppercase"
+            className={`p-1.5 px-3 border rounded-lg text-[10px] font-bold flex tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
             style={{ backgroundColor: dateBg, color: dateCol }}
           >
             <span>Wednesday, July 1, 2026</span>
@@ -777,6 +810,59 @@ export default function HomeLayoutConfigPage() {
                       className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Horizontal Alignment</label>
+                  <select
+                    value={draftSection.settings?.alignment || 'spaced'}
+                    onChange={(e) => updateDraftSetting('alignment', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
+                  >
+                    <option value="spaced">Spaced Between (Date Left, Location Right)</option>
+                    <option value="left">Left Aligned</option>
+                    <option value="center">Center Aligned</option>
+                    <option value="right">Right Aligned</option>
+                  </select>
+                </div>
+
+                <div className="border-t pt-3">
+                  <label className="text-[12px] font-extrabold text-[#6366f1] block mb-2 uppercase tracking-wide">Vertical Placement Preset</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'above-header')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        (draftSection.settings?.verticalPreset || 'above-header') === 'above-header'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Above Logo
+                    </button>
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'below-header')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.verticalPreset === 'below-header'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Below Logo
+                    </button>
+                    <button
+                      onClick={() => updateDraftSetting('verticalPreset', 'below-nav')}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                        draftSection.settings?.verticalPreset === 'below-nav'
+                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      Below Nav
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1.5 font-medium leading-relaxed">
+                    Choose relative position. The layout section sequence indexes will be automatically recalculated upon applying section edits.
+                  </p>
                 </div>
               </div>
             )}

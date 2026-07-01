@@ -927,10 +927,12 @@ export default function Home() {
                 case 'date-section':
                   const dateBg = section.settings?.bgColor || '#f8fafc';
                   const dateCol = section.settings?.textColor || '#64748b';
+                  const dateAlign = section.settings?.alignment || 'spaced';
+                  const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between';
                   return (
                     <div 
                       key="date-section" 
-                      className="w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex justify-between select-none tracking-wide font-mono uppercase"
+                      className={`w-full border-b border-zinc-200 py-2 px-4 sm:px-6 text-xs flex select-none tracking-wide font-mono uppercase transition-all ${dateAlignClass}`}
                       style={{ backgroundColor: dateBg, color: dateCol }}
                     >
                       <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
