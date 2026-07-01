@@ -1181,14 +1181,27 @@ export default function HomeLayoutConfigPage() {
             )}
           </div>
 
-          {/* RIGHT COLUMN: FOCUSED SECTION PREVIEW */}
+          {/* RIGHT COLUMN: FOCOCUSED SECTION PREVIEW */}
           <div className="flex flex-col gap-3">
             <div className="bg-[#eff6ff] p-3 px-4 border rounded-xl border-blue-200 select-none">
               <span className="text-[12.5px] font-extrabold text-blue-800 tracking-wide uppercase font-sans">
                 👁️ Live Section Preview Mockup
               </span>
             </div>
-            <div className="bg-slate-100/50 border border-slate-200 rounded-3xl p-6 min-h-[220px] flex flex-col justify-center gap-3">
+            <div 
+              className={`bg-slate-100/50 border border-slate-200 rounded-3xl min-h-[220px] flex flex-col justify-center gap-3 transition-all ${
+                draftSection.settings?.containerStyle === 'original' ||
+                draftSection.settings?.containerStyle === 'sharp-bar' ||
+                draftSection.settings?.containerStyle === 'left-accent' ||
+                draftSection.settings?.containerStyle === 'dual-border-slate' ||
+                draftSection.settings?.containerStyle === 'diagonal-gradient' ||
+                draftSection.id === 'domain-header' ||
+                draftSection.id === 'category-nav' ||
+                draftSection.id === 'date-section'
+                  ? 'p-0 overflow-hidden'
+                  : 'p-6'
+              }`}
+            >
               {renderPreviewMock(draftSection)}
             </div>
           </div>
