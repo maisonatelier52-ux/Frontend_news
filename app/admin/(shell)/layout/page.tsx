@@ -1,6 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Header from '../../../components/Header'
+import LeadStory from '../../../components/LeadStory'
+import NewsGrid from '../../../components/NewsGrid'
+import type { Article } from '../../../data/news'
 
 interface LayoutSection {
   id: string
@@ -61,19 +65,20 @@ function getDesignOptions(sectionId: string) {
 
 // SimulatorViewport — renders children at NATURAL_WIDTH px, scaled down to fill container width.
 // Uses ResizeObserver on both the outer (width) and inner (height) to compute correct dimensions.
-function SimulatorViewport({ children }: { children: React.ReactNode }) {
+// When centered=true, the viewport stays at naturalWidth and is centered (for mobile/tablet previews).
+function SimulatorViewport({ children, naturalWidth = 960, centered = false }: { children: React.ReactNode; naturalWidth?: number; centered?: boolean }) {
   const outerRef = React.useRef<HTMLDivElement>(null)
   const innerRef = React.useRef<HTMLDivElement>(null)
   const [scale, setScale] = React.useState(1)
   const [innerH, setInnerH] = React.useState(0)
-  const NATURAL_WIDTH = 960
+  const NATURAL_WIDTH = naturalWidth
 
   React.useEffect(() => {
     function measure() {
       if (!outerRef.current || !innerRef.current) return
       const availW = outerRef.current.getBoundingClientRect().width
-      const newScale = availW > 0 ? availW / NATURAL_WIDTH : 1
-      // scrollHeight gives the real layout height before transform is applied
+      // Never scale up — only scale down when container is narrower than natural width
+      const newScale = availW > 0 ? Math.min(availW / NATURAL_WIDTH, 1) : 1
       const h = innerRef.current.scrollHeight
       setScale(newScale)
       if (h > 0) setInnerH(h)
@@ -83,28 +88,63 @@ function SimulatorViewport({ children }: { children: React.ReactNode }) {
     if (outerRef.current) ro.observe(outerRef.current)
     if (innerRef.current) ro.observe(innerRef.current)
     return () => ro.disconnect()
-  }, [])
+  }, [NATURAL_WIDTH])
 
-  // The outer container must be exactly the scaled visual height so nothing below shifts up.
   const outerHeight = innerH > 0 ? Math.round(innerH * scale) : undefined
 
+  const outerW = centered
+    ? scale >= 1
+      ? `${NATURAL_WIDTH}px`
+      : '100%'
+    : '100%'
+
+  const maxW = centered ? `${NATURAL_WIDTH}px` : '100%'
+  const isMobile = NATURAL_WIDTH <= 375
+
   return (
-    <div
-      ref={outerRef}
-      className="w-full overflow-hidden"
-      style={{ height: outerHeight }}
-    >
+    <div className={`flex ${centered ? 'justify-center py-2' : ''}`}>
       <div
-        ref={innerRef}
+        ref={outerRef}
+        className={`overflow-hidden ${centered ? 'bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]' : ''}`}
         style={{
-          width: `${NATURAL_WIDTH}px`,
-          transformOrigin: 'top left',
-          transform: `scale(${scale})`,
-          // prevent the un-scaled layout height from pushing the outer div taller
-          ...(scale < 1 ? { marginBottom: `-${Math.round(innerH * (1 - scale))}px` } : {}),
+          width: outerW,
+          maxWidth: maxW,
+          height: outerHeight,
+          ...(centered ? {
+            borderRadius: isMobile ? '36px' : '16px',
+            border: isMobile ? '4px solid #1c1c1e' : '3px solid #8e8e93',
+            padding: isMobile ? '8px' : '6px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+          } : {})
         }}
       >
-        {children}
+        {/* Status bar for mobile */}
+        {centered && isMobile && scale >= 1 && (
+          <div className="flex items-center justify-between px-4 py-1.5 text-[9px] text-zinc-800 font-bold select-none" style={{ fontFamily: '-apple-system, sans-serif' }}>
+            <span>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+            <div className="flex items-center gap-1">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </div>
+          </div>
+        )}
+        <div
+          ref={innerRef}
+          style={{
+            width: `${NATURAL_WIDTH}px`,
+            transformOrigin: centered ? 'top center' : 'top left',
+            transform: `scale(${scale})`,
+            ...(scale < 1 ? { marginBottom: `-${Math.round(innerH * (1 - scale))}px` } : {}),
+          }}
+        >
+          {children}
+        </div>
+        {/* Home indicator for mobile */}
+        {centered && isMobile && scale >= 1 && (
+          <div className="flex justify-center py-1.5">
+            <div className="w-24 h-1 rounded-full bg-zinc-800/30" />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -116,12 +156,14 @@ export default function HomeLayoutConfigPage() {
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [articles, setArticles] = useState<Article[]>([])
   const [message, setMessage] = useState<string | null>(null)
   
   // Navigation / Customizer sub-page state
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
   const [previewTab, setPreviewTab] = useState<'draft' | 'live'>('draft')
+  const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [editTab, setEditTab] = useState<'draft' | 'live'>('draft')
 
   // Fetch Category options and current Layout
@@ -140,6 +182,34 @@ export default function HomeLayoutConfigPage() {
           const sortedSections = (layout.sections as LayoutSection[]).sort((a, b) => a.order - b.order)
           setSections(sortedSections)
           setOriginalSections(JSON.parse(JSON.stringify(sortedSections)))
+        }
+        // Load news articles for the live preview
+        try {
+          const newsRes = await fetch('/api/news?activeOnly=true')
+          if (newsRes.ok) {
+            const data = await newsRes.json()
+            const mapped = data.map((art: any) => ({
+              id: art._id,
+              title: art.title,
+              excerpt: art.excerpt || '',
+              content: art.blocks
+                ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
+                : [art.excerpt || ''],
+              category: art.category,
+              author: art.author,
+              authorTitle: 'Staff Reporter',
+              date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              readTime: art.readTime || '5 mins',
+              image: art.featuredImage || '/article-placeholder.jpg',
+              isLead: art.options?.featuredArticle || false,
+              isBreaking: art.options?.breakingNews || false,
+              isTrending: art.options?.featuredArticle || false,
+              commentsCount: Math.floor(Math.random() * 25) + 3
+            }))
+            setArticles(mapped)
+          }
+        } catch (err) {
+          console.error('Failed to load news articles for preview:', err)
         }
       } catch (err) {
         console.error('Failed to load layout data:', err)
@@ -1451,6 +1521,168 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
+  // Render the full home page replica — exact match of page.tsx
+  function renderFullPagePreview(sectionsList: LayoutSection[]) {
+    if (!leadArticle) return null
+    return (
+      <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
+        {/* Header — exact same component as the live site */}
+        <Header
+          activeCategory="All"
+          setActiveCategory={() => {}}
+          searchQuery=""
+          setSearchQuery={() => {}}
+          bookmarkCount={0}
+          showBookmarksOnly={false}
+          setShowBookmarksOnly={() => {}}
+          overrideSections={sectionsList}
+        />
+
+        {/* Main Content Body */}
+        <main className="flex-grow">
+          <LeadStory
+            leadArticle={leadArticle}
+            secondaryArticles={breakingNewsArticles}
+            subArticles={leadSubArticles}
+            onSelectArticle={() => {}}
+          />
+          <NewsGrid
+            articles={articles}
+            onSelectArticle={() => {}}
+            activeCategory="All"
+            searchQuery=""
+            showBookmarksOnly={false}
+          />
+        </main>
+
+        {/* 3. Newsletter Subscription section — exact copy from page.tsx */}
+        <section className="bg-zinc-50 border-t border-zinc-250 py-10 px-4 select-none">
+          <div className="max-w-2xl mx-auto text-center space-y-4">
+            <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
+              Subscribe to The Domain Name
+            </h3>
+            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+              Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.
+            </p>
+
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto mt-2">
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0"
+              >
+                Sign Up
+              </button>
+            </form>
+
+          </div>
+        </section>
+
+        {/* 4. Main Editorial Footer — exact copy from page.tsx */}
+        <footer className="bg-white border-t border-zinc-300 py-10 px-4 sm:px-6 select-none">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+
+            {/* Col 1: About */}
+            <div className="space-y-3">
+              <h4 className="font-editorial-title text-lg font-extrabold text-zinc-900 tracking-tight">
+                The Domain Name
+              </h4>
+              <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
+                An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.
+              </p>
+            </div>
+
+            {/* Col 2: Navigation Links */}
+            <div>
+              <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
+                Categories
+              </h5>
+              <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-600 font-medium">
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    U.S. News & Politics
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    Finance & Markets
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    Technology & Science
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    World Affairs
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    Marketing & Strategy
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    Arts & Entertainment
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: More Divisions */}
+            <div>
+              <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
+                Other Sections
+              </h5>
+              <ul className="space-y-2 text-xs text-zinc-600 font-medium">
+                <li>
+                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
+                    Press Releases & News
+                  </button>
+                </li>
+
+              </ul>
+            </div>
+
+            {/* Col 4: Operations & Contact */}
+
+
+          </div>
+
+          {/* Lower Legal Bar */}
+          <div className="max-w-7xl mx-auto border-t border-zinc-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] text-zinc-400 font-mono">
+            <div>
+              © {new Date().getFullYear()} The Domain Name. All rights reserved.
+            </div>
+            <div className="flex gap-4">
+              <span className="cursor-pointer hover:underline">Privacy Policy</span>
+              <span>•</span>
+              <span className="cursor-pointer hover:underline">Terms of Service</span>
+              <span>•</span>
+              <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    )
+  }
+
+  // Derived article data for live preview rendering
+  const leadArticle = articles.find((a) => a.isLead) || articles[0]
+  const breakingNewsArticles = leadArticle
+    ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id).slice(0, 3)
+    : []
+  const leadSubArticles = leadArticle
+    ? articles.filter((a) => a.id !== leadArticle.id && !breakingNewsArticles.some((b) => b.id === a.id)).slice(0, 4)
+    : []
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 py-24 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
@@ -2321,39 +2553,87 @@ export default function HomeLayoutConfigPage() {
       {/* HOMEPAGE LAYOUT PREVIEW SIMULATOR */}
       <div className="flex flex-col gap-4">
         {/* Toggle bar */}
-        <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs select-none">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-xs select-none gap-3">
           <div className="flex flex-col text-left">
             <span className="text-[13.5px] font-extrabold text-slate-800 uppercase tracking-wider font-sans flex items-center gap-2">
               🖥️ Homepage Live Preview Simulator
             </span>
             <span className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
-              Toggle tabs to compare live website view and proposed draft preview with animation
+              Compare draft vs live, switch device views
             </span>
           </div>
 
-          <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
-            <button
-              onClick={() => setPreviewTab('draft')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                previewTab === 'draft'
-                  ? 'bg-[#6366f1] text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <span>✨ Draft Preview (With Changes)</span>
-            </button>
-            <button
-              onClick={() => setPreviewTab('live')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                previewTab === 'live'
-                  ? 'bg-slate-500 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <span>🌐 Live Website View (Current)</span>
-            </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Device view toggles */}
+            <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+              <button
+                onClick={() => setDeviceView('desktop')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  deviceView === 'desktop'
+                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                Desktop
+              </button>
+              <button
+                onClick={() => setDeviceView('tablet')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  deviceView === 'tablet'
+                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Tablet
+              </button>
+              <button
+                onClick={() => setDeviceView('mobile')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  deviceView === 'mobile'
+                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                Mobile
+              </button>
+            </div>
+
+            {/* Draft/Live toggles */}
+            <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+              <button
+                onClick={() => setPreviewTab('draft')}
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewTab === 'draft'
+                    ? 'bg-[#6366f1] text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                <span>✨ Draft</span>
+              </button>
+              <button
+                onClick={() => setPreviewTab('live')}
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  previewTab === 'live'
+                    ? 'bg-slate-500 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-800'
+                }`}
+              >
+                <span>🌐 Live</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Device indicator bar */}
+        {deviceView !== 'desktop' && (
+          <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            Previewing at {deviceView === 'tablet' ? '768px (Tablet)' : '375px (Mobile)'} width
+          </div>
+        )}
 
         {/* Sliding Canvas Container — each slide uses a scaled viewport so content fits without overflow */}
         <div className="relative w-full overflow-hidden rounded-3xl border border-slate-200 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
@@ -2376,20 +2656,9 @@ export default function HomeLayoutConfigPage() {
                   Interactive Simulation
                 </span>
               </div>
-              {/* Scaled viewport — renders at 960px natural width, scaled to fit */}
-              <SimulatorViewport>
-                <div className="w-full flex flex-col gap-0 bg-white">
-                  {sections
-                    .filter(s => s.isVisible)
-                    .map(sec => (
-                      <div key={sec.id} className="relative group">
-                        <div className="absolute -top-2.5 left-3 bg-[#6366f1] text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10 select-none pointer-events-none">
-                          {sec.title}
-                        </div>
-                        {renderPreviewMock(sec)}
-                      </div>
-                    ))}
-                </div>
+              {/* Scaled viewport */}
+              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 960} centered={deviceView !== 'desktop'}>
+                {renderFullPagePreview(sections)}
               </SimulatorViewport>
             </div>
 
@@ -2405,19 +2674,8 @@ export default function HomeLayoutConfigPage() {
                 </span>
               </div>
               {/* Scaled viewport */}
-              <SimulatorViewport>
-                <div className="w-full flex flex-col gap-0 bg-white">
-                  {originalSections
-                    .filter(s => s.isVisible)
-                    .map(sec => (
-                      <div key={sec.id} className="relative group">
-                        <div className="absolute -top-2.5 left-3 bg-slate-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition z-10 select-none pointer-events-none">
-                          {sec.title}
-                        </div>
-                        {renderPreviewMock(sec)}
-                      </div>
-                    ))}
-                </div>
+              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 960} centered={deviceView !== 'desktop'}>
+                {renderFullPagePreview(originalSections)}
               </SimulatorViewport>
             </div>
           </div>

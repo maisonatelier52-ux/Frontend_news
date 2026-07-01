@@ -12,6 +12,8 @@ interface HeaderProps {
   bookmarkCount: number;
   showBookmarksOnly: boolean;
   setShowBookmarksOnly: (val: boolean) => void;
+  /** If provided, use these sections instead of fetching from API */
+  overrideSections?: any[];
 }
 
 export default function Header({
@@ -22,13 +24,14 @@ export default function Header({
   bookmarkCount,
   showBookmarksOnly,
   setShowBookmarksOnly,
+  overrideSections,
 }: HeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [layoutSections, setLayoutSections] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadCatsAndLayout() {
+    async function loadData() {
       try {
         const catRes = await fetch("/api/categories");
         if (catRes.ok) {
@@ -39,19 +42,24 @@ export default function Header({
           setCategories(["All", ...visibleCats]);
         }
 
-        const layoutRes = await fetch("/api/home-layout");
-        if (layoutRes.ok) {
-          const data = await layoutRes.json();
-          if (data && data.sections) {
-            setLayoutSections(data.sections);
+        if (!overrideSections) {
+          const layoutRes = await fetch("/api/home-layout");
+          if (layoutRes.ok) {
+            const data = await layoutRes.json();
+            if (data && data.sections) {
+              setLayoutSections(data.sections);
+            }
           }
         }
       } catch (err) {
         console.error("Failed to load header data:", err);
       }
     }
-    loadCatsAndLayout();
-  }, []);
+    if (overrideSections) {
+      setLayoutSections(overrideSections);
+    }
+    loadData();
+  }, [overrideSections]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
