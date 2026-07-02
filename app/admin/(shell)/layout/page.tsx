@@ -1,10 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Header from '../../../components/Header'
 import LeadStory from '../../../components/LeadStory'
 import NewsGrid from '../../../components/NewsGrid'
+import HomePageExperience from '../../../components/HomePageExperience'
 import type { Article } from '../../../data/news'
+
 
 interface LayoutSection {
   id: string
@@ -63,92 +66,217 @@ function getDesignOptions(sectionId: string) {
   ]
 }
 
-// SimulatorViewport — renders children at NATURAL_WIDTH px, scaled down to fill container width.
-// Uses ResizeObserver on both the outer (width) and inner (height) to compute correct dimensions.
-// When centered=true, the viewport stays at naturalWidth and is centered (for mobile/tablet previews).
-function SimulatorViewport({ children, naturalWidth = 960, centered = false }: { children: React.ReactNode; naturalWidth?: number; centered?: boolean }) {
+// SimulatorViewport — renders children inside an iframe at NATURAL_WIDTH px, scaled down to fill container width.
+// By rendering inside an iframe, CSS media queries are correctly calculated based on NATURAL_WIDTH,
+// causing responsive layouts (e.g., mobile stacking, text sizes) to trigger correctly.
+interface ZoomControlProps {
+  zoom: number;
+  setZoom: React.Dispatch<React.SetStateAction<number>> | ((z: number | ((prev: number) => number)) => void);
+}
+
+function ZoomControl({ zoom, setZoom }: ZoomControlProps) {
+  return (
+    <div className="flex items-center gap-1.5 bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-xl select-none text-[10px]">
+      <button
+        type="button"
+        onClick={() => setZoom(z => typeof z === 'number' ? Math.max(z - 0.25, 0.5) : Math.max((z as any) - 0.25, 0.5))}
+        className="p-0.5 px-1 hover:bg-slate-100 rounded font-bold text-slate-500 transition cursor-pointer select-none"
+        title="Zoom Out"
+      >
+        ➖
+      </button>
+      <span className="font-bold font-mono text-slate-600 min-w-[28px] text-center text-[10.5px]">
+        {Math.round(zoom * 100)}%
+      </span>
+      <button
+        type="button"
+        onClick={() => setZoom(z => typeof z === 'number' ? Math.min(z + 0.25, 2.0) : Math.min((z as any) + 0.25, 2.0))}
+        className="p-0.5 px-1 hover:bg-slate-100 rounded font-bold text-slate-500 transition cursor-pointer select-none"
+        title="Zoom In"
+      >
+        ➕
+      </button>
+      {zoom !== 1 && (
+        <button
+          type="button"
+          onClick={() => setZoom(1)}
+          className="ml-1 p-0.5 px-1.5 text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded font-bold transition cursor-pointer select-none"
+          title="Reset Zoom"
+        >
+          Reset
+        </button>
+      )}
+    </div>
+  )
+}
+
+// SimulatorViewport — renders children inside an iframe at NATURAL_WIDTH px, scaled down to fill container width.
+// By rendering inside an iframe, CSS media queries are correctly calculated based on NATURAL_WIDTH,
+// causing responsive layouts (e.g., mobile stacking, text sizes) to trigger correctly.
+function SimulatorViewport({
+  children,
+  naturalWidth = 1280,
+  centered = false,
+  zoom = 1
+}: {
+  children: React.ReactNode;
+  naturalWidth?: number;
+  centered?: boolean;
+  zoom?: number;
+}) {
   const outerRef = React.useRef<HTMLDivElement>(null)
-  const innerRef = React.useRef<HTMLDivElement>(null)
-  const [scale, setScale] = React.useState(1)
-  const [innerH, setInnerH] = React.useState(0)
+  const [iframeRef, setIframeRef] = React.useState<HTMLIFrameElement | null>(null)
+  const [baseScale, setBaseScale] = React.useState(1)
   const NATURAL_WIDTH = naturalWidth
 
+  // Fixed viewport heights for realistic simulator scrolling
+  const VIEWPORT_HEIGHT = NATURAL_WIDTH === 375 ? 640 : NATURAL_WIDTH === 768 ? 800 : 750
+
+  const iframeDoc = iframeRef?.contentWindow?.document
+  const mountNode = iframeDoc?.body
+
+  // Measure available width and calculate scale
   React.useEffect(() => {
     function measure() {
-      if (!outerRef.current || !innerRef.current) return
+      if (!outerRef.current) return
       const availW = outerRef.current.getBoundingClientRect().width
-      // Never scale up — only scale down when container is narrower than natural width
       const newScale = availW > 0 ? Math.min(availW / NATURAL_WIDTH, 1) : 1
-      const h = innerRef.current.scrollHeight
-      setScale(newScale)
-      if (h > 0) setInnerH(h)
+      setBaseScale(newScale)
     }
+
     measure()
     const ro = new ResizeObserver(measure)
     if (outerRef.current) ro.observe(outerRef.current)
-    if (innerRef.current) ro.observe(innerRef.current)
+
     return () => ro.disconnect()
   }, [NATURAL_WIDTH])
 
-  const outerHeight = innerH > 0 ? Math.round(innerH * scale) : undefined
+  // Copy document styles to iframe doc
+  React.useEffect(() => {
+    if (!iframeDoc) return
 
+    const head = iframeDoc.head
+    head.innerHTML = '' // clear
+
+    // Copy stylesheet links and styles
+    document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
+      head.appendChild(node.cloneNode(true))
+    })
+
+    // Match root document classes/styles
+    iframeDoc.documentElement.className = document.documentElement.className
+    if (iframeDoc.body) {
+      iframeDoc.body.className = document.body.className + ' bg-white'
+    }
+
+    // Embed styling to allow native vertical scrolling inside iframe with premium scrollbars
+    const style = iframeDoc.createElement('style')
+    style.textContent = `
+      body {
+        margin: 0;
+        padding: 0;
+        overflow-y: auto !important; /* Enable native vertical scrolling inside simulator frame */
+        height: 100%;
+      }
+      /* Custom scrollbar styling for the simulator view window */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      /* Custom style overrides to ensure the viewport background is solid white */
+      html, body {
+        background-color: #ffffff !important;
+      }
+    `
+    head.appendChild(style)
+  }, [iframeDoc])
+
+  const effectiveScale = baseScale * zoom
+  const outerHeight = Math.round(VIEWPORT_HEIGHT * baseScale * Math.min(zoom, 1))
   const outerW = centered
-    ? scale >= 1
-      ? `${NATURAL_WIDTH}px`
+    ? baseScale >= 1
+      ? `${NATURAL_WIDTH * Math.min(zoom, 1)}px`
       : '100%'
     : '100%'
 
   const maxW = centered ? `${NATURAL_WIDTH}px` : '100%'
-  const isMobile = NATURAL_WIDTH <= 375
+
+  const transformedWidth = Math.round(NATURAL_WIDTH * effectiveScale)
+  const transformedHeight = Math.round(VIEWPORT_HEIGHT * effectiveScale)
 
   return (
-    <div className={`flex ${centered ? 'justify-center py-2' : ''}`}>
+    <div className={`flex ${centered ? 'justify-center py-3' : ''} relative group w-full`}>
+      <style>{`
+        .admin-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .admin-scrollbar::-webkit-scrollbar-track {
+          background: #f8fafc;
+          border-radius: 4px;
+        }
+        .admin-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+          border: 2px solid #f8fafc;
+        }
+        .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
       <div
         ref={outerRef}
-        className={`overflow-hidden ${centered ? 'bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]' : ''}`}
+        className="overflow-auto bg-white transition-all duration-200 border border-slate-100 rounded-xl admin-scrollbar"
         style={{
           width: outerW,
           maxWidth: maxW,
           height: outerHeight,
           ...(centered ? {
-            borderRadius: isMobile ? '36px' : '16px',
-            border: isMobile ? '4px solid #1c1c1e' : '3px solid #8e8e93',
-            padding: isMobile ? '8px' : '6px',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
           } : {})
         }}
       >
-        {/* Status bar for mobile */}
-        {centered && isMobile && scale >= 1 && (
-          <div className="flex items-center justify-between px-4 py-1.5 text-[9px] text-zinc-800 font-bold select-none" style={{ fontFamily: '-apple-system, sans-serif' }}>
-            <span>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-            <div className="flex items-center gap-1">
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
-              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
-            </div>
-          </div>
-        )}
         <div
-          ref={innerRef}
           style={{
-            width: `${NATURAL_WIDTH}px`,
-            transformOrigin: centered ? 'top center' : 'top left',
-            transform: `scale(${scale})`,
-            ...(scale < 1 ? { marginBottom: `-${Math.round(innerH * (1 - scale))}px` } : {}),
+            width: `${transformedWidth}px`,
+            height: `${transformedHeight}px`,
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
-          {children}
+          <iframe
+            ref={setIframeRef}
+            title="Viewport Simulator"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: `${NATURAL_WIDTH}px`,
+              height: `${VIEWPORT_HEIGHT}px`,
+              border: 'none',
+              transformOrigin: 'top left',
+              transform: `scale(${effectiveScale})`
+            }}
+          >
+            {mountNode && createPortal(children, mountNode)}
+          </iframe>
         </div>
-        {/* Home indicator for mobile */}
-        {centered && isMobile && scale >= 1 && (
-          <div className="flex justify-center py-1.5">
-            <div className="w-24 h-1 rounded-full bg-zinc-800/30" />
-          </div>
-        )}
       </div>
     </div>
   )
 }
+
 
 export default function HomeLayoutConfigPage() {
   const [sections, setSections] = useState<LayoutSection[]>([])
@@ -158,13 +286,33 @@ export default function HomeLayoutConfigPage() {
   const [saving, setSaving] = useState(false)
   const [articles, setArticles] = useState<Article[]>([])
   const [message, setMessage] = useState<string | null>(null)
-  
+
   // Navigation / Customizer sub-page state
   const [activeEditId, setActiveEditId] = useState<string | null>(null)
   const [draftSection, setDraftSection] = useState<LayoutSection | null>(null)
   const [previewTab, setPreviewTab] = useState<'draft' | 'live'>('draft')
   const [deviceView, setDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [editTab, setEditTab] = useState<'draft' | 'live'>('draft')
+  const [editDeviceView, setEditDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [editPreviewTab, setEditPreviewTab] = useState<'preview' | 'live'>('preview')
+  const [hasBackups, setHasBackups] = useState(false)
+  const [factoryOriginalExists, setFactoryOriginalExists] = useState(false)
+  const [draftHistory, setDraftHistory] = useState<LayoutSection[]>([])
+  const [mainZoom, setMainZoom] = useState(1)
+  const [editZoom, setEditZoom] = useState(1)
+
+  // Refs for tracking active input edit sessions (grouped/debounced undo history)
+  const editSessionStateRef = React.useRef<LayoutSection | null>(null)
+  const editSessionPushedRef = React.useRef<boolean>(false)
+
+  // Reactive listener to check backups in localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const backupsStr = localStorage.getItem('homepage_layout_backups')
+      setHasBackups(backupsStr ? JSON.parse(backupsStr).length > 0 : false)
+      setFactoryOriginalExists(!!localStorage.getItem('homepage_layout_factory_original'))
+    }
+  }, [sections, originalSections])
 
   // Fetch Category options and current Layout
   useEffect(() => {
@@ -182,6 +330,11 @@ export default function HomeLayoutConfigPage() {
           const sortedSections = (layout.sections as LayoutSection[]).sort((a, b) => a.order - b.order)
           setSections(sortedSections)
           setOriginalSections(JSON.parse(JSON.stringify(sortedSections)))
+
+          // Store first-load layout configuration as factory original design for factory-reset
+          if (typeof window !== 'undefined' && !localStorage.getItem('homepage_layout_factory_original')) {
+            localStorage.setItem('homepage_layout_factory_original', JSON.stringify(sortedSections))
+          }
         }
         // Load news articles for the live preview
         try {
@@ -220,82 +373,57 @@ export default function HomeLayoutConfigPage() {
     loadData()
   }, [])
 
-  // Helper to deterministically sort the 4 header items based on presets:
-  // breaking-news, date-section, domain-header, category-nav
-  function sortHeaderSections(headerSecs: LayoutSection[]) {
-    const breaking = headerSecs.find(s => s.id === 'breaking-news') || headerSecs[0]
-    const date = headerSecs.find(s => s.id === 'date-section') || headerSecs[1]
-    const logo = headerSecs.find(s => s.id === 'domain-header') || headerSecs[2]
-    const nav = headerSecs.find(s => s.id === 'category-nav') || headerSecs[3]
-
-    const breakingPreset = breaking?.settings?.verticalPreset || 'above-header'
-    const datePreset = date?.settings?.verticalPreset || 'above-header'
-
-    const buckets: { id: string; section: LayoutSection }[] = []
-
-    // 1. above-header
-    if (breakingPreset === 'above-header') buckets.push({ id: 'breaking-news', section: breaking })
-    if (datePreset === 'above-header') buckets.push({ id: 'date-section', section: date })
-
-    // 2. logo
-    buckets.push({ id: 'domain-header', section: logo })
-
-    // 3. below-header
-    if (breakingPreset === 'below-header') buckets.push({ id: 'breaking-news', section: breaking })
-    if (datePreset === 'below-header') buckets.push({ id: 'date-section', section: date })
-
-    // 4. nav
-    buckets.push({ id: 'category-nav', section: nav })
-
-    // 5. below-nav
-    if (breakingPreset === 'below-nav') buckets.push({ id: 'breaking-news', section: breaking })
-    if (datePreset === 'below-nav') buckets.push({ id: 'date-section', section: date })
-
-    // Deduplicate and re-map
-    const seen = new Set<string>()
-    const sorted: LayoutSection[] = []
-    buckets.forEach(b => {
-      if (b.section && !seen.has(b.id)) {
-        seen.add(b.id)
-        sorted.push(b.section)
-      }
-    })
-    return sorted
-  }
-
+  // Enter sub-page customization edit mode
   // Enter sub-page customization edit mode
   function enterEditMode(section: LayoutSection) {
     setActiveEditId(section.id)
     setDraftSection(JSON.parse(JSON.stringify(section)))
+    setDraftHistory([]) // Clear edit history for the new edit session
     setEditTab('draft')
   }
 
   // Save current section draft edits and exit back to main board
   function saveSectionDraft() {
     if (draftSection) {
-      let nextSections = sections.map(s => s.id === draftSection.id ? draftSection : s)
-
-      // If the edited section is one of the header sections, sort them deterministically
-      const headerIds = ['breaking-news', 'date-section', 'domain-header', 'category-nav']
-      if (headerIds.includes(draftSection.id)) {
-        const headerSecs = nextSections.filter(s => headerIds.includes(s.id))
-        const nonHeaderSecs = nextSections.filter(s => !headerIds.includes(s.id))
-
-        const sortedHeaders = sortHeaderSections(headerSecs)
-        const combined = [...sortedHeaders, ...nonHeaderSecs]
-        nextSections = combined.map((s, idx) => ({ ...s, order: idx }))
-      }
-
+      const nextSections = sections.map(s => s.id === draftSection.id ? draftSection : s)
       setSections(nextSections)
     }
     setActiveEditId(null)
     setDraftSection(null)
+    setDraftHistory([]) // clear
+  }
+
+  // Edit Session tracking to group continuous typing/dragging updates into one undo action
+  function startEditSession() {
+    if (draftSection && !editSessionStateRef.current) {
+      editSessionStateRef.current = JSON.parse(JSON.stringify(draftSection))
+      editSessionPushedRef.current = false
+    }
+  }
+
+  function endEditSession() {
+    editSessionStateRef.current = null
+    editSessionPushedRef.current = false
   }
 
   // Discard section draft edits and exit back to main board
   function cancelSectionEdit() {
     setActiveEditId(null)
     setDraftSection(null)
+    setDraftHistory([]) // clear
+    endEditSession()
+  }
+
+  // Discard all changes in editing session and reset settings to original DB state
+  function resetToOriginal() {
+    if (activeEditId && draftSection) {
+      const originalSection = originalSections.find(s => s.id === activeEditId)
+      if (originalSection) {
+        setDraftHistory([]) // Clear undo history as we are resetting to original state
+        setDraftSection(JSON.parse(JSON.stringify(originalSection)))
+        endEditSession()
+      }
+    }
   }
 
   // Undo changes: reset Proposed Draft list in memory back to Original live database state
@@ -305,18 +433,55 @@ export default function HomeLayoutConfigPage() {
     setTimeout(() => setMessage(null), 3000)
   }
 
-  // Update field in current draft section
+  // Update field in current draft section (pushing current state to history first)
   function updateDraftField(field: keyof LayoutSection, value: any) {
     if (draftSection) {
+      if (editSessionStateRef.current) {
+        if (!editSessionPushedRef.current) {
+          setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(editSessionStateRef.current))])
+          editSessionPushedRef.current = true
+        }
+      } else {
+        setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(draftSection))])
+      }
       setDraftSection({ ...draftSection, [field]: value })
     }
   }
 
-  // Update dynamic setting in current draft section
+  // Update dynamic setting in current draft section (pushing current state to history first)
   function updateDraftSetting(key: string, value: any) {
     if (draftSection) {
+      if (editSessionStateRef.current) {
+        if (!editSessionPushedRef.current) {
+          setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(editSessionStateRef.current))])
+          editSessionPushedRef.current = true
+        }
+      } else {
+        setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(draftSection))])
+      }
       const nextSettings = { ...draftSection.settings, [key]: value }
       setDraftSection({ ...draftSection, settings: nextSettings })
+    }
+  }
+
+  // Update multiple dynamic settings in current draft section in a single history push
+  function updateDraftSettingsMultiple(updates: Record<string, any>) {
+    if (draftSection) {
+      setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(draftSection))])
+      const nextSettings = { ...draftSection.settings, ...updates }
+      setDraftSection({ ...draftSection, settings: nextSettings })
+    }
+  }
+
+  // Undo the last edit change inside the custom section settings layout back-to-back
+  function undoDraftEdit() {
+    if (draftHistory.length > 0) {
+      const nextHistory = [...draftHistory]
+      const previousState = nextHistory.pop()
+      setDraftHistory(nextHistory)
+      if (previousState) {
+        setDraftSection(previousState)
+      }
     }
   }
 
@@ -361,6 +526,19 @@ export default function HomeLayoutConfigPage() {
       })
 
       if (res.ok) {
+        // SUCCESS: Capture the previous design configuration (originalSections) and save to backup history
+        if (typeof window !== 'undefined') {
+          const backupsStr = localStorage.getItem('homepage_layout_backups')
+          const backups = backupsStr ? JSON.parse(backupsStr) : []
+          const newBackup = {
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            sections: originalSections
+          }
+          // Prepend backup, keep last 10 entries
+          const updated = [newBackup, ...backups].slice(0, 10)
+          localStorage.setItem('homepage_layout_backups', JSON.stringify(updated))
+        }
+
         setMessage('success')
         setOriginalSections(JSON.parse(JSON.stringify(sections)))
         setTimeout(() => setMessage(null), 4000)
@@ -372,6 +550,36 @@ export default function HomeLayoutConfigPage() {
       setMessage('failed')
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Restore factory original home page layout (captured on first load)
+  function restoreFactoryOriginal() {
+    if (typeof window !== 'undefined') {
+      const factoryStr = localStorage.getItem('homepage_layout_factory_original')
+      if (factoryStr) {
+        const factoryLayout = JSON.parse(factoryStr)
+        setSections(JSON.parse(JSON.stringify(factoryLayout)))
+        setMessage('restored-original')
+        setTimeout(() => setMessage(null), 3000)
+      }
+    }
+  }
+
+  // Restore the last layout configuration from saved backup history (multi-level undo)
+  function restoreLastBackup() {
+    if (typeof window !== 'undefined') {
+      const backupsStr = localStorage.getItem('homepage_layout_backups')
+      const backups = backupsStr ? JSON.parse(backupsStr) : []
+      if (backups.length > 0) {
+        const lastBackup = backups[0].sections
+        setSections(JSON.parse(JSON.stringify(lastBackup)))
+        // Pop from history
+        const remaining = backups.slice(1)
+        localStorage.setItem('homepage_layout_backups', JSON.stringify(remaining))
+        setMessage('restored-backup')
+        setTimeout(() => setMessage(null), 3000)
+      }
     }
   }
 
@@ -451,7 +659,8 @@ export default function HomeLayoutConfigPage() {
     const { animClass, speed } = getAnimationClassAndStyles(animation, scrollSpeed)
 
     const styleBlock = (
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes ticker-scroll {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
@@ -531,7 +740,7 @@ export default function HomeLayoutConfigPage() {
       if (animation === 'scroll') {
         return (
           <div className="relative w-full overflow-hidden flex items-center">
-            <div 
+            <div
               className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
               style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
             >
@@ -549,7 +758,7 @@ export default function HomeLayoutConfigPage() {
       }
 
       return (
-        <div 
+        <div
           className={`flex-1 font-medium truncate ${animClass}`}
           style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
         >
@@ -592,7 +801,7 @@ export default function HomeLayoutConfigPage() {
     const containerStyle = sec.settings?.containerStyle || 'original'
     const animation = sec.settings?.animation || 'scroll'
     const scrollSpeed = sec.settings?.scrollSpeed
-    
+
     const borderStyle = sec.settings?.borderStyle || 'none'
     const borderColor = sec.settings?.borderColor || '#e2e8f0'
 
@@ -602,7 +811,8 @@ export default function HomeLayoutConfigPage() {
     const { animClass, speed } = getAnimationClassAndStyles(animation, scrollSpeed)
 
     const styleBlock = (
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes ticker-scroll {
           0% { transform: translate3d(0, 0, 0); }
           100% { transform: translate3d(-50%, 0, 0); }
@@ -682,7 +892,7 @@ export default function HomeLayoutConfigPage() {
       if (animation === 'scroll') {
         return (
           <div className="relative w-full overflow-hidden flex items-center">
-            <div 
+            <div
               className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
               style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
             >
@@ -695,7 +905,7 @@ export default function HomeLayoutConfigPage() {
       }
 
       return (
-        <div 
+        <div
           className={`flex-1 font-medium truncate select-text ${animClass}`}
           style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
         >
@@ -712,10 +922,10 @@ export default function HomeLayoutConfigPage() {
       const sampleItems = alertText
         ? alertText.split('   •   ')
         : [
-            'Federal grid upgrades active',
-            'Stock indexes climb',
-            'Supreme Court issues rulings',
-          ]
+          'Federal grid upgrades active',
+          'Stock indexes climb',
+          'Supreme Court issues rulings',
+        ]
       return (
         <div
           className="w-full overflow-hidden py-2 border-b border-zinc-800 text-[11px] font-mono"
@@ -835,20 +1045,20 @@ export default function HomeLayoutConfigPage() {
     const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center'
 
     return (
-      <div 
+      <div
         className={`w-full flex flex-col items-center justify-center pt-2 pb-4 md:pt-4 md:pb-6 border-b border-zinc-200 px-4 select-none transition-all ${alignClass}`}
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
           <div className="flex flex-col items-center select-none w-full">
-            <h1 
+            <h1
               className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none relative flex justify-center text-center select-none"
               style={{ fontSize: logoSize, color: logoColor }}
             >
               <span>D</span>
               <span className="relative inline-flex justify-center select-none">
                 <span>OMAIN NAM</span>
-                <span 
+                <span
                   className="absolute top-full left-0 right-0 flex justify-between select-none pointer-events-none whitespace-nowrap"
                   style={{ transform: 'translateY(4px)' }}
                 >
@@ -865,13 +1075,13 @@ export default function HomeLayoutConfigPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center select-none">
-            <div 
+            <div
               className="border border-dashed border-slate-300 rounded flex items-center justify-center p-3 text-slate-400 font-bold bg-slate-50 text-xs shrink-0 select-none"
               style={{ width: '200px', height: '42px' }}
             >
               🖼️ {logoImg ? 'Loaded Logo' : 'Upload Image Logo'}
             </div>
-            <p 
+            <p
               className="mt-1 text-[8px] sm:text-xs text-zinc-500 uppercase tracking-widest text-center"
               style={{ fontSize: tagSize, color: tagColor }}
             >
@@ -896,7 +1106,7 @@ export default function HomeLayoutConfigPage() {
     const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center'
 
     return (
-      <div 
+      <div
         className="w-full border-b border-zinc-400 py-1.5 md:py-0 select-none transition-all"
         style={{ backgroundColor: bgColor }}
       >
@@ -953,8 +1163,8 @@ export default function HomeLayoutConfigPage() {
 
         const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
         return (
-          <div 
-            key={section.id} 
+          <div
+            key={section.id}
             className={`w-full py-2 px-4 sm:px-6 text-xs text-zinc-650 flex items-center transition-all ${dateAlignClass}`}
             style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
           >
@@ -1521,169 +1731,21 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
-  // Render the full home page replica — exact match of page.tsx
+
+  // Render the full home page — uses exact same HomePageExperience component as the real site
+  // Both Live and Preview simulator views use this, ensuring perfect design parity
   function renderFullPagePreview(sectionsList: LayoutSection[]) {
-    if (!leadArticle) return null
     return (
-      <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
-        {/* Header — exact same component as the live site */}
-        <Header
-          activeCategory="All"
-          setActiveCategory={() => {}}
-          searchQuery=""
-          setSearchQuery={() => {}}
-          bookmarkCount={0}
-          showBookmarksOnly={false}
-          setShowBookmarksOnly={() => {}}
-          overrideSections={sectionsList}
-        />
-
-        {/* Main Content Body */}
-        <main className="flex-grow">
-          <LeadStory
-            leadArticle={leadArticle}
-            secondaryArticles={breakingNewsArticles}
-            subArticles={leadSubArticles}
-            onSelectArticle={() => {}}
-          />
-          <NewsGrid
-            articles={articles}
-            onSelectArticle={() => {}}
-            activeCategory="All"
-            searchQuery=""
-            showBookmarksOnly={false}
-          />
-        </main>
-
-        {/* 3. Newsletter Subscription section — exact copy from page.tsx */}
-        <section className="bg-zinc-50 border-t border-zinc-250 py-10 px-4 select-none">
-          <div className="max-w-2xl mx-auto text-center space-y-4">
-            <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
-              Subscribe to The Domain Name
-            </h3>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
-              Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.
-            </p>
-
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto mt-2">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0"
-              >
-                Sign Up
-              </button>
-            </form>
-
-          </div>
-        </section>
-
-        {/* 4. Main Editorial Footer — exact copy from page.tsx */}
-        <footer className="bg-white border-t border-zinc-300 py-10 px-4 sm:px-6 select-none">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-
-            {/* Col 1: About */}
-            <div className="space-y-3">
-              <h4 className="font-editorial-title text-lg font-extrabold text-zinc-900 tracking-tight">
-                The Domain Name
-              </h4>
-              <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
-                An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.
-              </p>
-            </div>
-
-            {/* Col 2: Navigation Links */}
-            <div>
-              <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-                Categories
-              </h5>
-              <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-600 font-medium">
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    U.S. News & Politics
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    Finance & Markets
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    Technology & Science
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    World Affairs
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    Marketing & Strategy
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    Arts & Entertainment
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Col 3: More Divisions */}
-            <div>
-              <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-                Other Sections
-              </h5>
-              <ul className="space-y-2 text-xs text-zinc-600 font-medium">
-                <li>
-                  <button onClick={() => {}} className="hover:text-zinc-950 transition cursor-pointer">
-                    Press Releases & News
-                  </button>
-                </li>
-
-              </ul>
-            </div>
-
-            {/* Col 4: Operations & Contact */}
-
-
-          </div>
-
-          {/* Lower Legal Bar */}
-          <div className="max-w-7xl mx-auto border-t border-zinc-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] text-zinc-400 font-mono">
-            <div>
-              © {new Date().getFullYear()} The Domain Name. All rights reserved.
-            </div>
-            <div className="flex gap-4">
-              <span className="cursor-pointer hover:underline">Privacy Policy</span>
-              <span>•</span>
-              <span className="cursor-pointer hover:underline">Terms of Service</span>
-              <span>•</span>
-              <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
-            </div>
-          </div>
-        </footer>
-      </div>
+      <HomePageExperience
+        articlesOverride={articles}
+        layoutSectionsOverride={sectionsList}
+        previewMode={true}
+      />
     )
   }
 
-  // Derived article data for live preview rendering
-  const leadArticle = articles.find((a) => a.isLead) || articles[0]
-  const breakingNewsArticles = leadArticle
-    ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id).slice(0, 3)
-    : []
-  const leadSubArticles = leadArticle
-    ? articles.filter((a) => a.id !== leadArticle.id && !breakingNewsArticles.some((b) => b.id === a.id)).slice(0, 4)
-    : []
-
   if (loading) {
+
     return (
       <div className="flex flex-col items-center justify-center p-12 py-24 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
         <div className="w-8 h-8 border-3 border-slate-200 border-t-[#6366f1] rounded-full animate-spin"></div>
@@ -1701,10 +1763,20 @@ export default function HomeLayoutConfigPage() {
 
     return (
       <div className="animate-[admin-fade-in_0.35s_ease_both]">
+        {/* Back Button above Homepage Layout Breadcrumb */}
+        <div className="mb-2">
+          <button
+            onClick={cancelSectionEdit}
+            className="group flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition text-[11px] font-bold uppercase tracking-wider cursor-pointer select-none"
+          >
+            <span className="transition-transform group-hover:-translate-x-0.5">←</span> Back to Layout Manager
+          </button>
+        </div>
+
         {/* Breadcrumb Header */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <div className="text-[11px] text-slate-450 font-bold uppercase tracking-widest flex items-center gap-1 mb-1">
+            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1 mb-1">
               <span>Homepage Layout</span> ➔ <span>Custom Settings</span>
             </div>
             <h1 className="text-[25px] font-serif font-extrabold text-slate-900 m-0">
@@ -1712,24 +1784,44 @@ export default function HomeLayoutConfigPage() {
             </h1>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={cancelSectionEdit}
-              className="p-2 px-5 bg-white text-slate-650 border rounded-xl text-[12.5px] font-bold hover:bg-slate-50 cursor-pointer transition"
-            >
-              Cancel & Back
-            </button>
+            {draftHistory.length > 0 && (
+              <button
+                onClick={undoDraftEdit}
+                className="p-2 px-3 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 rounded-xl text-[11px] font-extrabold cursor-pointer transition whitespace-nowrap animate-[admin-scale-in_0.2s_ease_both]"
+                title="Undo the last dynamic layout setting edit"
+              >
+                ↩️ Undo Last Edit ({draftHistory.length})
+              </button>
+            )}
+            {draftHistory.length > 0 && (
+              <button
+                onClick={resetToOriginal}
+                className="p-2 px-3 bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 rounded-xl text-[11px] font-extrabold cursor-pointer transition whitespace-nowrap animate-[admin-scale-in_0.2s_ease_both]"
+                title="Discard all changes and reset to original layout settings"
+              >
+                🔄 Reset
+              </button>
+            )}
             <button
               onClick={saveSectionDraft}
-              className="p-2 px-6 bg-[#6366f1] text-white rounded-xl text-[12.5px] font-bold hover:bg-[#4f46e5] cursor-pointer shadow-[0_3px_8px_rgba(99,102,241,0.2)] transition"
+              className="p-2 px-4 bg-[#6366f1] text-white rounded-xl text-[11px] font-extrabold hover:bg-[#4f46e5] cursor-pointer shadow-[0_3px_8px_rgba(99,102,241,0.2)] transition whitespace-nowrap"
             >
               Apply Section Edits
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start min-w-0 w-full">
-          {/* LEFT COLUMN: OPTIONS CONTROLLER */}
-          <div className="bg-white rounded-2xl border p-6 flex flex-col gap-5 shadow-xs">
+        <div
+          onFocus={startEditSession}
+          onBlur={endEditSession}
+          onMouseDown={startEditSession}
+          onMouseUp={endEditSession}
+          onTouchStart={startEditSession}
+          onTouchEnd={endEditSession}
+          className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start min-w-0 w-full"
+        >
+          {/* LEFT COLUMN: OPTIONS CONTROLLER (aligned with page header, no background layer) */}
+          <div className="xl:col-span-2 flex flex-col gap-6 bg-transparent p-0 border-0 shadow-none">
             <div className="text-[13px] font-extrabold text-[#6366f1] border-b pb-2 tracking-wider uppercase font-sans">
               Layout & Presentation Controls
             </div>
@@ -1767,8 +1859,8 @@ export default function HomeLayoutConfigPage() {
                       <div className="text-[9.5px] text-slate-400 font-medium">Remove the prefix tag completely. Only show news.</div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer select-none">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={draftSection.settings?.hidePrefix === true}
                         onChange={(e) => updateDraftSetting('hidePrefix', e.target.checked)}
                         className="sr-only peer"
@@ -1791,8 +1883,8 @@ export default function HomeLayoutConfigPage() {
                       <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <span className="text-[11px] font-bold text-slate-650">Blinking Effect</span>
                         <label className="relative inline-flex items-center cursor-pointer select-none">
-                          <input 
-                            type="checkbox" 
+                          <input
+                            type="checkbox"
                             checked={draftSection.settings?.isBlinking !== false}
                             onChange={(e) => updateDraftSetting('isBlinking', e.target.checked)}
                             className="sr-only peer"
@@ -1877,66 +1969,58 @@ export default function HomeLayoutConfigPage() {
                 )}
 
                 {/* Border Options */}
-                <div className="border-t pt-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Thickness Style</label>
-                    <select
-                      value={draftSection.settings?.borderStyle || 'none'}
-                      onChange={(e) => updateDraftSetting('borderStyle', e.target.value)}
-                      className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
-                    >
-                      <option value="none">No Border</option>
-                      <option value="thin">Thin Border (1px)</option>
-                      <option value="thick">Thick Border (3px)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
-                    <input
-                      type="color"
-                      value={draftSection.settings?.borderColor || '#e2e8f0'}
-                      onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
-                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
-                    />
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Border Thickness</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: 'No Border', value: 0 },
+                          { label: 'Thin', value: 1 },
+                          { label: 'Thick', value: 3 },
+                        ].map((opt) => {
+                          const currentVal = draftSection.settings?.borderThickness !== undefined
+                            ? draftSection.settings.borderThickness
+                            : draftSection.settings?.borderStyle === 'thick'
+                              ? 3
+                              : draftSection.settings?.borderStyle === 'none'
+                                ? 0
+                                : 1; // Default is thin (1x)
+                          const isActive = currentVal === opt.value;
+                          return (
+                            <button
+                              key={opt.label}
+                              type="button"
+                              onClick={() => {
+                                updateDraftSettingsMultiple({
+                                  borderThickness: opt.value,
+                                  borderStyle: opt.value === 0 ? 'none' : opt.value === 3 ? 'thick' : 'thin'
+                                });
+                              }}
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer select-none ${isActive
+                                  ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                                }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.borderColor || '#e2e8f0'}
+                        onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
+                        className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Vertical Position Presets */}
-                <div className="border-t pt-3">
-                  <label className="text-[12px] font-extrabold text-[#6366f1] block mb-2 uppercase tracking-wide">Vertical Placement Preset</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'above-header')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        (draftSection.settings?.verticalPreset || 'above-header') === 'above-header'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Above Logo
-                    </button>
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'below-header')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.verticalPreset === 'below-header'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Below Logo
-                    </button>
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'below-nav')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.verticalPreset === 'below-nav'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Below Nav
-                    </button>
-                  </div>
-                </div>
+
 
                 <div>
                   <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Limit News Quantity</label>
@@ -1971,17 +2055,15 @@ export default function HomeLayoutConfigPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => updateDraftSetting('logoType', 'text')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.logoType !== 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${draftSection.settings?.logoType !== 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
                     >
                       Text Typography Logo
                     </button>
                     <button
                       onClick={() => updateDraftSetting('logoType', 'image')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.logoType === 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
+                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${draftSection.settings?.logoType === 'image' ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700' : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
                     >
                       Image Logo Asset
                     </button>
@@ -2131,7 +2213,7 @@ export default function HomeLayoutConfigPage() {
 
                 <div className="border-t pt-3 flex flex-col gap-3">
                   <label className="text-[12px] font-extrabold text-[#6366f1] block uppercase tracking-wide">Search Box Customizations</label>
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[10px] font-bold text-slate-450 block mb-1">Search Placement</label>
@@ -2221,67 +2303,57 @@ export default function HomeLayoutConfigPage() {
                   </select>
                 </div>
 
-                <div className="border-t pt-3">
-                  <label className="text-[12px] font-extrabold text-[#6366f1] block mb-2 uppercase tracking-wide">Vertical Placement Preset</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'above-header')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        (draftSection.settings?.verticalPreset || 'above-header') === 'above-header'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Above Logo
-                    </button>
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'below-header')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.verticalPreset === 'below-header'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Below Logo
-                    </button>
-                    <button
-                      onClick={() => updateDraftSetting('verticalPreset', 'below-nav')}
-                      className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        draftSection.settings?.verticalPreset === 'below-nav'
-                          ? 'border-[#6366f1] bg-indigo-50/40 text-indigo-700'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
-                      }`}
-                    >
-                      Below Nav
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-1.5 font-medium leading-relaxed">
-                    Choose relative position. The layout section sequence indexes will be automatically recalculated upon applying section edits.
-                  </p>
-                </div>
+
 
                 {/* Border Options */}
-                <div className="border-t pt-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Thickness Style</label>
-                    <select
-                      value={draftSection.settings?.borderStyle || 'none'}
-                      onChange={(e) => updateDraftSetting('borderStyle', e.target.value)}
-                      className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
-                    >
-                      <option value="none">No Border</option>
-                      <option value="thin">Thin Border (1px)</option>
-                      <option value="thick">Thick Border (3px)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
-                    <input
-                      type="color"
-                      value={draftSection.settings?.borderColor || '#e2e8f0'}
-                      onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
-                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
-                    />
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Border Thickness</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: 'No Border', value: 0 },
+                          { label: 'Thin', value: 1 },
+                          { label: 'Thick', value: 3 },
+                        ].map((opt) => {
+                          const currentVal = draftSection.settings?.borderThickness !== undefined
+                            ? draftSection.settings.borderThickness
+                            : draftSection.settings?.borderStyle === 'thick'
+                              ? 3
+                              : draftSection.settings?.borderStyle === 'none'
+                                ? 0
+                                : 1; // Default is thin (1x)
+                          const isActive = currentVal === opt.value;
+                          return (
+                            <button
+                              key={opt.label}
+                              type="button"
+                              onClick={() => {
+                                updateDraftSettingsMultiple({
+                                  borderThickness: opt.value,
+                                  borderStyle: opt.value === 0 ? 'none' : opt.value === 3 ? 'thick' : 'thin'
+                                });
+                              }}
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer select-none ${isActive
+                                  ? 'border-[#6366f1] bg-[#eef2ff] text-indigo-700'
+                                  : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                                }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Border Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.borderColor || '#e2e8f0'}
+                        onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
+                        className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2341,98 +2413,124 @@ export default function HomeLayoutConfigPage() {
             )}
           </div>
 
-          {/* RIGHT COLUMN: DUAL PREVIEW PANELS — full width for breaking news for accurate representation */}
-          <div className="flex flex-col gap-6">
+          {/* RIGHT COLUMN: FULL-PAGE PREVIEW — exact same renderFullPagePreview used by the main simulator */}
+          <div className="xl:col-span-3 flex flex-col gap-5 bg-white p-6 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.025)] xl:border-l xl:border-slate-100 xl:pl-8">
 
-            {/* PANEL 1 — EXACT replica of current live news site design (read-only) */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_6px_rgba(34,197,94,0.5)]"></span>
-                <span className="text-[12px] font-extrabold text-emerald-700 uppercase tracking-widest font-sans">
-                  Current Live Design
-                </span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono uppercase tracking-wide bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                  Live on news site right now
-                </span>
+            {/* Preview Controls Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-xl gap-3 select-none">
+              <div className="flex flex-col text-left">
+                <span className="text-[12px] font-extrabold text-slate-700 uppercase tracking-wide">Full Page Preview</span>
+                <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Exact same design as the live news site</span>
               </div>
-              <div className={`overflow-hidden border-2 border-emerald-300 shadow-[0_0_0_4px_rgba(134,239,172,0.15)] relative ${
-                (() => {
-                  const origSec = originalSections.find(s => s.id === draftSection.id) || draftSection
-                  const cs = origSec.settings?.containerStyle || 'original'
-                  const isFlush = cs === 'original' || cs === 'sharp-bar' || cs === 'left-accent' || cs === 'dual-border-slate' || cs === 'diagonal-gradient' || draftSection.id === 'domain-header' || draftSection.id === 'category-nav' || draftSection.id === 'date-section'
-                  return isFlush ? 'rounded-none' : 'rounded-2xl'
-                })()
-              }`}>
-                {/* Decorative label */}
-                <div className="absolute top-0 right-0 z-10 bg-emerald-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider select-none">
-                  LIVE
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Device view toggles */}
+                <div className="bg-slate-200/50 p-1 rounded-lg flex items-center gap-1 border border-slate-200">
+                  <button
+                    onClick={() => setEditDeviceView('desktop')}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${editDeviceView === 'desktop' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Lap
+                  </button>
+                  <button
+                    onClick={() => setEditDeviceView('tablet')}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${editDeviceView === 'tablet' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                    Tablet
+                  </button>
+                  <button
+                    onClick={() => setEditDeviceView('mobile')}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${editDeviceView === 'mobile' ? 'bg-white text-slate-800 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                    Mobile
+                  </button>
                 </div>
-                <div className="pointer-events-none select-none">
-                  {isBreaking
-                    ? renderExactLiveTicker(originalSections.find(s => s.id === draftSection.id) || draftSection)
-                    : (() => {
-                        const origSec = originalSections.find(s => s.id === draftSection.id) || draftSection
-                        const cs = origSec.settings?.containerStyle || 'original'
-                        const isFlush = cs === 'original' || cs === 'sharp-bar' || cs === 'left-accent' || cs === 'dual-border-slate' || cs === 'diagonal-gradient' || draftSection.id === 'domain-header' || draftSection.id === 'category-nav' || draftSection.id === 'date-section'
-                        return (
-                          <div className={isFlush ? 'p-0' : 'p-5 bg-slate-50'}>
-                            {renderPreviewMock(origSec)}
-                          </div>
-                        )
-                      })()
-                  }
+                {/* Preview / Live tab toggle */}
+                <div className="bg-slate-200/50 p-1 rounded-lg flex items-center gap-1 border border-slate-200">
+                  <button
+                    onClick={() => setEditPreviewTab('preview')}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${editPreviewTab === 'preview' ? 'bg-[#6366f1] text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                  >
+                    ✨ Preview
+                  </button>
+                  <button
+                    onClick={() => setEditPreviewTab('live')}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${editPreviewTab === 'live' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                  >
+                    🌐 Live
+                  </button>
                 </div>
               </div>
-              <p className="text-[10px] text-emerald-600 font-semibold px-1">
-                ↑ This is exactly how the Breaking News Ticker appears on your live news site right now.
-              </p>
             </div>
 
-            {/* DIVIDER */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 border-t border-slate-200" />
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
-                Edit Preview
-              </span>
-              <div className="flex-1 border-t border-slate-200" />
-            </div>
-
-            {/* PANEL 2 — Live-updating draft preview (updates as you change settings) */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 px-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block animate-pulse"></span>
-                <span className="text-[12px] font-extrabold text-indigo-700 uppercase tracking-widest font-sans">
-                  Preview with Your Changes
-                </span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono uppercase tracking-wide bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                  Updates as you edit
-                </span>
+            {editDeviceView !== 'desktop' && (
+              <div className="flex items-center justify-center gap-2 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                Previewing at {editDeviceView === 'tablet' ? '768px (Tablet)' : '375px (Mobile)'} width
               </div>
+            )}
+
+            {/* Sliding Preview Canvas — same pattern as main dashboard simulator */}
+            <div className="relative w-full overflow-hidden rounded-2xl border border-slate-200 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
               <div
-                className={`overflow-hidden border-2 border-indigo-300 shadow-[0_0_0_4px_rgba(165,180,252,0.15)] relative ${
-                  isBreaking || draftSection.settings?.containerStyle === 'original' ||
-                  draftSection.settings?.containerStyle === 'sharp-bar' ||
-                  draftSection.settings?.containerStyle === 'left-accent' ||
-                  draftSection.settings?.containerStyle === 'dual-border-slate' ||
-                  draftSection.settings?.containerStyle === 'diagonal-gradient' ||
-                  draftSection.id === 'domain-header' ||
-                  draftSection.id === 'category-nav' ||
-                  draftSection.id === 'date-section'
-                    ? 'p-0 rounded-none'
-                    : 'p-5 bg-slate-50 rounded-2xl'
-                }`}
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{
+                  width: '200%',
+                  transform: editPreviewTab === 'preview' ? 'translateX(0%)' : 'translateX(-50%)',
+                }}
               >
-                {/* Decorative label */}
-                <div className="absolute top-0 right-0 z-10 bg-indigo-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider select-none">
-                  PREVIEW
+                {/* Slide 1: Preview with draft changes — merges draftSection into sections list */}
+                <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white">
+                  <div className="flex justify-between items-center px-4 py-2 bg-slate-50 select-none flex-shrink-0 gap-2 border-b border-slate-100">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6366f1] truncate">✨ Preview — Your Draft Changes</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[8px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">Updates as you edit</span>
+                      <ZoomControl zoom={editZoom} setZoom={setEditZoom} />
+                    </div>
+                  </div>
+                  <SimulatorViewport
+                    naturalWidth={editDeviceView === 'mobile' ? 375 : editDeviceView === 'tablet' ? 768 : 1280}
+                    centered={editDeviceView !== 'desktop'}
+                    zoom={editZoom}
+                  >
+                    {renderFullPagePreview(
+                      sections.map(s => s.id === draftSection.id ? draftSection : s)
+                    )}
+                  </SimulatorViewport>
                 </div>
-                {renderPreviewMock(draftSection)}
+
+                {/* Slide 2: Current Live view — uses originalSections (saved DB state) */}
+                <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white border-l border-slate-100">
+                  <div className="flex justify-between items-center px-4 py-2 bg-slate-50 select-none flex-shrink-0 gap-2 border-b border-slate-100">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 truncate">🌐 Live — Currently Published</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[8px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded-full whitespace-nowrap">Active DB State</span>
+                      <ZoomControl zoom={editZoom} setZoom={setEditZoom} />
+                    </div>
+                  </div>
+                  <SimulatorViewport
+                    naturalWidth={editDeviceView === 'mobile' ? 375 : editDeviceView === 'tablet' ? 768 : 1280}
+                    centered={editDeviceView !== 'desktop'}
+                    zoom={editZoom}
+                  >
+                    {renderFullPagePreview(originalSections)}
+                  </SimulatorViewport>
+                </div>
               </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-relaxed px-1">
-                ✦ Adjust settings on the left and watch this preview update instantly.
-                Click <strong className="text-[#6366f1]">Apply Section Edits</strong> above to confirm and save to the homepage.
-              </p>
             </div>
+
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed px-1">
+              ✦ Adjust settings on the left — the <span className="text-[#6366f1] font-semibold">Preview</span> updates instantly.
+              Click <strong className="text-[#6366f1]">Apply Section Edits</strong> above to confirm.
+              The <span className="text-emerald-600 font-semibold">Live</span> tab shows the currently published site.
+            </p>
 
           </div>
         </div>
@@ -2444,17 +2542,38 @@ export default function HomeLayoutConfigPage() {
   return (
     <div className="max-w-[1250px] w-full min-w-0 animate-[admin-fade-in_0.4s_ease_both] pb-12">
       {/* Header board */}
-      <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center text-white gap-4">
+      <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center text-white gap-4">
         <div>
           <h1 className="text-[26px] font-serif font-extrabold text-white tracking-tight m-0">Modular Homepage Builder</h1>
           <p className="text-[13px] text-slate-300 mt-1 font-medium">Reorder elements globally or click customize to adjust individual alignment, logo files, and marquee scrolls.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Revert / Backup Restore actions */}
+          {hasBackups && (
+            <button
+              onClick={restoreLastBackup}
+              className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition px-3.5 py-2.5 rounded-xl text-[12.5px] font-bold cursor-pointer"
+              title="Step back to the previously published layout configuration"
+            >
+              ⏪ Revert to Previous Design
+            </button>
+          )}
+          {factoryOriginalExists && (
+            <button
+              onClick={restoreFactoryOriginal}
+              className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition px-3.5 py-2.5 rounded-xl text-[12.5px] font-bold cursor-pointer"
+              title="Reset the layout to the original design layout captured on first visit"
+            >
+              🔄 Reset to Original Layout
+            </button>
+          )}
+          <span className="w-[1px] h-6 bg-white/10 hidden md:inline" />
           <button
             onClick={undoAllChanges}
             className="bg-white/10 hover:bg-white/20 text-white transition px-4 py-2.5 rounded-xl text-[12.5px] font-bold border border-white/10 cursor-pointer"
+            title="Discard current draft edits and revert to the active layout configuration"
           >
-            ↩️ Undo Changes
+            ↩️ Undo Draft Changes
           </button>
           <button
             onClick={saveLayout}
@@ -2482,6 +2601,16 @@ export default function HomeLayoutConfigPage() {
           <span>↩️</span> Draft layout discarded. Reverted back to the active database configuration.
         </div>
       )}
+      {message === 'restored-backup' && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
+          <span>⏪</span> Restored to the previously saved layout configuration. Click <strong>Confirm &amp; Save Changes</strong> to publish it.
+        </div>
+      )}
+      {message === 'restored-original' && (
+        <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
+          <span>🔄</span> Restored to the original factory homepage layout. Click <strong>Confirm &amp; Save Changes</strong> to publish it.
+        </div>
+      )}
 
       {/* Sections Table list */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.015)] mb-8 overflow-hidden">
@@ -2492,11 +2621,10 @@ export default function HomeLayoutConfigPage() {
           {sections.map((section, idx) => (
             <div
               key={section.id}
-              className={`p-3 px-5 rounded-xl border flex items-center justify-between gap-4 transition-all ${
-                section.isVisible 
+              className={`p-3 px-5 rounded-xl border flex items-center justify-between gap-4 transition-all ${section.isVisible
                   ? 'border-slate-200 bg-white shadow-xs hover:border-slate-350'
                   : 'border-slate-200 bg-slate-50/50 opacity-60'
-              }`}
+                }`}
             >
               {/* Order & Title */}
               <div className="flex items-center gap-3">
@@ -2568,33 +2696,30 @@ export default function HomeLayoutConfigPage() {
             <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
               <button
                 onClick={() => setDeviceView('desktop')}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  deviceView === 'desktop'
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${deviceView === 'desktop'
                     ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 Desktop
               </button>
               <button
                 onClick={() => setDeviceView('tablet')}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  deviceView === 'tablet'
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${deviceView === 'tablet'
                     ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                 Tablet
               </button>
               <button
                 onClick={() => setDeviceView('mobile')}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  deviceView === 'mobile'
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${deviceView === 'mobile'
                     ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
                     : 'text-slate-500 hover:text-slate-700'
-                }`}
+                  }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                 Mobile
@@ -2605,21 +2730,19 @@ export default function HomeLayoutConfigPage() {
             <div className="bg-slate-200/50 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
               <button
                 onClick={() => setPreviewTab('draft')}
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  previewTab === 'draft'
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${previewTab === 'draft'
                     ? 'bg-[#6366f1] text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-800'
-                }`}
+                  }`}
               >
                 <span>✨ Draft</span>
               </button>
               <button
                 onClick={() => setPreviewTab('live')}
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  previewTab === 'live'
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${previewTab === 'live'
                     ? 'bg-slate-500 text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-800'
-                }`}
+                  }`}
               >
                 <span>🌐 Live</span>
               </button>
@@ -2648,16 +2771,19 @@ export default function HomeLayoutConfigPage() {
             {/* ── Slide 1: Proposed Draft ── */}
             <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white">
               {/* Slide label bar */}
-              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#6366f1]">
+              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0 gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#6366f1] truncate">
                   📝 Proposed Draft Layout Preview (Unsaved)
                 </span>
-                <span className="text-[9px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded-full animate-pulse">
-                  Interactive Simulation
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[9px] bg-[#6366f1] text-white font-bold px-2 py-0.5 rounded-full animate-pulse whitespace-nowrap">
+                    Interactive Simulation
+                  </span>
+                  <ZoomControl zoom={mainZoom} setZoom={setMainZoom} />
+                </div>
               </div>
               {/* Scaled viewport */}
-              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 960} centered={deviceView !== 'desktop'}>
+              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 1280} centered={deviceView !== 'desktop'} zoom={mainZoom}>
                 {renderFullPagePreview(sections)}
               </SimulatorViewport>
             </div>
@@ -2665,16 +2791,19 @@ export default function HomeLayoutConfigPage() {
             {/* ── Slide 2: Current Live View ── */}
             <div style={{ width: '50%', minWidth: 0 }} className="flex flex-col bg-white border-l border-slate-100">
               {/* Slide label bar */}
-              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0">
-                <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
+              <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 bg-slate-50 select-none flex-shrink-0 gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 truncate">
                   🌐 Current Live Layout View (Active)
                 </span>
-                <span className="text-[9px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded-full">
-                  Active DB State
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[9px] bg-slate-500 text-white font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Active DB State
+                  </span>
+                  <ZoomControl zoom={mainZoom} setZoom={setMainZoom} />
+                </div>
               </div>
               {/* Scaled viewport */}
-              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 960} centered={deviceView !== 'desktop'}>
+              <SimulatorViewport naturalWidth={deviceView === 'mobile' ? 375 : deviceView === 'tablet' ? 768 : 1280} centered={deviceView !== 'desktop'} zoom={mainZoom}>
                 {renderFullPagePreview(originalSections)}
               </SimulatorViewport>
             </div>

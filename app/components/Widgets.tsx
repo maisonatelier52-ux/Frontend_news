@@ -38,12 +38,25 @@ export function StockTicker() {
 // --- Dynamic Breaking News Ticker ---
 // Reads settings saved in admin → Home Layout → Breaking News Ticker
 // Falls back to the original StockTicker design if no custom settings exist.
-export function DynamicBreakingNewsTicker() {
-  const [settings, setSettings] = useState<Record<string, any> | null>(null)
-  const [breakingArticles, setBreakingArticles] = useState<string[]>([])
+export function DynamicBreakingNewsTicker({
+  settingsOverride,
+  breakingArticleTitlesOverride,
+}: {
+  settingsOverride?: Record<string, any>
+  breakingArticleTitlesOverride?: string[]
+} = {}) {
+  const [settings, setSettings] = useState<Record<string, any> | null>(settingsOverride || null)
+  const [breakingArticles, setBreakingArticles] = useState<string[]>(breakingArticleTitlesOverride || [])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    if (settingsOverride || breakingArticleTitlesOverride) {
+      setSettings(settingsOverride || null)
+      setBreakingArticles(breakingArticleTitlesOverride || [])
+      setLoaded(true)
+      return
+    }
+
     async function loadSettings() {
       try {
         // Load layout settings from DB
@@ -72,7 +85,7 @@ export function DynamicBreakingNewsTicker() {
       }
     }
     loadSettings()
-  }, [])
+  }, [settingsOverride, breakingArticleTitlesOverride])
 
   // While loading, render invisible placeholder so there's no layout shift
   if (!loaded) {
@@ -89,7 +102,7 @@ export function DynamicBreakingNewsTicker() {
   const isBlinking   = settings?.isBlinking    !== false
   const cStyle       = settings?.containerStyle || 'original'
   const animation    = settings?.animation     || 'scroll'
-  const borderStyle  = settings?.borderStyle   || 'none'
+  const borderStyle  = settings?.borderStyle   || 'thin'
   const borderColor  = settings?.borderColor   || '#e2e8f0'
   const customText   = settings?.customText    || ''
   const scrollSpeed  = settings?.scrollSpeed
@@ -99,11 +112,15 @@ export function DynamicBreakingNewsTicker() {
   const tickerItems = breakingArticles.length > 0 ? breakingArticles : fallback
   const alertText   = customText || tickerItems.join('   •   ')
 
-  const borderCss = borderStyle === 'thin'
-    ? `1px solid ${borderColor}`
-    : borderStyle === 'thick'
-    ? `3px solid ${borderColor}`
-    : 'none'
+  // Resolve border thickness, defaulting to 0 if 'none', 1 if 'thin', 3 if 'thick'.
+  const defaultThickness = borderStyle === 'thick' ? 3 : borderStyle === 'thin' ? 1 : 0;
+  const borderThickness = typeof settings?.borderThickness === 'number'
+    ? settings.borderThickness
+    : defaultThickness;
+
+  const borderCss = borderThickness === 0
+    ? 'none'
+    : `${borderThickness}px solid ${borderColor}`;
 
   const blinkClass = isBlinking ? 'animate-pulse' : ''
 

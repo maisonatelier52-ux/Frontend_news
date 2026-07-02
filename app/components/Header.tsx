@@ -4,6 +4,32 @@ import React, { useState, useEffect } from "react";
 
 import { DynamicBreakingNewsTicker } from "./Widgets";
 
+type SectionSettingValue = string | number | boolean | undefined;
+type SectionSettings = Record<string, SectionSettingValue>;
+
+interface HeaderLayoutSection {
+  id: string;
+  order?: number;
+  isVisible?: boolean;
+  settings?: SectionSettings;
+}
+
+interface CategoryApiItem {
+  name: string;
+  isVisible?: boolean;
+  articles?: number;
+}
+
+function stringSetting(settings: SectionSettings | undefined, key: string, fallback: string) {
+  const value = settings?.[key];
+  return typeof value === "string" ? value : fallback;
+}
+
+function numberSetting(settings: SectionSettings | undefined, key: string, fallback: number) {
+  const value = settings?.[key];
+  return typeof value === "number" ? value : fallback;
+}
+
 interface HeaderProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
@@ -13,7 +39,8 @@ interface HeaderProps {
   showBookmarksOnly: boolean;
   setShowBookmarksOnly: (val: boolean) => void;
   /** If provided, use these sections instead of fetching from API */
-  overrideSections?: any[];
+  overrideSections?: HeaderLayoutSection[];
+  breakingArticleTitlesOverride?: string[];
 }
 
 export default function Header({
@@ -25,27 +52,28 @@ export default function Header({
   showBookmarksOnly,
   setShowBookmarksOnly,
   overrideSections,
+  breakingArticleTitlesOverride,
 }: HeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categories, setCategories] = useState<string[]>(["All"]);
-  const [layoutSections, setLayoutSections] = useState<any[]>([]);
+  const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
         const catRes = await fetch("/api/categories");
         if (catRes.ok) {
-          const data = await catRes.json();
+          const data = (await catRes.json()) as CategoryApiItem[];
           const visibleCats = data
-            .filter((c: any) => c.isVisible !== false && c.articles > 0)
-            .map((c: any) => c.name);
+            .filter((c) => c.isVisible !== false && (c.articles || 0) > 0)
+            .map((c) => c.name);
           setCategories(["All", ...visibleCats]);
         }
 
         if (!overrideSections) {
           const layoutRes = await fetch("/api/home-layout");
           if (layoutRes.ok) {
-            const data = await layoutRes.json();
+            const data = (await layoutRes.json()) as { sections?: HeaderLayoutSection[] };
             if (data && data.sections) {
               setLayoutSections(data.sections);
             }
@@ -82,13 +110,20 @@ export default function Header({
   };
   const formattedDate = today.toLocaleDateString("en-US", options);
 
-  const renderDateSection = (sec: any) => {
-    const dateBg = sec?.settings?.bgColor || '#ffffff';
-    const dateCol = sec?.settings?.textColor || '#52525b';
-    const dateAlign = sec?.settings?.alignment || 'spaced';
-    const dateBorder = sec?.settings?.borderStyle || 'none';
-    const dateBorderCol = sec?.settings?.borderColor || '#e4e4e7';
-    const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : `1px solid #e4e4e7`;
+  const renderDateSection = (sec: HeaderLayoutSection) => {
+    const dateBg = stringSetting(sec.settings, 'bgColor', '#ffffff');
+    const dateCol = stringSetting(sec.settings, 'textColor', '#52525b');
+    const dateAlign = stringSetting(sec.settings, 'alignment', 'spaced');
+    const dateBorder = stringSetting(sec.settings, 'borderStyle', 'thin');
+    const dateBorderCol = stringSetting(sec.settings, 'borderColor', '#e4e4e7');
+    
+    // Default to thin (1px) if not explicitly set. If set to 'none' or thickness is 0, then no border.
+    const defaultThickness = dateBorder === 'thick' ? 3 : dateBorder === 'none' ? 0 : 1;
+    const dateBorderThickness = numberSetting(sec.settings, 'borderThickness', defaultThickness);
+    
+    const dateBorderCss = dateBorderThickness === 0 
+      ? 'none' 
+      : `${dateBorderThickness}px solid ${dateBorderCol}`;
 
     const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between';
 
@@ -113,16 +148,16 @@ export default function Header({
     );
   };
 
-  const renderDomainHeader = (sec: any) => {
-    const isText = sec?.settings?.logoType !== 'image';
-    const alignment = sec?.settings?.alignment || 'center';
-    const logoSize = sec?.settings?.logoSize || '72px';
-    const logoColor = sec?.settings?.logoColor || '#000000';
-    const logoImg = sec?.settings?.logoImage || '';
-    const tagline = sec?.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism';
-    const tagSize = sec?.settings?.taglineSize || '12px';
-    const tagColor = sec?.settings?.taglineColor || '#71717a';
-    const bgColor = sec?.settings?.bgColor || '#ffffff';
+  const renderDomainHeader = (sec: HeaderLayoutSection) => {
+    const isText = stringSetting(sec.settings, 'logoType', 'text') !== 'image';
+    const alignment = stringSetting(sec.settings, 'alignment', 'center');
+    const logoSize = stringSetting(sec.settings, 'logoSize', '72px');
+    const logoColor = stringSetting(sec.settings, 'logoColor', '#000000');
+    const logoImg = stringSetting(sec.settings, 'logoImage', '');
+    const tagline = stringSetting(sec.settings, 'taglineText', 'Truth, Clarity, and Perspective - Independent Journalism');
+    const tagSize = stringSetting(sec.settings, 'taglineSize', '12px');
+    const tagColor = stringSetting(sec.settings, 'taglineColor', '#71717a');
+    const bgColor = stringSetting(sec.settings, 'bgColor', '#ffffff');
 
     const alignClass = alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center';
 
@@ -133,10 +168,13 @@ export default function Header({
         style={{ backgroundColor: bgColor }}
       >
         {isText ? (
-          <div className="flex flex-col items-center select-none w-full">
+          <div className="flex flex-col items-center select-none w-full overflow-hidden">
             <h1 
-              className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none relative flex justify-center text-center select-none"
-              style={{ fontSize: logoSize, color: logoColor }}
+              className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none text-center select-none whitespace-nowrap w-full"
+              style={{ 
+                color: logoColor,
+                fontSize: `clamp(28px, 7vw, ${logoSize})`,
+              }}
               onClick={() => {
                 setActiveCategory("All");
                 setSearchQuery("");
@@ -144,23 +182,14 @@ export default function Header({
                 setShowBookmarksOnly(false);
               }}
             >
-              <span>D</span>
-              <span className="relative inline-flex justify-center select-none">
-                <span>OMAIN NAM</span>
-                <span 
-                  className="absolute top-full left-0 right-0 flex justify-between select-none pointer-events-none whitespace-nowrap"
-                  style={{ transform: 'translateY(4px)' }}
-                >
-                  {tagline.toUpperCase().split('').map((char: string, i: number) => (
-                    <span key={i} style={{ fontSize: tagSize, color: tagColor }} className="font-sans font-bold uppercase leading-none tracking-normal">
-                      {char === ' ' ? '\u00A0' : char}
-                    </span>
-                  ))}
-                </span>
-              </span>
-              <span>E</span>
+              DOMAIN NAME
             </h1>
-            <div style={{ height: `calc(${tagSize} + 8px)` }} />
+            <p
+              className="mt-2 font-sans font-bold uppercase tracking-widest text-center leading-tight select-none"
+              style={{ fontSize: `clamp(8px, 1.5vw, ${tagSize})`, color: tagColor, letterSpacing: '0.15em' }}
+            >
+              {tagline}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
@@ -187,14 +216,15 @@ export default function Header({
     );
   };
 
-  const renderCategoryNav = (sec: any) => {
-    const bgColor = sec?.settings?.bgColor || '#ffffff';
-    const alignment = sec?.settings?.alignment || 'center';
-    const searchPlacement = sec?.settings?.searchPlacement || 'right';
-    const activeDesign = sec?.settings?.activeLinkDesign || 'underline';
-    const searchPlaceholder = sec?.settings?.searchPlaceholder || 'Search articles...';
-    const searchBorderColor = sec?.settings?.searchBorderColor || '#e4e4e7';
-    const searchBorderThickness = sec?.settings?.searchBorderThickness || '1px';
+
+  const renderCategoryNav = (sec: HeaderLayoutSection) => {
+    const bgColor = stringSetting(sec.settings, 'bgColor', '#ffffff');
+    const alignment = stringSetting(sec.settings, 'alignment', 'center');
+    const searchPlacement = stringSetting(sec.settings, 'searchPlacement', 'right');
+    const activeDesign = stringSetting(sec.settings, 'activeLinkDesign', 'underline');
+    const searchPlaceholder = stringSetting(sec.settings, 'searchPlaceholder', 'Search articles...');
+    const searchBorderColor = stringSetting(sec.settings, 'searchBorderColor', '#e4e4e7');
+    const searchBorderThickness = stringSetting(sec.settings, 'searchBorderThickness', '1px');
 
     const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
 
@@ -267,7 +297,7 @@ export default function Header({
   const headerIds = ["breaking-news", "date-section", "domain-header", "category-nav"];
   
   const sortedHeaderSections = layoutSections.length > 0
-    ? layoutSections.filter((s: any) => headerIds.includes(s.id) && s.isVisible !== false).sort((a: any, b: any) => a.order - b.order)
+    ? layoutSections.filter((s) => headerIds.includes(s.id) && s.isVisible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
     : [
         { id: "breaking-news", order: 0 },
         { id: "date-section", order: 1 },
@@ -277,9 +307,15 @@ export default function Header({
 
   return (
     <header className="w-full bg-white select-none">
-      {sortedHeaderSections.map((section: any) => {
+      {sortedHeaderSections.map((section) => {
         if (section.id === "breaking-news") {
-          return <DynamicBreakingNewsTicker key="breaking-news" />;
+          return (
+            <DynamicBreakingNewsTicker
+              key="breaking-news"
+              settingsOverride={overrideSections ? section.settings : undefined}
+              breakingArticleTitlesOverride={overrideSections ? breakingArticleTitlesOverride : undefined}
+            />
+          );
         }
         if (section.id === "date-section") {
           return renderDateSection(section);
