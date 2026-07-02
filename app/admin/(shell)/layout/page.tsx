@@ -130,7 +130,7 @@ function SimulatorViewport({
   const NATURAL_WIDTH = naturalWidth
 
   // Fixed viewport heights for realistic simulator scrolling
-  const VIEWPORT_HEIGHT = NATURAL_WIDTH === 375 ? 640 : NATURAL_WIDTH === 768 ? 800 : 750
+  const VIEWPORT_HEIGHT = NATURAL_WIDTH === 375 ? 680 : NATURAL_WIDTH === 768 ? 850 : 900
 
   const iframeDoc = iframeRef?.contentWindow?.document
   const mountNode = iframeDoc?.body
@@ -214,7 +214,7 @@ function SimulatorViewport({
   const transformedHeight = Math.round(VIEWPORT_HEIGHT * effectiveScale)
 
   return (
-    <div className={`flex ${centered ? 'justify-center py-3' : ''} relative group w-full`}>
+    <div ref={outerRef} className={`flex ${centered ? 'justify-center py-3' : ''} relative group w-full`}>
       <style>{`
         .admin-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -234,7 +234,6 @@ function SimulatorViewport({
         }
       `}</style>
       <div
-        ref={outerRef}
         className="overflow-auto bg-white transition-all duration-200 border border-slate-100 rounded-xl admin-scrollbar"
         style={{
           width: outerW,
@@ -304,6 +303,8 @@ export default function HomeLayoutConfigPage() {
   // Refs for tracking active input edit sessions (grouped/debounced undo history)
   const editSessionStateRef = React.useRef<LayoutSection | null>(null)
   const editSessionPushedRef = React.useRef<boolean>(false)
+  const lastEditedKeyRef = React.useRef<string | null>(null)
+  const lastEditTimeRef = React.useRef<number>(0)
 
   // Reactive listener to check backups in localStorage
   useEffect(() => {
@@ -436,14 +437,21 @@ export default function HomeLayoutConfigPage() {
   // Update field in current draft section (pushing current state to history first)
   function updateDraftField(field: keyof LayoutSection, value: any) {
     if (draftSection) {
+      const now = Date.now()
+      const isConsecutive = lastEditedKeyRef.current === field && (now - lastEditTimeRef.current < 1200)
+
       if (editSessionStateRef.current) {
         if (!editSessionPushedRef.current) {
           setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(editSessionStateRef.current))])
           editSessionPushedRef.current = true
         }
-      } else {
+      } else if (!isConsecutive) {
         setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(draftSection))])
       }
+
+      lastEditedKeyRef.current = field
+      lastEditTimeRef.current = now
+
       setDraftSection({ ...draftSection, [field]: value })
     }
   }
@@ -451,14 +459,21 @@ export default function HomeLayoutConfigPage() {
   // Update dynamic setting in current draft section (pushing current state to history first)
   function updateDraftSetting(key: string, value: any) {
     if (draftSection) {
+      const now = Date.now()
+      const isConsecutive = lastEditedKeyRef.current === key && (now - lastEditTimeRef.current < 1200)
+
       if (editSessionStateRef.current) {
         if (!editSessionPushedRef.current) {
           setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(editSessionStateRef.current))])
           editSessionPushedRef.current = true
         }
-      } else {
+      } else if (!isConsecutive) {
         setDraftHistory(prev => [...prev, JSON.parse(JSON.stringify(draftSection))])
       }
+
+      lastEditedKeyRef.current = key
+      lastEditTimeRef.current = now
+
       const nextSettings = { ...draftSection.settings, [key]: value }
       setDraftSection({ ...draftSection, settings: nextSettings })
     }
@@ -1161,24 +1176,73 @@ export default function HomeLayoutConfigPage() {
         const dateBorderCol = section.settings?.borderColor || '#e4e4e7'
         const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : `1px solid #e4e4e7`
 
-        const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between'
+        const showDate = section.settings?.showDate !== false
+        const customDateText = section.settings?.customDateText || 'Wednesday, July 1, 2026'
+        const showLocation = section.settings?.showLocation !== false
+        const customLocationText = section.settings?.customLocationText || 'Washington, D.C.'
+        const customExtraText = section.settings?.customExtraText || ''
+        const extraTextPlacement = section.settings?.extraTextPlacement || 'right'
+
+        // Render date element
+        const dateElement = showDate && (
+          <span className="flex items-center gap-1.5 font-sans font-medium">
+            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {customDateText}
+          </span>
+        )
+
+        // Render location element
+        const locationElement = showLocation && (
+          <span className="font-sans font-semibold text-zinc-500 text-[11px]">
+            {customLocationText}
+          </span>
+        )
+
+        // Render extra text element
+        const extraElement = customExtraText && (
+          <span className="font-sans font-semibold text-indigo-650 text-[10px] bg-indigo-50/70 px-2 py-0.5 rounded border border-indigo-150 tracking-wide">
+            {customExtraText}
+          </span>
+        )
+
+        if (dateAlign === 'spaced') {
+          return (
+            <div
+              key={section.id}
+              className="w-full py-2 px-4 sm:px-6 text-xs text-zinc-650 flex items-center justify-between transition-all"
+              style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
+            >
+              <div className="flex items-center gap-3">
+                {dateElement}
+                {extraTextPlacement === 'left' && extraElement}
+              </div>
+              <div className="flex items-center gap-3">
+                {extraTextPlacement === 'right' && extraElement}
+                {locationElement}
+              </div>
+            </div>
+          )
+        }
+
+        // Left, Center, or Right alignment
+        const dateAlignClass = dateAlign === 'center'
+          ? 'justify-center gap-6'
+          : dateAlign === 'right'
+            ? 'justify-end gap-4'
+            : 'justify-start gap-4'
+
         return (
           <div
             key={section.id}
             className={`w-full py-2 px-4 sm:px-6 text-xs text-zinc-650 flex items-center transition-all ${dateAlignClass}`}
             style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
           >
-            <span className="flex items-center gap-1.5 font-sans font-medium">
-              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Wednesday, July 1, 2026
-            </span>
-            {dateAlign === 'spaced' && (
-              <span className="font-sans font-semibold text-zinc-500 text-[11px]">
-                Washington, D.C.
-              </span>
-            )}
+            {extraTextPlacement === 'left' && extraElement}
+            {dateElement}
+            {locationElement}
+            {extraTextPlacement === 'right' && extraElement}
           </div>
         )
       }
@@ -1875,7 +1939,7 @@ export default function HomeLayoutConfigPage() {
                         <label className="text-[10px] font-bold text-slate-400 block mb-1">Prefix Text Label</label>
                         <input
                           type="text"
-                          value={draftSection.settings?.prefixText || 'BREAKING'}
+                          value={draftSection.settings?.prefixText || 'BREAKING NEWS'}
                           onChange={(e) => updateDraftSetting('prefixText', e.target.value)}
                           className="p-2 border rounded-lg text-xs w-full bg-white text-slate-750 outline-none"
                         />
@@ -2031,17 +2095,6 @@ export default function HomeLayoutConfigPage() {
                     value={draftSection.limit}
                     onChange={(e) => updateDraftField('limit', parseInt(e.target.value) || 5)}
                     className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Ticker Text Override (Optional)</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Enter manual text override. Leave empty to scroll live breaking articles automatically..."
-                    value={draftSection.settings?.customText || ''}
-                    onChange={(e) => updateDraftSetting('customText', e.target.value)}
-                    className="p-2.5 border rounded-lg text-xs w-full bg-white text-slate-755 outline-none resize-none font-medium"
                   />
                 </div>
               </div>
@@ -2303,7 +2356,97 @@ export default function HomeLayoutConfigPage() {
                   </select>
                 </div>
 
+                {/* Date Display Options */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-700 block">Show Date Badge</span>
+                      <span className="text-[9px] text-slate-400 font-semibold uppercase">Toggle date visibility</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={draftSection.settings?.showDate !== false}
+                        onChange={(e) => updateDraftSetting('showDate', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                    </label>
+                  </div>
 
+                  {draftSection.settings?.showDate !== false && (
+                    <div className="animate-[admin-fade-in_0.2s_ease]">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Date Text</label>
+                      <input
+                        type="text"
+                        placeholder="Wednesday, July 1, 2026"
+                        value={draftSection.settings?.customDateText || ''}
+                        onChange={(e) => updateDraftSetting('customDateText', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Location Display Options */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-700 block">Show Location Badge</span>
+                      <span className="text-[9px] text-slate-400 font-semibold uppercase">Toggle place visibility</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={draftSection.settings?.showLocation !== false}
+                        onChange={(e) => updateDraftSetting('showLocation', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                    </label>
+                  </div>
+
+                  {draftSection.settings?.showLocation !== false && (
+                    <div className="animate-[admin-fade-in_0.2s_ease]">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Location Text</label>
+                      <input
+                        type="text"
+                        placeholder="Washington, D.C."
+                        value={draftSection.settings?.customLocationText || ''}
+                        onChange={(e) => updateDraftSetting('customLocationText', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Extra Information Options */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Extra Info Text</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Breaking, Special Edition, etc."
+                      value={draftSection.settings?.customExtraText || ''}
+                      onChange={(e) => updateDraftSetting('customExtraText', e.target.value)}
+                      className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                    />
+                  </div>
+
+                  {draftSection.settings?.customExtraText && (
+                    <div className="animate-[admin-fade-in_0.2s_ease]">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Extra Info Placement</label>
+                      <select
+                        value={draftSection.settings?.extraTextPlacement || 'right'}
+                        onChange={(e) => updateDraftSetting('extraTextPlacement', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
+                      >
+                        <option value="left">Left Side (Next to Date)</option>
+                        <option value="right">Right Side (Next to Location)</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
 
                 {/* Border Options */}
                 <div className="border-t pt-3 flex flex-col gap-3">
@@ -2414,7 +2557,7 @@ export default function HomeLayoutConfigPage() {
           </div>
 
           {/* RIGHT COLUMN: FULL-PAGE PREVIEW — exact same renderFullPagePreview used by the main simulator */}
-          <div className="xl:col-span-3 flex flex-col gap-5 bg-white p-6 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.025)] xl:border-l xl:border-slate-100 xl:pl-8">
+          <div className="xl:col-span-3 xl:sticky xl:top-[115px] self-start flex flex-col gap-3.5 bg-white p-4 rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.02)] xl:border-l xl:border-slate-100 xl:pl-6">
 
             {/* Preview Controls Bar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-xl gap-3 select-none">
@@ -2525,12 +2668,6 @@ export default function HomeLayoutConfigPage() {
                 </div>
               </div>
             </div>
-
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed px-1">
-              ✦ Adjust settings on the left — the <span className="text-[#6366f1] font-semibold">Preview</span> updates instantly.
-              Click <strong className="text-[#6366f1]">Apply Section Edits</strong> above to confirm.
-              The <span className="text-emerald-600 font-semibold">Live</span> tab shows the currently published site.
-            </p>
 
           </div>
         </div>
