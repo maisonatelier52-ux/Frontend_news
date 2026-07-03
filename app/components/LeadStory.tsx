@@ -626,7 +626,7 @@ export default function LeadStory({
               {renderLeadRow()}
               <div className="border-t border-zinc-200 mt-4 pt-3" />
               <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
-                {subArticles.slice(0, 4).map((article) => (
+                {subArticles.slice(0, 2).map((article) => (
                   <div key={article.id} onClick={() => onSelectArticle(article.id)}
                     className="group cursor-pointer flex flex-col justify-start py-1 hover:bg-zinc-50/50 px-2 rounded transition-colors duration-150">
                     <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-1">{article.category}</div>
@@ -637,8 +637,24 @@ export default function LeadStory({
                 ))}
               </div>
             </div>
-            {/* Right: 4 articles (extra one) */}
-            {renderRightWithImagesExtra(secondaryArticles, 4)}
+            {/* Right: Breaking Updates — text only, 4 articles, no images */}
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
+              <div className="flex flex-col gap-0">
+                {secondaryArticles.slice(0, 4).map((article, idx) => (
+                  <div
+                    key={article.id}
+                    className="group cursor-pointer py-3 border-b border-zinc-150 last:border-0"
+                    onClick={() => onSelectArticle(article.id)}
+                  >
+                    <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">{article.category}</span>
+                    <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-600 transition mt-0.5">{article.title}</h3>
+                    <p className="mt-0.5 text-[11px] text-zinc-550 line-clamp-2 font-sans">{article.content?.[0] || article.excerpt}</p>
+                    <div className="mt-1.5 text-[10px] text-zinc-400 font-sans">{article.date} · {article.readTime}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -785,7 +801,7 @@ export default function LeadStory({
                 ))}
               </div>
             </div>
-            {renderRightStandard(secondaryArticles)}
+            {renderRightStandard(secondaryArticles.slice(0, 3))}
           </div>
         </div>
       </section>
@@ -992,7 +1008,7 @@ export default function LeadStory({
             </div>
 
             <div className="flex-1 flex flex-col justify-between gap-4">
-              {secondaryArticles.map((article, idx) => (
+              {secondaryArticles.slice(0, 3).map((article, idx) => (
                 <div
                   key={article.id}
                   className="group cursor-pointer flex flex-col justify-between py-1.5 first:pt-0 last:pb-0"
@@ -1018,7 +1034,7 @@ export default function LeadStory({
                     </span>
                     <span className="font-semibold text-zinc-700">{article.readTime}</span>
                   </div>
-                  {idx < secondaryArticles.length - 1 && (
+                  {idx < 2 && (
                     <div className="border-b border-zinc-200 mt-4" />
                   )}
                 </div>
