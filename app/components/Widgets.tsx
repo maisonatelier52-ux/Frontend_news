@@ -41,17 +41,21 @@ export function StockTicker() {
 export function DynamicBreakingNewsTicker({
   settingsOverride,
   breakingArticleTitlesOverride,
+  limitOverride,
 }: {
   settingsOverride?: Record<string, any>
   breakingArticleTitlesOverride?: string[]
+  limitOverride?: number
 } = {}) {
   const [settings, setSettings] = useState<Record<string, any> | null>(settingsOverride || null)
+  const [limit, setLimit] = useState<number>(limitOverride || 5)
   const [breakingArticles, setBreakingArticles] = useState<string[]>(breakingArticleTitlesOverride || [])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (settingsOverride || breakingArticleTitlesOverride) {
+    if (settingsOverride || breakingArticleTitlesOverride || limitOverride !== undefined) {
       setSettings(settingsOverride || null)
+      setLimit(limitOverride ?? 5)
       setBreakingArticles(breakingArticleTitlesOverride || [])
       setLoaded(true)
       return
@@ -66,6 +70,7 @@ export function DynamicBreakingNewsTicker({
           const breakingSec = (layout.sections || []).find((s: any) => s.id === 'breaking-news')
           if (breakingSec) {
             setSettings(breakingSec.settings || {})
+            setLimit(breakingSec.limit || 5)
           }
         }
 
@@ -85,7 +90,7 @@ export function DynamicBreakingNewsTicker({
       }
     }
     loadSettings()
-  }, [settingsOverride, breakingArticleTitlesOverride])
+  }, [settingsOverride, breakingArticleTitlesOverride, limitOverride])
 
   // While loading, render invisible placeholder so there's no layout shift
   if (!loaded) {
@@ -109,7 +114,7 @@ export function DynamicBreakingNewsTicker({
 
   // Fall back to static articles if none from DB
   const fallback = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => a.title)
-  const tickerItems = breakingArticles.length > 0 ? breakingArticles : fallback
+  const tickerItems = (breakingArticles.length > 0 ? breakingArticles : fallback).slice(0, limit)
   const alertText   = customText || tickerItems.join('   •   ')
 
   // Resolve border thickness, defaulting to 0 if 'none', 1 if 'thin', 3 if 'thick'.
@@ -136,38 +141,45 @@ export function DynamicBreakingNewsTicker({
   }
   const speed = scrollSpeed || defaultSpeed
 
-  switch (animation) {
-    case 'fade':
-      animClass = 'animate-custom-fade'
-      break
-    case 'vertical-roll':
-      animClass = 'animate-vertical-roll'
-      break
-    case 'zoom-pulse':
-      animClass = 'animate-zoom-pulse'
-      break
-    case 'flash-fast':
-      animClass = 'animate-flash-fast'
-      break
-    case 'glitch-shiver':
-      animClass = 'animate-glitch-shiver'
-      break
-    case 'slide-reveal':
-      animClass = 'animate-slide-reveal'
-      break
-    case 'bounce-reveal':
-      animClass = 'animate-bounce-reveal'
-      break
-    case 'shimmer':
-      animClass = 'animate-shimmer'
-      break
-    case 'static':
-      animClass = ''
-      break
-    case 'scroll':
-    default:
-      animClass = 'animate-custom-scroll'
-      break
+  // If there's only one news item, we don't need any animation/movement
+  const shouldAnimate = tickerItems.length > 1
+
+  if (shouldAnimate) {
+    switch (animation) {
+      case 'fade':
+        animClass = 'animate-custom-fade'
+        break
+      case 'vertical-roll':
+        animClass = 'animate-vertical-roll'
+        break
+      case 'zoom-pulse':
+        animClass = 'animate-zoom-pulse'
+        break
+      case 'flash-fast':
+        animClass = 'animate-flash-fast'
+        break
+      case 'glitch-shiver':
+        animClass = 'animate-glitch-shiver'
+        break
+      case 'slide-reveal':
+        animClass = 'animate-slide-reveal'
+        break
+      case 'bounce-reveal':
+        animClass = 'animate-bounce-reveal'
+        break
+      case 'shimmer':
+        animClass = 'animate-shimmer'
+        break
+      case 'static':
+        animClass = ''
+        break
+      case 'scroll':
+      default:
+        animClass = 'animate-custom-scroll'
+        break
+    }
+  } else {
+    animClass = ''
   }
 
   const styleBlock = (
@@ -248,7 +260,7 @@ export function DynamicBreakingNewsTicker({
   )
 
   const renderTextContent = () => {
-    if (animation === 'scroll') {
+    if (animation === 'scroll' && tickerItems.length > 1) {
       return (
         <div className="relative w-full overflow-hidden flex items-center">
           <div 

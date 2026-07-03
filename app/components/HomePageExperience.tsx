@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Article } from "../data/news";
-import Header from "./Header";
+import Header, { HeaderLayoutSection } from "./Header";
 import LeadStory from "./LeadStory";
 import NewsGrid from "./NewsGrid";
 import ArticleReader from "./ArticleReader";
@@ -35,7 +35,7 @@ const INITIAL_COMMENTS: Record<string, Comment[]> = {
 
 interface HomePageExperienceProps {
   articlesOverride?: Article[];
-  layoutSectionsOverride?: unknown[];
+  layoutSectionsOverride?: HeaderLayoutSection[];
   previewMode?: boolean;
 }
 
@@ -86,6 +86,8 @@ export default function HomePageExperience({
   previewMode = false,
 }: HomePageExperienceProps = {}) {
   const router = useRouter();
+  const sections = (layoutSectionsOverride || []) as any[];
+  const leadSection = sections.find(s => s.id === 'first-hero');
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
@@ -335,6 +337,8 @@ export default function HomePageExperience({
               secondaryArticles={breakingArticlesWithStats}
               subArticles={leadSubArticlesWithStats}
               onSelectArticle={setSelectedArticleId}
+              settings={leadSection?.settings}
+              designStyle={leadSection?.designStyle}
             />
             <NewsGrid
               articles={articlesWithDynamicStats}

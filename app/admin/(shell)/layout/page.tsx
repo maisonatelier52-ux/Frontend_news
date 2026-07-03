@@ -42,27 +42,35 @@ function getDesignOptions(sectionId: string) {
     return [
       { value: 'hero-split', label: 'Standard Hero Split' },
       { value: 'hero-full', label: 'Full-Width Hero Card' },
-      { value: 'hero-minimal', label: 'Minimal Text Headline' }
+      { value: 'hero-minimal', label: 'Minimal Text Headline' },
+      { value: 'hero-boxed', label: 'Boxed Container Hero' },
+      { value: 'hero-card-grid', label: 'Compact Card Grid' }
     ]
   }
   if (sectionId === 'opinion-column') {
     return [
       { value: 'columns', label: 'Styled Card Columns' },
       { value: 'quote', label: 'Simple Block Quote' },
-      { value: 'list', label: 'Compact List' }
+      { value: 'list', label: 'Compact List' },
+      { value: 'magazine', label: 'Magazine Row' },
+      { value: 'grid', label: 'Card Grid Layout' }
     ]
   }
   if (sectionId === 'arts-marketing-pr') {
     return [
       { value: 'spotlight-grid', label: 'Spotlight Grid' },
-      { value: 'spotlight-flex', label: 'Horizontal Flex Columns' },
-      { value: 'spotlight-text', label: 'Text Bulletins' }
+      { value: 'spotlight-flex', label: 'Horizontal Flex' },
+      { value: 'spotlight-text', label: 'Text Bulletins' },
+      { value: 'grid', label: 'Card Grid' },
+      { value: 'list', label: 'Compact List' }
     ]
   }
   return [
     { value: 'grid', label: 'Card Grid Layout' },
-    { value: 'magazine', label: 'Magazine Row Layout' },
-    { value: 'list', label: 'Compact List Layout' }
+    { value: 'magazine', label: 'Magazine Row' },
+    { value: 'list', label: 'Compact List' },
+    { value: 'masonry', label: 'Masonry Grid' },
+    { value: 'columns', label: 'Multi-Column List' }
   ]
 }
 
@@ -277,6 +285,22 @@ function SimulatorViewport({
 }
 
 
+const FACTORY_ORIGINAL_LAYOUT: LayoutSection[] = [
+  { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#dc2626', textColor: '#ffffff', customText: '' } },
+  { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#f8fafc', textColor: '#64748b' } },
+  { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { logoType: 'text', alignment: 'center', logoSize: '72px', taglineText: 'Truth, Clarity, and Perspective • Independent Journalism', taglineSize: '12px', taglineColor: '#71717a', bgColor: '#ffffff', logoColor: '#000000', logoImage: '' } },
+  { id: 'category-nav', title: 'Categories Navigation', isVisible: true, categorySource: 'All', order: 3, limit: 1, designStyle: 'default', colorTheme: 'indigo', settings: { bgColor: '#ffffff', alignment: 'center', activeLinkDesign: 'underline', searchPlacement: 'right', searchPlaceholder: 'Search articles...', searchBorderColor: '#e4e4e7', searchBorderThickness: '1px' } },
+  { id: 'first-hero', title: 'Main Hero Story', isVisible: true, categorySource: 'All', order: 4, limit: 5, designStyle: 'hero-split', colorTheme: 'indigo', settings: {} },
+  { id: 'us-politics', title: 'U.S. News & Politics', isVisible: true, categorySource: 'Politics', order: 5, limit: 4, designStyle: 'grid', colorTheme: 'indigo', settings: {} },
+  { id: 'finance-markets', title: 'Finance & Markets', isVisible: true, categorySource: 'Business', order: 6, limit: 4, designStyle: 'grid', colorTheme: 'indigo', settings: {} },
+  { id: 'opinion-column', title: 'Opinions & Perspectives', isVisible: true, categorySource: 'All', order: 7, limit: 3, designStyle: 'columns', colorTheme: 'zinc', settings: {} },
+  { id: 'technology-section', title: 'Tech Pulse', isVisible: true, categorySource: 'Technology', order: 8, limit: 4, designStyle: 'grid', colorTheme: 'indigo', settings: {} },
+  { id: 'trending-columns', title: 'Trending Columns', isVisible: true, categorySource: 'All', order: 9, limit: 5, designStyle: 'list', colorTheme: 'indigo', settings: {} },
+  { id: 'world-affairs', title: 'World Affairs', isVisible: true, categorySource: 'World', order: 10, limit: 5, designStyle: 'grid', colorTheme: 'indigo', settings: {} },
+  { id: 'arts-marketing-pr', title: 'Culture & Press Spotlight', isVisible: true, categorySource: 'Entertainment,Sports', order: 11, limit: 6, designStyle: 'spotlight-grid', colorTheme: 'indigo', settings: {} },
+  { id: 'latest-news', title: 'The Latest Chronicle Feed', isVisible: true, categorySource: 'All', order: 12, limit: 10, designStyle: 'list', colorTheme: 'indigo', settings: {} }
+]
+
 export default function HomeLayoutConfigPage() {
   const [sections, setSections] = useState<LayoutSection[]>([])
   const [originalSections, setOriginalSections] = useState<LayoutSection[]>([])
@@ -295,10 +319,127 @@ export default function HomeLayoutConfigPage() {
   const [editDeviceView, setEditDeviceView] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [editPreviewTab, setEditPreviewTab] = useState<'preview' | 'live'>('preview')
   const [hasBackups, setHasBackups] = useState(false)
-  const [factoryOriginalExists, setFactoryOriginalExists] = useState(false)
+  const factoryOriginalExists = true
   const [draftHistory, setDraftHistory] = useState<LayoutSection[]>([])
   const [mainZoom, setMainZoom] = useState(1)
   const [editZoom, setEditZoom] = useState(1)
+
+  const renderLayoutIcon = (value: string) => {
+    // Row 1, Col 1: 3 equal vertical columns
+    if (value === 'columns' || value === 'spotlight-flex') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+        </div>
+      );
+    }
+
+    // Row 1, Col 2: Left 2/3 vertical, right 2 horizontal stacked cards
+    if (value === 'hero-split' || value === 'magazine') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[2] bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-1 flex flex-col gap-1">
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          </div>
+        </div>
+      );
+    }
+
+    // Row 1, Col 3: 2 rows of 3 columns
+    if (value === 'grid' || value === 'spotlight-grid') {
+      return (
+        <div className="w-full h-full grid grid-cols-3 grid-rows-2 gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+        </div>
+      );
+    }
+
+    // Row 2, Col 2: Top row 2 equal, Bottom row 3 equal
+    if (value === 'masonry' || value === 'hero-card-grid') {
+      return (
+        <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-1 flex gap-1">
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          </div>
+          <div className="flex-1 flex gap-1">
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          </div>
+        </div>
+      );
+    }
+
+    // Row 2, Col 3: Large main box, split right box, single full bottom
+    if (value === 'hero-full') {
+      return (
+        <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[2] flex gap-1">
+            <div className="flex-[2] bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+              <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            </div>
+          </div>
+          <div className="flex-1 flex gap-1">
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          </div>
+        </div>
+      );
+    }
+
+    // Boxed Container layout
+    if (value === 'hero-boxed') {
+      return (
+        <div className="w-full h-full p-1 bg-white border border-zinc-300 rounded shadow-xs flex items-center justify-center">
+          <div className="w-full h-full border border-indigo-400 bg-white rounded p-0.5 flex gap-1">
+            <div className="flex-[2] bg-zinc-100 border border-zinc-200 rounded-[1px]" />
+            <div className="flex-1 flex flex-col gap-0.5">
+              <div className="flex-1 bg-zinc-100 border border-zinc-200 rounded-[1px]" />
+              <div className="flex-1 bg-zinc-100 border border-zinc-200 rounded-[1px]" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Row 3, Col 3: Alternating brick grid (masonry look)
+    if (value === 'quote') {
+      return (
+        <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-200 rounded shadow-xs">
+          <div className="flex-1 flex gap-1">
+            <div className="flex-[2] bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          </div>
+          <div className="flex-1 flex gap-1">
+            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+            <div className="flex-[2] bg-zinc-100 border border-zinc-255 rounded-[1px]" />
+          </div>
+        </div>
+      );
+    }
+
+    // Default: text/list rows representation
+    return (
+      <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs justify-center">
+        <div className="h-1 bg-zinc-300 w-full rounded-[1px]" />
+        <div className="h-1 bg-zinc-300 w-4/5 rounded-[1px]" />
+        <div className="h-1 bg-zinc-300 w-5/6 rounded-[1px]" />
+      </div>
+    );
+  };
 
   // Refs for tracking active input edit sessions (grouped/debounced undo history)
   const editSessionStateRef = React.useRef<LayoutSection | null>(null)
@@ -311,7 +452,6 @@ export default function HomeLayoutConfigPage() {
     if (typeof window !== 'undefined') {
       const backupsStr = localStorage.getItem('homepage_layout_backups')
       setHasBackups(backupsStr ? JSON.parse(backupsStr).length > 0 : false)
-      setFactoryOriginalExists(!!localStorage.getItem('homepage_layout_factory_original'))
     }
   }, [sections, originalSections])
 
@@ -526,8 +666,8 @@ export default function HomeLayoutConfigPage() {
     setSections(updated)
   }
 
-  // Save layout logic
-  async function saveLayout() {
+  // Save layout data helper that directly calls the API to sync database
+  async function saveLayoutData(targetSections: LayoutSection[], isBackupRestore = false, isFactoryReset = false) {
     setSaving(true)
     setMessage(null)
     try {
@@ -536,26 +676,42 @@ export default function HomeLayoutConfigPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateName: 'custom',
-          sections
+          sections: targetSections
         })
       })
 
       if (res.ok) {
-        // SUCCESS: Capture the previous design configuration (originalSections) and save to backup history
-        if (typeof window !== 'undefined') {
-          const backupsStr = localStorage.getItem('homepage_layout_backups')
-          const backups = backupsStr ? JSON.parse(backupsStr) : []
-          const newBackup = {
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            sections: originalSections
+        if (isBackupRestore) {
+          // If restoring backup, we pop the first backup from local history
+          if (typeof window !== 'undefined') {
+            const backupsStr = localStorage.getItem('homepage_layout_backups')
+            const backups = backupsStr ? JSON.parse(backupsStr) : []
+            if (backups.length > 0) {
+              const remaining = backups.slice(1)
+              localStorage.setItem('homepage_layout_backups', JSON.stringify(remaining))
+            }
           }
-          // Prepend backup, keep last 10 entries
-          const updated = [newBackup, ...backups].slice(0, 10)
-          localStorage.setItem('homepage_layout_backups', JSON.stringify(updated))
+          setMessage('restored-backup')
+        } else if (isFactoryReset) {
+          setMessage('restored-original')
+        } else {
+          // Standard manual save: push the previous layout state to backups
+          if (typeof window !== 'undefined') {
+            const backupsStr = localStorage.getItem('homepage_layout_backups')
+            const backups = backupsStr ? JSON.parse(backupsStr) : []
+            const newBackup = {
+              timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+              sections: originalSections
+            }
+            const updated = [newBackup, ...backups].slice(0, 10)
+            localStorage.setItem('homepage_layout_backups', JSON.stringify(updated))
+          }
+          setMessage('success')
         }
-
-        setMessage('success')
-        setOriginalSections(JSON.parse(JSON.stringify(sections)))
+        
+        setSections(JSON.parse(JSON.stringify(targetSections)))
+        setOriginalSections(JSON.parse(JSON.stringify(targetSections)))
+        setPreviewTab('draft') // Switch tab to draft so changes are immediately visible
         setTimeout(() => setMessage(null), 4000)
       } else {
         setMessage('failed')
@@ -568,17 +724,23 @@ export default function HomeLayoutConfigPage() {
     }
   }
 
+  // Save layout logic
+  async function saveLayout() {
+    await saveLayoutData(sections)
+  }
+
   // Restore factory original home page layout (captured on first load)
   function restoreFactoryOriginal() {
     if (typeof window !== 'undefined') {
       const factoryStr = localStorage.getItem('homepage_layout_factory_original')
       if (factoryStr) {
         const factoryLayout = JSON.parse(factoryStr)
-        setSections(JSON.parse(JSON.stringify(factoryLayout)))
-        setMessage('restored-original')
-        setTimeout(() => setMessage(null), 3000)
+        saveLayoutData(JSON.parse(JSON.stringify(factoryLayout)), false, true)
+        return
       }
     }
+    // Fallback if localStorage was cleared
+    saveLayoutData(JSON.parse(JSON.stringify(FACTORY_ORIGINAL_LAYOUT)), false, true)
   }
 
   // Restore the last layout configuration from saved backup history (multi-level undo)
@@ -588,12 +750,7 @@ export default function HomeLayoutConfigPage() {
       const backups = backupsStr ? JSON.parse(backupsStr) : []
       if (backups.length > 0) {
         const lastBackup = backups[0].sections
-        setSections(JSON.parse(JSON.stringify(lastBackup)))
-        // Pop from history
-        const remaining = backups.slice(1)
-        localStorage.setItem('homepage_layout_backups', JSON.stringify(remaining))
-        setMessage('restored-backup')
-        setTimeout(() => setMessage(null), 3000)
+        saveLayoutData(JSON.parse(JSON.stringify(lastBackup)), true, false)
       }
     }
   }
@@ -1049,7 +1206,7 @@ export default function HomeLayoutConfigPage() {
   const renderDomainHeaderPreview = (sec: LayoutSection) => {
     const isText = sec.settings?.logoType !== 'image'
     const alignment = sec.settings?.alignment || 'center'
-    const logoSize = sec.settings?.logoSize || '36px'
+    const logoSize = sec.settings?.logoSize || '72px'
     const logoColor = sec.settings?.logoColor || '#000000'
     const logoImg = sec.settings?.logoImage || ''
     const tagline = sec.settings?.taglineText || 'Truth, Clarity, and Perspective • Independent Journalism'
@@ -1118,21 +1275,47 @@ export default function HomeLayoutConfigPage() {
     const searchBorderColor = sec.settings?.searchBorderColor || '#e4e4e7'
     const searchBorderThickness = sec.settings?.searchBorderThickness || '1px'
 
+    const textColor = sec.settings?.textColor || '#4b5563'
+    const activeColor = sec.settings?.activeColor || (activeDesign === 'underline' ? '#000000' : '#ffffff')
+    const activeBgColor = sec.settings?.activeBgColor || '#000000'
+    const navBorder = sec.settings?.navBorder || 'thin'
+    const navBorderColor = sec.settings?.navBorderColor || '#e4e4e7'
+
     const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center'
+
+    let borderStyleCss = {}
+    if (navBorder === 'thin') {
+      borderStyleCss = { borderBottom: `1px solid ${navBorderColor}` }
+    } else if (navBorder === 'thick') {
+      borderStyleCss = { borderBottom: `3px solid ${navBorderColor}` }
+    } else {
+      borderStyleCss = { borderBottom: 'none' }
+    }
+
+    let activeClass = "py-2 px-3 text-xs md:text-sm font-semibold transition-all border-b-2 cursor-pointer whitespace-nowrap flex-shrink-0"
+    let activeStyle: React.CSSProperties = { color: activeColor, borderBottomColor: activeColor }
+
+    if (activeDesign === 'capsule') {
+      activeClass = "px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0"
+      activeStyle = { color: activeColor, backgroundColor: activeBgColor }
+    } else if (activeDesign === 'box') {
+      activeClass = "px-3 py-1.5 rounded-none text-xs md:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0 font-bold"
+      activeStyle = { color: activeColor, backgroundColor: activeBgColor }
+    }
 
     return (
       <div
-        className="w-full border-b border-zinc-400 py-1.5 md:py-0 select-none transition-all"
-        style={{ backgroundColor: bgColor }}
+        className="w-full py-1.5 md:py-0 select-none transition-all font-sans"
+        style={{ backgroundColor: bgColor, ...borderStyleCss }}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
-          <nav className={`flex items-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 ${alignClass}`}>
-            <span className={`py-2 px-3 text-xs md:text-sm font-medium transition-all ${activeDesign === 'underline' ? 'text-black border-b-2 border-black font-semibold' : 'bg-zinc-950 text-white px-3 py-1 rounded font-semibold'}`}>
+          <nav className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 py-1 ${alignClass}`}>
+            <span className={activeClass} style={activeStyle}>
               All News
             </span>
-            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Politics</span>
-            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Technology</span>
-            <span className="py-2 px-3 text-xs md:text-sm font-medium text-zinc-600 hover:text-black">Business</span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0" style={{ color: textColor }}>Politics</span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0" style={{ color: textColor }}>Technology</span>
+            <span className="py-2 px-3 text-xs md:text-sm font-medium whitespace-nowrap flex-shrink-0" style={{ color: textColor }}>Business</span>
           </nav>
 
           {searchPlacement !== 'hidden' && (
@@ -1167,6 +1350,143 @@ export default function HomeLayoutConfigPage() {
     const borderStyle = section.settings?.borderColor ? `3px solid ${section.settings.borderColor}` : ''
     const customBg = section.settings?.bgColor || '#ffffff'
 
+    const renderArticlesInLayout = (sec: LayoutSection, articles: any[], isSub: boolean) => {
+      const style = sec.designStyle || 'grid';
+      const themeBadge = COLOR_MAP[sec.colorTheme] || COLOR_MAP.indigo;
+      const accentBorder = sec.settings?.borderColor ? `3px solid ${sec.settings.borderColor}` : '';
+
+      // Header label
+      const headerEl = (
+        <div 
+          className={`${isSub ? 'border-b border-zinc-950 pb-1 mb-4' : 'border-b-2 border-zinc-900 pb-1 mb-3'} flex items-center justify-between`}
+          style={{ borderTop: accentBorder || undefined }}
+        >
+          <h2 className={`${isSub ? 'text-[11px] font-bold uppercase tracking-widest text-zinc-900' : 'text-xs font-extrabold uppercase tracking-widest text-zinc-955'}`}>
+            {sec.title}
+          </h2>
+          <span className={`text-[8.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-sm ${themeBadge.bg} ${themeBadge.text} border ${themeBadge.border}`}>
+            {sec.id.replace('-section', '').replace('first-', '').toUpperCase()}
+          </span>
+        </div>
+      );
+
+      if (style === 'grid') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-3 gap-4">
+              {articles.map((art, idx) => (
+                <div key={idx} className="flex flex-col gap-2">
+                  <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                    📸 Image
+                  </div>
+                  <div>
+                    <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight line-clamp-2">
+                      {art.title}
+                    </h3>
+                    <p className="mt-1 text-[10px] text-zinc-500 line-clamp-2 leading-tight">{art.excerpt}</p>
+                    <div className="mt-2 text-[9px] text-zinc-400 font-sans">
+                      {art.readTime}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'magazine') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-12 gap-5">
+              <div className="col-span-7 flex flex-col gap-2">
+                <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                  📸 Main Photo
+                </div>
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
+                  {articles[0]?.title}
+                </h3>
+                <p className="text-xs text-zinc-550 line-clamp-2 leading-relaxed">{articles[0]?.excerpt}</p>
+              </div>
+              <div className="col-span-5 flex flex-col gap-3 justify-between">
+                {articles.slice(1, 3).map((art, idx) => (
+                  <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+                    <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight">
+                      {art.title}
+                    </h4>
+                    <p className="text-[10px] text-zinc-500 line-clamp-2 mt-0.5 leading-tight">{art.excerpt}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'masonry') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-2 gap-4">
+              {articles.slice(0, 2).map((art, idx) => (
+                <div key={idx} className="bg-zinc-50 p-2.5 rounded-sm border border-zinc-155 flex flex-col gap-2">
+                  <div className="w-full aspect-[16/9] bg-zinc-100 border rounded-xs flex items-center justify-center text-[8px] font-bold text-zinc-400">📸 Image</div>
+                  <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight">{art.title}</h3>
+                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-tight">{art.excerpt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'columns') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-3 gap-4">
+              {articles.map((art, idx) => (
+                <div key={idx} className="border-l border-zinc-200 pl-3">
+                  <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight hover:text-zinc-600 cursor-pointer">
+                    "{art.title}"
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 font-sans mt-1">By {art.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // Default: 'list' (Compact List Layout)
+      return (
+        <div className="w-full">
+          {headerEl}
+          <div className="space-y-3">
+            {articles.map((art, idx) => (
+              <div key={idx} className="flex gap-4 items-start py-1 border-b border-zinc-100 last:border-0 pb-3 last:pb-0">
+                <div className="flex-1">
+                  <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
+                    {art.title}
+                  </h3>
+                  <p className="mt-1 text-[11px] text-zinc-550 line-clamp-2 leading-relaxed">{art.excerpt}</p>
+                  <div className="mt-1.5 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                    <span>By <span className="text-zinc-500 font-medium">{art.author}</span> • {art.date}</span>
+                    <span className="font-semibold text-zinc-700">{art.readTime}</span>
+                  </div>
+                </div>
+                <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] font-semibold text-zinc-450">
+                  📸 Image
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
     switch (section.id) {
       case 'date-section': {
         const dateBg = section.settings?.bgColor || '#ffffff'
@@ -1177,32 +1497,77 @@ export default function HomeLayoutConfigPage() {
         const dateBorderCss = dateBorder === 'thin' ? `1px solid ${dateBorderCol}` : dateBorder === 'thick' ? `3px solid ${dateBorderCol}` : `1px solid #e4e4e7`
 
         const showDate = section.settings?.showDate !== false
-        const customDateText = section.settings?.customDateText || 'Wednesday, July 1, 2026'
+        const formattedDate = new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         const showLocation = section.settings?.showLocation !== false
         const customLocationText = section.settings?.customLocationText || 'Washington, D.C.'
         const customExtraText = section.settings?.customExtraText || ''
         const extraTextPlacement = section.settings?.extraTextPlacement || 'right'
 
+        const getBadgeStyle = (
+          prefix: string,
+          defaultStyle: 'plain' | 'box',
+          defaultBgColor: string,
+          defaultTextColor: string,
+          defaultBorderColor: string
+        ) => {
+          const style = section.settings?.[`${prefix}Style`] || defaultStyle
+          if (style === 'plain') {
+            return {
+              className: "font-sans font-medium",
+              style: {}
+            }
+          }
+          
+          const bg = section.settings?.[`${prefix}BoxBg`] || defaultBgColor
+          const text = section.settings?.[`${prefix}BoxText`] || defaultTextColor
+          const borderCol = section.settings?.[`${prefix}BoxBorderColor`] || defaultBorderColor
+          const thick = section.settings?.[`${prefix}BoxBorderThickness`] !== undefined
+            ? section.settings[`${prefix}BoxBorderThickness`]
+            : 1
+          
+          return {
+            className: "font-sans font-bold text-[10px] px-2.5 py-0.5 rounded tracking-wide transition-all",
+            style: {
+              backgroundColor: bg,
+              color: text,
+              border: thick === 0 ? 'none' : `${thick}px solid ${borderCol}`
+            }
+          }
+        }
+
+        const dateBadge = getBadgeStyle('date', 'plain', '#f3f4f6', '#1f2937', '#e5e7eb')
+        const locationBadge = getBadgeStyle('location', 'plain', '#f3f4f6', '#1f2937', '#e5e7eb')
+        const extraBadge = getBadgeStyle('extra', 'box', '#e0e7ff', '#4f46e5', '#c7d2fe')
+
         // Render date element
         const dateElement = showDate && (
-          <span className="flex items-center gap-1.5 font-sans font-medium">
-            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <span 
+            className={`flex items-center gap-1.5 ${dateBadge.className}`}
+            style={dateBadge.style}
+          >
+            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: dateBadge.style.color }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {customDateText}
+            {formattedDate}
           </span>
         )
 
         // Render location element
         const locationElement = showLocation && (
-          <span className="font-sans font-semibold text-zinc-500 text-[11px]">
+          <span 
+            className={locationBadge.className}
+            style={locationBadge.style}
+          >
             {customLocationText}
           </span>
         )
 
         // Render extra text element
         const extraElement = customExtraText && (
-          <span className="font-sans font-semibold text-indigo-650 text-[10px] bg-indigo-50/70 px-2 py-0.5 rounded border border-indigo-150 tracking-wide">
+          <span 
+            className={extraBadge.className}
+            style={extraBadge.style}
+          >
             {customExtraText}
           </span>
         )
@@ -1246,100 +1611,120 @@ export default function HomeLayoutConfigPage() {
           </div>
         )
       }
-      case 'first-hero':
+      case 'first-hero': {
+        const titleText = section.settings?.titleText || 'Senate Committee Reaches Funding Package Settlement'
+        const titleColor = section.settings?.titleColor || '#09090b'
+        const excerptText = section.settings?.excerptText || 'Senate committee members have voted to approve a packaging agreement to boost enterprise growth and infrastructure funding across rural states.'
+        const excerptColor = section.settings?.excerptColor || '#52525b'
+        
+        const isBoxed = section.settings?.isBoxed === true
+        const boxBgColor = section.settings?.boxBgColor || '#f9fafb'
+        const boxBorderColor = section.settings?.boxBorderColor || '#e5e7eb'
+        const boxBorderThickness = section.settings?.boxBorderThickness || '1px'
+        const boxRounded = section.settings?.boxRounded || '8px'
+        
+        const boxedStyle: React.CSSProperties = isBoxed ? {
+          backgroundColor: boxBgColor,
+          border: boxBorderThickness === '0px' ? 'none' : `${boxBorderThickness} solid ${boxBorderColor}`,
+          borderRadius: boxRounded,
+          padding: '1.25rem'
+        } : {}
+
         return (
           <section key={section.id} className="w-full py-6 px-4 sm:px-6 max-w-7xl mx-auto text-left border-t border-zinc-200 transition-all font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Side: Lead Story + Sub-articles */}
-              <div className="lg:col-span-8 flex flex-col justify-start">
-                <div className="flex flex-col md:flex-row gap-6">
-                  {/* Lead story text */}
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-red-700 text-white font-extrabold px-2 py-0.5 text-[9px] uppercase tracking-wider">
-                          Lead Story
-                        </span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
-                          US News
-                        </span>
-                      </div>
-                      <h2 className="font-editorial-title text-2xl sm:text-3xl font-extrabold text-zinc-900 leading-tight tracking-tight">
-                        Senate Committee Reaches Funding Package Settlement
-                      </h2>
-                      <p className="mt-2 text-xs text-zinc-500 leading-relaxed font-sans line-clamp-3">
-                        Senate committee members have voted to approve a packaging agreement to boost enterprise growth and infrastructure funding across rural states.
-                      </p>
-                    </div>
-                    <div className="mt-4 border-t border-zinc-150 pt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+            <div style={boxedStyle}>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Side: Lead Story + Sub-articles */}
+                <div className="lg:col-span-8 flex flex-col justify-start">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Lead story text */}
+                    <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        By <span className="font-semibold text-zinc-750">Staff Reporter</span>
-                        <span className="text-zinc-400"> • July 1, 2026</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="bg-red-700 text-white font-extrabold px-2 py-0.5 text-[9px] uppercase tracking-wider">
+                            Lead Story
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                            US News
+                          </span>
+                        </div>
+                        <h2 className="font-editorial-title text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight" style={{ color: titleColor }}>
+                          {titleText}
+                        </h2>
+                        <p className="mt-2 text-xs leading-relaxed font-sans line-clamp-3" style={{ color: excerptColor }}>
+                          {excerptText}
+                        </p>
                       </div>
-                      <span className="font-semibold text-zinc-700">5 mins</span>
+                      <div className="mt-4 border-t border-zinc-150 pt-2 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                        <div>
+                          By <span className="font-semibold text-zinc-750">Staff Reporter</span>
+                          <span className="text-zinc-400"> • July 1, 2026</span>
+                        </div>
+                        <span className="font-semibold text-zinc-700">5 mins</span>
+                      </div>
+                    </div>
+                    {/* Lead image placeholder */}
+                    <div className="flex-1 min-h-[140px] bg-zinc-100 rounded-sm relative overflow-hidden flex items-center justify-center text-zinc-400 font-sans text-[10px] font-bold border border-zinc-200">
+                      📸 FEATURED STORY IMAGE
                     </div>
                   </div>
-                  {/* Lead image placeholder */}
-                  <div className="flex-1 min-h-[140px] bg-zinc-100 rounded-sm relative overflow-hidden flex items-center justify-center text-zinc-400 font-sans text-[10px] font-bold border border-zinc-200">
-                    📸 FEATURED STORY IMAGE
+
+                  <div className="border-t border-zinc-200 mt-4 pt-3" />
+
+                  {/* 2 sub-articles */}
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Finance</div>
+                      <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                        Stocks Rally Following Fed Policy Announcement
+                      </h3>
+                      <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                        <span>
+                          By <span className="text-zinc-500 font-medium">Market Correspondent</span> • Today
+                        </span>
+                        <span className="font-semibold text-zinc-700">3 mins</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Technology</div>
+                      <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
+                        Enterprise Custom AI Models Latency Optimization
+                      </h3>
+                      <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                        <span>
+                          By <span className="text-zinc-500 font-medium">Tech Editor</span> • Today
+                        </span>
+                        <span className="font-semibold text-zinc-700">4 mins</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-200 mt-4 pt-3" />
-
-                {/* 2 sub-articles */}
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Finance</div>
-                    <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
-                      Stocks Rally Following Fed Policy Announcement
-                    </h3>
-                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>
-                        By <span className="text-zinc-500 font-medium">Market Correspondent</span> • Today
-                      </span>
-                      <span className="font-semibold text-zinc-700">3 mins</span>
-                    </div>
+                {/* Right Side: Column of Secondary/Breaking */}
+                <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
+                  <div className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1">
+                    Breaking Updates
                   </div>
-                  <div>
-                    <div className="text-[9px] text-zinc-400 font-extrabold uppercase tracking-widest mb-0.5">Technology</div>
-                    <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
-                      Enterprise Custom AI Models Latency Optimization
-                    </h3>
-                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>
-                        By <span className="text-zinc-500 font-medium">Tech Editor</span> • Today
-                      </span>
-                      <span className="font-semibold text-zinc-700">4 mins</span>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">World</span>
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
+                        Global Climate Summit Reaches Agreement
+                      </h3>
+                      <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                        <span>By World Desk • Yesterday</span>
+                        <span className="font-semibold text-zinc-700">5 mins</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side: Column of Secondary/Breaking */}
-              <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
-                <div className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1">
-                  Breaking Updates
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">World</span>
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
-                      Global Climate Summit Reaches Agreement
-                    </h3>
-                    <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>By World Desk • Yesterday</span>
-                      <span className="font-semibold text-zinc-700">5 mins</span>
-                    </div>
-                  </div>
-                  <div className="border-t pt-2">
-                    <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">Science</span>
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
-                      JWST Reveals Atmospheric Findings on Exoplanet
-                    </h3>
-                    <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>By Space Desk • June 30, 2026</span>
-                      <span className="font-semibold text-zinc-700">4 mins</span>
+                    <div className="border-t pt-2">
+                      <span className="text-[9px] text-red-700 font-extrabold uppercase tracking-widest">Science</span>
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug">
+                        JWST Reveals Atmospheric Findings on Exoplanet
+                      </h3>
+                      <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                        <span>By Space Desk • June 30, 2026</span>
+                        <span className="font-semibold text-zinc-700">4 mins</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1347,6 +1732,7 @@ export default function HomeLayoutConfigPage() {
             </div>
           </section>
         )
+      }
       case 'opinion-column':
         return (
           <div key={section.id} className="bg-zinc-50 border border-zinc-200 p-6 rounded-sm text-left max-w-7xl mx-auto font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
@@ -1422,35 +1808,7 @@ export default function HomeLayoutConfigPage() {
         ]
         return (
           <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
-            {!isSubColumn && (
-              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
-              </div>
-            )}
-            {isSubColumn && (
-              <div className="border-b border-zinc-950 pb-1 mb-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
-              </div>
-            )}
-            <div className="space-y-4">
-              {usArticlesMock.map((article, idx) => (
-                <div key={idx} className="flex gap-4 items-start py-1 border-b border-zinc-100 last:border-0 pb-3 last:pb-0">
-                  <div className="flex-1">
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
-                      {article.title}
-                    </h3>
-                    <p className="mt-1 text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
-                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                    </div>
-                  </div>
-                  <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] font-semibold text-zinc-450">
-                    📸 Image
-                  </div>
-                </div>
-              ))}
-            </div>
+            {renderArticlesInLayout(section, usArticlesMock, isSubColumn)}
           </div>
         )
       }
@@ -1480,35 +1838,7 @@ export default function HomeLayoutConfigPage() {
         ]
         return (
           <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
-            {!isSubColumn && (
-              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
-              </div>
-            )}
-            {isSubColumn && (
-              <div className="border-b border-zinc-950 pb-1 mb-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
-              </div>
-            )}
-            <div className="space-y-4">
-              {financeArticlesMock.map((article, idx) => (
-                <div key={idx} className="flex gap-4 items-start py-1 border-b border-zinc-100 last:border-0 pb-3 last:pb-0">
-                  <div className="flex-1">
-                    <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
-                      {article.title}
-                    </h3>
-                    <p className="mt-1 text-[11px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                    <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
-                      <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
-                      <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                    </div>
-                  </div>
-                  <div className="w-16 h-12 bg-zinc-100 rounded-sm border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[8px] font-semibold text-zinc-450">
-                    📸 Image
-                  </div>
-                </div>
-              ))}
-            </div>
+            {renderArticlesInLayout(section, financeArticlesMock, isSubColumn)}
           </div>
         )
       }
@@ -1538,33 +1868,7 @@ export default function HomeLayoutConfigPage() {
         ]
         return (
           <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
-            {!isSubColumn && (
-              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
-              </div>
-            )}
-            {isSubColumn && (
-              <div className="border-b border-zinc-955 pb-1 mb-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {techArticlesMock.map((article, idx) => (
-                <div key={idx} className="space-y-2">
-                  <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
-                    📸 Tech Image
-                  </div>
-                  <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
-                    {article.title}
-                  </h3>
-                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                  <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-450 font-sans border-t pt-1">
-                    <span>By <span className="text-zinc-505 font-medium">{article.author}</span></span>
-                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {renderArticlesInLayout(section, techArticlesMock, isSubColumn)}
           </div>
         )
       }
@@ -1594,33 +1898,7 @@ export default function HomeLayoutConfigPage() {
         ]
         return (
           <div key={section.id} className="w-full text-left font-sans" style={{ backgroundColor: customBg }}>
-            {!isSubColumn && (
-              <div className="border-b-2 border-zinc-900 pb-1 mb-3">
-                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-955">{section.title}</h2>
-              </div>
-            )}
-            {isSubColumn && (
-              <div className="border-b border-zinc-955 pb-1 mb-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-zinc-900">{section.title}</h2>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {worldArticlesMock.map((article, idx) => (
-                <div key={idx} className="space-y-2">
-                  <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
-                    📸 World Image
-                  </div>
-                  <h3 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-900 leading-snug">
-                    {article.title}
-                  </h3>
-                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                  <div className="mt-2 flex items-center justify-between text-[9px] text-zinc-450 font-sans border-t pt-1">
-                    <span>By <span className="text-zinc-505 font-medium">{article.author}</span></span>
-                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {renderArticlesInLayout(section, worldArticlesMock, isSubColumn)}
           </div>
         )
       }
@@ -1805,6 +2083,115 @@ export default function HomeLayoutConfigPage() {
         layoutSectionsOverride={sectionsList}
         previewMode={true}
       />
+    )
+  }
+
+  const renderBadgeStyleConfig = (
+    prefix: string, 
+    label: string, 
+    defaultBg = '#f3f4f6', 
+    defaultText = '#1f2937', 
+    defaultBorder = '#e5e7eb'
+  ) => {
+    const styleKey = `${prefix}Style`
+    const bgKey = `${prefix}BoxBg`
+    const textKey = `${prefix}BoxText`
+    const borderColKey = `${prefix}BoxBorderColor`
+    const borderThickKey = `${prefix}BoxBorderThickness`
+
+    const currentStyle = draftSection?.settings?.[styleKey] || (prefix === 'extra' ? 'box' : 'plain')
+    const currentBg = draftSection?.settings?.[bgKey] || defaultBg
+    const currentText = draftSection?.settings?.[textKey] || defaultText
+    const currentBorderColor = draftSection?.settings?.[borderColKey] || defaultBorder
+    const currentThickness = draftSection?.settings?.[borderThickKey] !== undefined 
+      ? draftSection.settings[borderThickKey] 
+      : 1
+
+    return (
+      <div className="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-xl flex flex-col gap-3 animate-[admin-fade-in_0.2s_ease]">
+        <div>
+          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">{label} Badge Style</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 'plain', label: 'Plain Text' },
+              { value: 'box', label: 'Custom Box' }
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => updateDraftSetting(styleKey, opt.value)}
+                className={`p-1.5 rounded-lg border text-xs font-bold transition cursor-pointer select-none ${
+                  currentStyle === opt.value
+                    ? 'border-[#6366f1] bg-indigo-50/45 text-indigo-700 font-bold shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-605'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {currentStyle === 'box' && (
+          <div className="flex flex-col gap-3 animate-[admin-fade-in_0.2s_ease] border-t border-slate-200/50 pt-2.5">
+            {/* Color controls */}
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[9.5px] font-bold text-slate-400 uppercase block mb-1">BG Color</label>
+                <input
+                  type="color"
+                  value={currentBg}
+                  onChange={(e) => updateDraftSetting(bgKey, e.target.value)}
+                  className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="text-[9.5px] font-bold text-slate-400 uppercase block mb-1">Text Color</label>
+                <input
+                  type="color"
+                  value={currentText}
+                  onChange={(e) => updateDraftSetting(textKey, e.target.value)}
+                  className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="text-[9.5px] font-bold text-slate-400 uppercase block mb-1">Border Color</label>
+                <input
+                  type="color"
+                  value={currentBorderColor}
+                  onChange={(e) => updateDraftSetting(borderColKey, e.target.value)}
+                  className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Thickness controls */}
+            <div>
+              <label className="text-[9.5px] font-bold text-slate-400 uppercase block mb-1">Box Border Thickness</label>
+              <div className="flex gap-1">
+                {[
+                  { label: 'None', value: 0 },
+                  { label: 'Thin', value: 1 },
+                  { label: 'Thick', value: 3 }
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => updateDraftSetting(borderThickKey, opt.value)}
+                    className={`flex-1 p-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer select-none ${
+                      currentThickness === opt.value
+                        ? 'border-[#6366f1] bg-indigo-50/45 text-indigo-700 font-bold shadow-xs'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-605'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -2148,7 +2535,7 @@ export default function HomeLayoutConfigPage() {
                     <div>
                       <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Logo Font Size</label>
                       <select
-                        value={draftSection.settings?.logoSize || '36px'}
+                        value={draftSection.settings?.logoSize || '72px'}
                         onChange={(e) => updateDraftSetting('logoSize', e.target.value)}
                         className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer font-bold text-slate-700"
                       >
@@ -2156,6 +2543,7 @@ export default function HomeLayoutConfigPage() {
                         <option value="36px">36px (Normal)</option>
                         <option value="48px">48px (Large)</option>
                         <option value="64px">64px (Extra Large)</option>
+                        <option value="72px">72px (Huge)</option>
                       </select>
                     </div>
                   </div>
@@ -2227,43 +2615,132 @@ export default function HomeLayoutConfigPage() {
 
             {/* 3. CATEGORIES NAVIGATION SETTINGS */}
             {isNav && (
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-4 animate-[admin-fade-in_0.3s_ease]">
+                {/* Navbar Visibility Remove Toggle */}
+                <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-1">
                   <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Navbar Background Color</label>
+                    <div className="text-[12px] font-bold text-slate-700">Display Categories Navbar</div>
+                    <div className="text-[9.5px] text-slate-400 font-medium">Remove or hide this categories section on the live site.</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
                     <input
-                      type="color"
-                      value={draftSection.settings?.bgColor || '#ffffff'}
-                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
-                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      type="checkbox"
+                      checked={draftSection.isVisible !== false}
+                      onChange={(e) => updateDraftField('isVisible', e.target.checked)}
+                      className="sr-only peer"
                     />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Navbar Alignment</label>
-                    <select
-                      value={draftSection.settings?.alignment || 'center'}
-                      onChange={(e) => updateDraftSetting('alignment', e.target.value)}
-                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
-                    >
-                      <option value="left">Left Align Links</option>
-                      <option value="center">Center Align Links</option>
-                      <option value="right">Right Align Links</option>
-                    </select>
-                  </div>
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                  </label>
                 </div>
 
+                {/* Design Option - Active Link Layout style */}
                 <div>
-                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Active Category Style</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Active Item Design Style</label>
                   <select
                     value={draftSection.settings?.activeLinkDesign || 'underline'}
                     onChange={(e) => updateDraftSetting('activeLinkDesign', e.target.value)}
                     className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
                   >
                     <option value="underline">Underline Highlight</option>
-                    <option value="capsule">Colored Background Capsule</option>
+                    <option value="capsule">Capsule Rounded Box</option>
+                    <option value="box">Rectangular Box Style</option>
                   </select>
                 </div>
 
+                {/* Navbar Alignment */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Navbar Alignment</label>
+                  <select
+                    value={draftSection.settings?.alignment || 'center'}
+                    onChange={(e) => updateDraftSetting('alignment', e.target.value)}
+                    className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-705 font-bold"
+                  >
+                    <option value="left">Left Align Links</option>
+                    <option value="center">Center Align Links</option>
+                    <option value="right">Right Align Links</option>
+                  </select>
+                </div>
+
+                {/* Color Options */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <label className="text-[11.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">Color Style Options</label>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Navbar Background</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.bgColor || '#ffffff'}
+                        onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
+                        className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Default Text Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.textColor || '#4b5563'}
+                        onChange={(e) => updateDraftSetting('textColor', e.target.value)}
+                        className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Active Item Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.activeColor || (draftSection.settings?.activeLinkDesign === 'underline' ? '#000000' : '#ffffff')}
+                        onChange={(e) => updateDraftSetting('activeColor', e.target.value)}
+                        className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+                    {(draftSection.settings?.activeLinkDesign === 'capsule' || draftSection.settings?.activeLinkDesign === 'box') && (
+                      <div className="animate-[admin-fade-in_0.2s_ease]">
+                        <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Active Item Background</label>
+                        <input
+                          type="color"
+                          value={draftSection.settings?.activeBgColor || '#000000'}
+                          onChange={(e) => updateDraftSetting('activeBgColor', e.target.value)}
+                          className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Border Customizations */}
+                <div className="border-t pt-3 flex flex-col gap-3">
+                  <label className="text-[11.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">Navbar Border Option</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Navbar Border Thickness</label>
+                      <select
+                        value={draftSection.settings?.navBorder || 'thin'}
+                        onChange={(e) => updateDraftSetting('navBorder', e.target.value)}
+                        className="p-1.5 border rounded-lg text-xs w-full bg-white outline-none text-slate-700"
+                      >
+                        <option value="none">None (Remove Border)</option>
+                        <option value="thin">Thin Bottom Border</option>
+                        <option value="thick">Thick Bottom Border</option>
+                      </select>
+                    </div>
+                    {draftSection.settings?.navBorder !== 'none' && (
+                      <div className="animate-[admin-fade-in_0.2s_ease]">
+                        <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Border Color</label>
+                        <input
+                          type="color"
+                          value={draftSection.settings?.navBorderColor || '#e4e4e7'}
+                          onChange={(e) => updateDraftSetting('navBorderColor', e.target.value)}
+                          className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search Box Customizations */}
                 <div className="border-t pt-3 flex flex-col gap-3">
                   <label className="text-[12px] font-extrabold text-[#6366f1] block uppercase tracking-wide">Search Box Customizations</label>
 
@@ -2281,7 +2758,7 @@ export default function HomeLayoutConfigPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">Placeholder Text</label>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Placeholder Text</label>
                       <input
                         type="text"
                         value={draftSection.settings?.searchPlaceholder || ''}
@@ -2293,7 +2770,7 @@ export default function HomeLayoutConfigPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Border Color</label>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Search Border Color</label>
                       <input
                         type="color"
                         value={draftSection.settings?.searchBorderColor || '#e4e4e7'}
@@ -2302,7 +2779,7 @@ export default function HomeLayoutConfigPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Border Thickness</label>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-1">Search Border Thickness</label>
                       <select
                         value={draftSection.settings?.searchBorderThickness || '1px'}
                         onChange={(e) => updateDraftSetting('searchBorderThickness', e.target.value)}
@@ -2373,18 +2850,8 @@ export default function HomeLayoutConfigPage() {
                       <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#6366f1]"></div>
                     </label>
                   </div>
-
                   {draftSection.settings?.showDate !== false && (
-                    <div className="animate-[admin-fade-in_0.2s_ease]">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Date Text</label>
-                      <input
-                        type="text"
-                        placeholder="Wednesday, July 1, 2026"
-                        value={draftSection.settings?.customDateText || ''}
-                        onChange={(e) => updateDraftSetting('customDateText', e.target.value)}
-                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
-                      />
-                    </div>
+                    renderBadgeStyleConfig('date', 'Date')
                   )}
                 </div>
 
@@ -2407,15 +2874,18 @@ export default function HomeLayoutConfigPage() {
                   </div>
 
                   {draftSection.settings?.showLocation !== false && (
-                    <div className="animate-[admin-fade-in_0.2s_ease]">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Location Text</label>
-                      <input
-                        type="text"
-                        placeholder="Washington, D.C."
-                        value={draftSection.settings?.customLocationText || ''}
-                        onChange={(e) => updateDraftSetting('customLocationText', e.target.value)}
-                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
-                      />
+                    <div className="animate-[admin-fade-in_0.2s_ease] flex flex-col gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Custom Location Text</label>
+                        <input
+                          type="text"
+                          placeholder="Washington, D.C."
+                          value={draftSection.settings?.customLocationText !== undefined ? draftSection.settings.customLocationText : 'Washington, D.C.'}
+                          onChange={(e) => updateDraftSetting('customLocationText', e.target.value)}
+                          className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                        />
+                      </div>
+                      {renderBadgeStyleConfig('location', 'Location')}
                     </div>
                   )}
                 </div>
@@ -2434,16 +2904,19 @@ export default function HomeLayoutConfigPage() {
                   </div>
 
                   {draftSection.settings?.customExtraText && (
-                    <div className="animate-[admin-fade-in_0.2s_ease]">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Extra Info Placement</label>
-                      <select
-                        value={draftSection.settings?.extraTextPlacement || 'right'}
-                        onChange={(e) => updateDraftSetting('extraTextPlacement', e.target.value)}
-                        className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
-                      >
-                        <option value="left">Left Side (Next to Date)</option>
-                        <option value="right">Right Side (Next to Location)</option>
-                      </select>
+                    <div className="animate-[admin-fade-in_0.2s_ease] flex flex-col gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Extra Info Placement</label>
+                        <select
+                          value={draftSection.settings?.extraTextPlacement || 'right'}
+                          onChange={(e) => updateDraftSetting('extraTextPlacement', e.target.value)}
+                          className="p-2 border rounded-lg text-xs w-full bg-white outline-none cursor-pointer text-slate-700 font-bold"
+                        >
+                          <option value="left">Left Side (Next to Date)</option>
+                          <option value="right">Right Side (Next to Location)</option>
+                        </select>
+                      </div>
+                      {renderBadgeStyleConfig('extra', 'Extra Info', '#e0e7ff', '#4f46e5', '#c7d2fe')}
                     </div>
                   )}
                 </div>
@@ -2501,57 +2974,198 @@ export default function HomeLayoutConfigPage() {
                 </div>
               </div>
             )}
-
-            {/* 5. STANDARD NEWS SECTIONS SETTINGS */}
             {!isBreaking && !isHeader && !isNav && !isDate && (
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-4 animate-[admin-fade-in_0.3s_ease]">
+                {/* Display Section Visibility Toggle */}
+                <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-1">
                   <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Design Style</label>
-                    <select
-                      value={draftSection.designStyle}
-                      onChange={(e) => updateDraftField('designStyle', e.target.value)}
-                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none text-slate-700 font-bold"
-                    >
-                      {getDesignOptions(draftSection.id).map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    <div className="text-[12px] font-bold text-slate-700">Display Section on Homepage</div>
+                    <div className="text-[9.5px] text-slate-400 font-medium">Remove or hide this section on the live homepage.</div>
                   </div>
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={draftSection.isVisible !== false}
+                      onChange={(e) => updateDraftField('isVisible', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                  </label>
+                </div>
+
+                {/* 5-Option Design Style Visual Grid Selector */}
+                <div className="border-t pt-3">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Design Layout Style</label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {getDesignOptions(draftSection.id).map(opt => {
+                      const isSelected = draftSection.designStyle === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateDraftField('designStyle', opt.value)}
+                          className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition text-center cursor-pointer ${
+                            isSelected
+                              ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1] font-bold'
+                              : 'border-slate-200 bg-white text-slate-650 hover:border-slate-300'
+                          }`}
+                        >
+                          {/* Mini Visual Grid Icon representation */}
+                          <div className="w-16 h-10 flex-shrink-0">
+                            {renderLayoutIcon(opt.value)}
+                          </div>
+                          <span className="text-[10px] font-bold tracking-tight leading-none truncate max-w-full text-slate-700">{opt.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Color Theme Badge Selector & Top Border Color Accent */}
+                <div className="grid grid-cols-2 gap-3 border-t pt-3">
                   <div>
                     <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Color Theme Badge</label>
                     <select
                       value={draftSection.colorTheme}
                       onChange={(e) => updateDraftField('colorTheme', e.target.value)}
-                      className="p-2.5 border rounded-lg text-xs w-full bg-white outline-none text-slate-700 font-bold"
+                      className="p-2 border rounded-lg text-xs w-full bg-white outline-none text-slate-700 font-bold animate-[admin-fade-in_0.2s_ease]"
                     >
                       {colorOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 border-t pt-3">
                   <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Background Color Override</label>
-                    <input
-                      type="color"
-                      value={draftSection.settings?.bgColor || '#ffffff'}
-                      onChange={(e) => updateDraftSetting('bgColor', e.target.value)}
-                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Top Border Color (Accent)</label>
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Top Border Accent</label>
                     <input
                       type="color"
                       value={draftSection.settings?.borderColor || '#ffffff'}
                       onChange={(e) => updateDraftSetting('borderColor', e.target.value)}
-                      className="w-full h-9 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
                     />
                   </div>
                 </div>
+
+                {/* Specific Options for Lead Story (first-hero) */}
+                {draftSection.id === 'first-hero' && (
+                  <div className="border-t pt-3 flex flex-col gap-3 animate-[admin-fade-in_0.2s_ease]">
+                    <label className="text-[11.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">Lead Story Text & Color</label>
+                    
+                    {/* Title Customize */}
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Custom Title Text</label>
+                      <input
+                        type="text"
+                        placeholder="Default article title"
+                        value={draftSection.settings?.titleText || ''}
+                        onChange={(e) => updateDraftSetting('titleText', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none animate-[admin-fade-in_0.2s_ease]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Title Text Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.titleColor || '#09090b'}
+                        onChange={(e) => updateDraftSetting('titleColor', e.target.value)}
+                        className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Excerpt Customize */}
+                    <div className="border-t pt-2">
+                      <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Custom Excerpt Text</label>
+                      <textarea
+                        placeholder="Default article excerpt"
+                        value={draftSection.settings?.excerptText || ''}
+                        onChange={(e) => updateDraftSetting('excerptText', e.target.value)}
+                        className="p-2 border rounded-lg text-xs w-full h-16 bg-white text-slate-700 outline-none resize-none font-sans"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Excerpt Text Color</label>
+                      <input
+                        type="color"
+                        value={draftSection.settings?.excerptColor || '#52525b'}
+                        onChange={(e) => updateDraftSetting('excerptColor', e.target.value)}
+                        className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer animate-[admin-fade-in_0.2s_ease]"
+                      />
+                    </div>
+
+                    {/* Box Container Design Options */}
+                    <div className="border-t pt-3 flex flex-col gap-2">
+                      <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <div>
+                          <div className="text-[11.5px] font-bold text-slate-700">Box Style Container</div>
+                          <div className="text-[9.5px] text-slate-400 font-medium">Wrap Lead Story inside a styled card.</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={draftSection.settings?.isBoxed === true}
+                            onChange={(e) => updateDraftSetting('isBoxed', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                        </label>
+                      </div>
+
+                      {draftSection.settings?.isBoxed && (
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col gap-3 animate-[admin-fade-in_0.2s_ease]">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Box Background</label>
+                              <input
+                                type="color"
+                                value={draftSection.settings?.boxBgColor || '#f9fafb'}
+                                onChange={(e) => updateDraftSetting('boxBgColor', e.target.value)}
+                                className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-455 block mb-0.5">Box Border</label>
+                              <input
+                                type="color"
+                                value={draftSection.settings?.boxBorderColor || '#e5e7eb'}
+                                onChange={(e) => updateDraftSetting('boxBorderColor', e.target.value)}
+                                className="w-full h-8 p-0.5 border rounded-lg bg-white cursor-pointer"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Border Width</label>
+                              <select
+                                value={draftSection.settings?.boxBorderThickness || '1px'}
+                                onChange={(e) => updateDraftSetting('boxBorderThickness', e.target.value)}
+                                className="p-1.5 border rounded-lg text-xs w-full bg-white outline-none"
+                              >
+                                <option value="0px">None</option>
+                                <option value="1px">1px (Thin)</option>
+                                <option value="2px">2px (Medium)</option>
+                                <option value="3px">3px (Thick)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-450 block mb-0.5">Corners</label>
+                              <select
+                                value={draftSection.settings?.boxRounded || '8px'}
+                                onChange={(e) => updateDraftSetting('boxRounded', e.target.value)}
+                                className="p-1.5 border rounded-lg text-xs w-full bg-white outline-none"
+                              >
+                                <option value="0px">Sharp</option>
+                                <option value="4px">Soft (Sm)</option>
+                                <option value="8px">Rounded (Md)</option>
+                                <option value="12px">More Rounded (Lg)</option>
+                                <option value="24px">Full (Pill)</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2740,12 +3354,12 @@ export default function HomeLayoutConfigPage() {
       )}
       {message === 'restored-backup' && (
         <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
-          <span>⏪</span> Restored to the previously saved layout configuration. Click <strong>Confirm &amp; Save Changes</strong> to publish it.
+          <span>⏪</span> Layout configurations reverted successfully! Changes are now live on the homepage.
         </div>
       )}
       {message === 'restored-original' && (
         <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[13px] font-bold flex items-center gap-2 animate-[admin-fade-in_0.3s_ease]">
-          <span>🔄</span> Restored to the original factory homepage layout. Click <strong>Confirm &amp; Save Changes</strong> to publish it.
+          <span>🔄</span> Layout configuration reset to factory original successfully! Changes are now live on the homepage.
         </div>
       )}
 

@@ -7,10 +7,15 @@ import { DynamicBreakingNewsTicker } from "./Widgets";
 type SectionSettingValue = string | number | boolean | undefined;
 type SectionSettings = Record<string, SectionSettingValue>;
 
-interface HeaderLayoutSection {
+export interface HeaderLayoutSection {
   id: string;
   order?: number;
   isVisible?: boolean;
+  limit?: number;
+  designStyle?: string;
+  categorySource?: string;
+  colorTheme?: string;
+  title?: string;
   settings?: SectionSettings;
 }
 
@@ -125,25 +130,113 @@ export default function Header({
       ? 'none' 
       : `${dateBorderThickness}px solid ${dateBorderCol}`;
 
-    const dateAlignClass = dateAlign === 'left' ? 'justify-start gap-4' : dateAlign === 'center' ? 'justify-center gap-6' : dateAlign === 'right' ? 'justify-end gap-4' : 'justify-between';
+    const showDate = sec.settings?.showDate !== false;
+    const showLocation = sec.settings?.showLocation !== false;
+    const customLocationText = stringSetting(sec.settings, 'customLocationText', 'Washington, D.C.');
+    const customExtraText = stringSetting(sec.settings, 'customExtraText', '');
+    const extraTextPlacement = stringSetting(sec.settings, 'extraTextPlacement', 'right');
+
+    const getBadgeStyle = (
+      prefix: string,
+      defaultStyle: 'plain' | 'box',
+      defaultBgColor: string,
+      defaultTextColor: string,
+      defaultBorderColor: string
+    ) => {
+      const style = stringSetting(sec.settings, `${prefix}Style`, defaultStyle);
+      if (style === 'plain') {
+        return {
+          className: "font-sans font-medium",
+          style: {}
+        };
+      }
+      
+      const bg = stringSetting(sec.settings, `${prefix}BoxBg`, defaultBgColor);
+      const text = stringSetting(sec.settings, `${prefix}BoxText`, defaultTextColor);
+      const borderCol = stringSetting(sec.settings, `${prefix}BoxBorderColor`, defaultBorderColor);
+      const thick = numberSetting(sec.settings, `${prefix}BoxBorderThickness`, 1);
+      
+      return {
+        className: "font-sans font-bold text-[10px] px-2.5 py-0.5 rounded tracking-wide transition-all",
+        style: {
+          backgroundColor: bg,
+          color: text,
+          border: thick === 0 ? 'none' : `${thick}px solid ${borderCol}`
+        }
+      };
+    };
+
+    const dateBadge = getBadgeStyle('date', 'plain', '#f3f4f6', '#1f2937', '#e5e7eb');
+    const locationBadge = getBadgeStyle('location', 'plain', '#f3f4f6', '#1f2937', '#e5e7eb');
+    const extraBadge = getBadgeStyle('extra', 'box', '#e0e7ff', '#4f46e5', '#c7d2fe');
+
+    // Render components
+    const dateElement = showDate && (
+      <span 
+        className={`flex items-center gap-1.5 ${dateBadge.className}`}
+        style={dateBadge.style}
+      >
+        <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: dateBadge.style.color }}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        {formattedDate}
+      </span>
+    );
+
+    const locationElement = showLocation && (
+      <span 
+        className={locationBadge.className}
+        style={locationBadge.style}
+      >
+        {customLocationText}
+      </span>
+    );
+
+    const extraElement = customExtraText && (
+      <span 
+        className={extraBadge.className}
+        style={extraBadge.style}
+      >
+        {customExtraText}
+      </span>
+    );
+
+    if (dateAlign === 'spaced') {
+      return (
+        <div 
+          key="date-section"
+          className="w-full py-2 px-4 sm:px-6 text-xs flex items-center justify-between transition-all"
+          style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
+        >
+          <div className="flex items-center gap-3">
+            {dateElement}
+            {extraTextPlacement === 'left' && extraElement}
+          </div>
+          <div className="flex items-center gap-3">
+            {extraTextPlacement === 'right' && extraElement}
+            {locationElement}
+          </div>
+        </div>
+      );
+    }
+
+    // Left, Center, or Right alignment
+    const dateAlignClass = dateAlign === 'center'
+      ? 'justify-center gap-6'
+      : dateAlign === 'right'
+        ? 'justify-end gap-4'
+        : 'justify-start gap-4';
 
     return (
       <div 
         key="date-section"
-        className={`w-full py-2 px-4 sm:px-6 text-xs text-zinc-600 flex items-center transition-all ${dateAlignClass}`}
+        className={`w-full py-2 px-4 sm:px-6 text-xs flex items-center transition-all ${dateAlignClass}`}
         style={{ backgroundColor: dateBg, color: dateCol, borderBottom: dateBorderCss }}
       >
-        <span className="flex items-center gap-1.5 font-sans font-medium">
-          <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          {formattedDate}
-        </span>
-        {dateAlign === 'spaced' && (
-          <span className="font-sans font-semibold text-zinc-500 text-[11px]">
-            Washington, D.C.
-          </span>
-        )}
+        {extraTextPlacement === 'left' && extraElement}
+        {dateElement}
+        {locationElement}
+        {extraTextPlacement === 'right' && extraElement}
       </div>
     );
   };
@@ -226,34 +319,65 @@ export default function Header({
     const searchBorderColor = stringSetting(sec.settings, 'searchBorderColor', '#e4e4e7');
     const searchBorderThickness = stringSetting(sec.settings, 'searchBorderThickness', '1px');
 
+    // Custom style settings
+    const textColor = stringSetting(sec.settings, 'textColor', '#4b5563');
+    const activeColor = stringSetting(sec.settings, 'activeColor', activeDesign === 'underline' ? '#000000' : '#ffffff');
+    const activeBgColor = stringSetting(sec.settings, 'activeBgColor', '#000000');
+    
+    const navBorder = stringSetting(sec.settings, 'navBorder', 'thin');
+    const navBorderColor = stringSetting(sec.settings, 'navBorderColor', '#e4e4e7');
+    
     const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
+
+    let borderStyleCss = {};
+    if (navBorder === 'thin') {
+      borderStyleCss = { borderBottom: `1px solid ${navBorderColor}` };
+    } else if (navBorder === 'thick') {
+      borderStyleCss = { borderBottom: `3px solid ${navBorderColor}` };
+    } else {
+      borderStyleCss = { borderBottom: 'none' };
+    }
 
     return (
       <div 
         key="category-nav"
-        className="w-full border-b border-zinc-400 py-1.5 md:py-0 transition-all"
-        style={{ backgroundColor: bgColor }}
+        className="w-full py-1.5 md:py-0 transition-all font-sans"
+        style={{ backgroundColor: bgColor, ...borderStyleCss }}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 gap-3 md:gap-0">
-          <nav className={`flex items-center gap-0 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 ${alignClass}`}>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setShowBookmarksOnly(false);
-                }}
-                className={`py-2 px-3 text-xs md:text-sm font-medium transition-all hover:bg-zinc-50 cursor-pointer whitespace-nowrap flex-shrink-0 ${
-                  activeCategory === cat && !showBookmarksOnly
-                    ? activeDesign === 'underline'
-                      ? "text-black border-b-2 border-black font-semibold"
-                      : "bg-zinc-950 text-white px-3 py-1 rounded font-semibold"
-                    : "text-zinc-600 hover:text-black font-medium"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <nav className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto flex-1 py-1 ${alignClass}`}>
+            {categories.map((cat) => {
+              const isActive = activeCategory === cat && !showBookmarksOnly;
+              let itemClass = "py-2 px-3 text-xs md:text-sm font-medium transition-all hover:bg-zinc-50 cursor-pointer whitespace-nowrap flex-shrink-0";
+              let itemStyle: React.CSSProperties = { color: textColor };
+
+              if (isActive) {
+                if (activeDesign === 'underline') {
+                  itemClass = "py-2 px-3 text-xs md:text-sm font-semibold transition-all border-b-2 cursor-pointer whitespace-nowrap flex-shrink-0";
+                  itemStyle = { color: activeColor, borderBottomColor: activeColor };
+                } else if (activeDesign === 'capsule') {
+                  itemClass = "px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0";
+                  itemStyle = { color: activeColor, backgroundColor: activeBgColor };
+                } else if (activeDesign === 'box') {
+                  itemClass = "px-3 py-1.5 rounded-none text-xs md:text-sm font-semibold transition-all cursor-pointer whitespace-nowrap flex-shrink-0 font-bold";
+                  itemStyle = { color: activeColor, backgroundColor: activeBgColor };
+                }
+              }
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setShowBookmarksOnly(false);
+                  }}
+                  className={itemClass}
+                  style={itemStyle}
+                >
+                  {cat}
+                </button>
+              );
+            })}
           </nav>
 
           {searchPlacement !== 'hidden' && (
@@ -296,14 +420,14 @@ export default function Header({
 
   const headerIds = ["breaking-news", "date-section", "domain-header", "category-nav"];
   
-  const sortedHeaderSections = layoutSections.length > 0
+  const sortedHeaderSections: HeaderLayoutSection[] = layoutSections.length > 0
     ? layoutSections.filter((s) => headerIds.includes(s.id) && s.isVisible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
     : [
         { id: "breaking-news", order: 0 },
         { id: "date-section", order: 1 },
         { id: "domain-header", order: 2 },
         { id: "category-nav", order: 3 }
-      ];
+      ] as HeaderLayoutSection[];
 
   return (
     <header className="w-full bg-white select-none">
@@ -314,6 +438,7 @@ export default function Header({
               key="breaking-news"
               settingsOverride={overrideSections ? section.settings : undefined}
               breakingArticleTitlesOverride={overrideSections ? breakingArticleTitlesOverride : undefined}
+              limitOverride={overrideSections ? section.limit : undefined}
             />
           );
         }
