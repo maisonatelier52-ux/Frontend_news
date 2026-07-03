@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 400 });
     }
 
-    // Verify OTP
+    // Verify OTP (Temporarily commented out for bypass)
+    /*
     if (!user.otpCode || user.otpCode !== otp) {
       return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 });
     }
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     if (user.otpExpiry && new Date() > user.otpExpiry) {
       return NextResponse.json({ error: 'Verification code has expired' }, { status: 400 });
     }
+    */
 
     // Clear OTP
     user.otpCode = undefined;
