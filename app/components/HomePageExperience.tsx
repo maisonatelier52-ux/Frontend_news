@@ -86,8 +86,10 @@ export default function HomePageExperience({
   previewMode = false,
 }: HomePageExperienceProps = {}) {
   const router = useRouter();
-  const sections = (layoutSectionsOverride || []) as any[];
-  const leadSection = sections.find(s => s.id === 'first-hero');
+  // When no override is given (live homepage), load layout from API
+  const [loadedSections, setLoadedSections] = useState<any[]>([]);
+  const sections = (layoutSectionsOverride || loadedSections) as any[];
+  const leadSection = sections.find((s: any) => s.id === 'first-hero');
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
@@ -96,6 +98,26 @@ export default function HomePageExperience({
   const [articlesLoading, setArticlesLoading] = useState(!articlesOverride);
   const articles = articlesOverride || loadedArticles;
   const loading = articlesOverride ? false : articlesLoading;
+
+  // Load layout sections from API when not in admin preview mode
+  useEffect(() => {
+    if (layoutSectionsOverride) return; // admin preview supplies its own sections
+    async function loadLayout() {
+      try {
+        const res = await fetch('/api/home-layout');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.sections && Array.isArray(data.sections)) {
+            const sorted = [...data.sections].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+            setLoadedSections(sorted);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load layout:', err);
+      }
+    }
+    loadLayout();
+  }, [layoutSectionsOverride]);
 
   useEffect(() => {
     if (articlesOverride) {
@@ -239,12 +261,20 @@ export default function HomePageExperience({
     .map((article) => article.title);
 
   // Secondary / Breaking news list for the Lead component
-  const breakingArticles = leadArticle ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id).slice(0, 3) : [];
+  // First pull all genuinely breaking articles, then pad with other recent articles to reach 6
+  const strictBreaking = leadArticle
+    ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id)
+    : [];
+  const fillerArticles = leadArticle
+    ? articles.filter((a) => !a.isBreaking && a.id !== leadArticle.id)
+    : [];
+  // Combine: breaking first, then fillers to reach up to 6
+  const breakingArticles = [...strictBreaking, ...fillerArticles].slice(0, 6);
 
   // Sub-articles for the bottom of the lead story left-column
   const leadSubArticles = leadArticle ? articles
     .filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
-    .slice(0, 4) : [];
+    .slice(0, 6) : [];
 
   // Selected article for reader modal
   const selectedArticle = articles.find((a) => a.id === selectedArticleId);

@@ -40,11 +40,14 @@ const colorOptions = [
 function getDesignOptions(sectionId: string) {
   if (sectionId === 'first-hero') {
     return [
-      { value: 'hero-split', label: 'Standard Hero Split' },
-      { value: 'hero-full', label: 'Full-Width Hero Card' },
-      { value: 'hero-minimal', label: 'Minimal Text Headline' },
-      { value: 'hero-boxed', label: 'Boxed Container Hero' },
-      { value: 'hero-card-grid', label: 'Compact Card Grid' }
+      { value: 'hero-split',          label: 'Hero Split + Image' },
+      { value: 'editorial-spotlight', label: 'Editorial Spotlight' },
+      { value: 'cover-story',         label: 'Cover Story Overlay' },
+      { value: 'split-detail',        label: 'Split Detail + Image' },
+      { value: 'featured-card',       label: 'Featured Card Box' },
+      { value: 'classic-broadsheet',  label: 'Classic Broadsheet' },
+      { value: 'hero-full',           label: 'Wide Banner + Text' },
+      { value: 'hero-minimal',        label: 'Headline Only' },
     ]
   }
   if (sectionId === 'opinion-column') {
@@ -380,27 +383,113 @@ export default function HomeLayoutConfigPage() {
       );
     }
 
-    // Row 2, Col 3: Large main box, split right box, single full bottom
+    // hero-full: Wide banner image on top, text below
     if (value === 'hero-full') {
       return (
         <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
-          <div className="flex-[2] flex gap-1">
-            <div className="flex-[2] bg-zinc-100 border border-zinc-250 rounded-[1px]" />
-            <div className="flex-1 flex flex-col gap-1">
-              <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
-              <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
-            </div>
-          </div>
-          <div className="flex-1 flex gap-1">
-            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
-            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
-            <div className="flex-1 bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-[2] bg-zinc-300 border border-zinc-350 rounded-[1px]" />
+          <div className="flex-1 flex flex-col gap-0.5 px-0.5">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-4/5" />
+            <div className="h-0.5 bg-zinc-300 rounded-[1px] w-full" />
+            <div className="h-0.5 bg-zinc-300 rounded-[1px] w-3/4" />
           </div>
         </div>
       );
     }
 
-    // Boxed Container layout
+    // editorial-spotlight: Big image LEFT, text panel RIGHT
+    if (value === 'editorial-spotlight') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[3] bg-zinc-300 border border-zinc-350 rounded-[1px] relative">
+            <div className="absolute top-1 left-1 w-3 h-1 bg-red-500 rounded-[1px]" />
+          </div>
+          <div className="flex-[2] flex flex-col justify-center gap-0.5 px-0.5">
+            <div className="h-0.5 bg-zinc-300 rounded w-1/2" />
+            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-4/5" />
+            <div className="h-0.5 bg-zinc-300 rounded w-full mt-0.5" />
+            <div className="h-0.5 bg-zinc-300 rounded w-3/4" />
+          </div>
+        </div>
+      );
+    }
+
+    // cover-story: Full bleed image with dark overlay + text at bottom
+    if (value === 'cover-story') {
+      return (
+        <div className="w-full h-full p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="w-full h-full relative rounded-[1px] overflow-hidden bg-zinc-400">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-800/90 to-transparent" />
+            <div className="absolute bottom-1 left-1 right-1 flex flex-col gap-0.5">
+              <div className="w-4 h-1 bg-red-500 rounded-[1px]" />
+              <div className="h-1 bg-white/90 rounded-[1px] w-full" />
+              <div className="h-0.5 bg-white/60 rounded w-4/5" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // split-detail: Image LEFT (42%), red accent border + text RIGHT
+    if (value === 'split-detail') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[2] bg-zinc-300 border border-zinc-350 rounded-[1px]" />
+          <div className="flex-[3] flex flex-col justify-center gap-0.5 pl-1 border-l-2 border-red-600">
+            <div className="h-0.5 bg-zinc-300 rounded w-1/2" />
+            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-3/4" />
+            <div className="h-0.5 bg-zinc-300 rounded w-full" />
+            <div className="h-0.5 bg-zinc-300 rounded w-4/5" />
+          </div>
+        </div>
+      );
+    }
+
+    // featured-card: Card box with text LEFT (7 cols), image RIGHT (5 cols)
+    if (value === 'featured-card') {
+      return (
+        <div className="w-full h-full p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="w-full h-full border border-zinc-200 bg-zinc-50 rounded-[2px] flex gap-1 p-0.5">
+            <div className="flex-[7] flex flex-col justify-center gap-0.5 px-0.5">
+              <div className="w-5 h-1 bg-zinc-900 rounded-[1px]" />
+              <div className="h-1.5 bg-zinc-700 rounded-[1px] w-full" />
+              <div className="h-1.5 bg-zinc-700 rounded-[1px] w-3/4" />
+              <div className="h-0.5 bg-zinc-300 rounded w-full mt-0.5" />
+            </div>
+            <div className="flex-[5] bg-zinc-300 rounded-[1px] border border-zinc-200" />
+          </div>
+        </div>
+      );
+    }
+
+    // classic-broadsheet: Thick top border, massive headline, 2-col text below
+    if (value === 'classic-broadsheet') {
+      return (
+        <div className="w-full h-full flex flex-col gap-0.5 p-1 bg-white border border-zinc-300 rounded shadow-xs border-t-2 border-t-zinc-800">
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <div className="w-3 h-1 bg-red-500 rounded-[1px]" />
+            <div className="flex-1 border-b border-zinc-300" />
+          </div>
+          <div className="h-2.5 bg-zinc-900 rounded-[1px] w-full" />
+          <div className="h-2 bg-zinc-900 rounded-[1px] w-5/6" />
+          <div className="flex gap-1 mt-0.5 flex-1">
+            <div className="flex-1 flex flex-col gap-0.5">
+              <div className="h-0.5 bg-zinc-300 rounded w-full" />
+              <div className="h-0.5 bg-zinc-300 rounded w-4/5" />
+              <div className="h-0.5 bg-zinc-300 rounded w-full" />
+            </div>
+            <div className="flex-1 flex flex-col gap-0.5">
+              <div className="h-0.5 bg-zinc-300 rounded w-full" />
+              <div className="h-0.5 bg-zinc-200 rounded w-3/4 italic" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Boxed Container layout (hero-boxed)
     if (value === 'hero-boxed') {
       return (
         <div className="w-full h-full p-1 bg-white border border-zinc-300 rounded shadow-xs flex items-center justify-center">
