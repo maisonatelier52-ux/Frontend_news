@@ -376,6 +376,7 @@ export default function HomePageExperience({
               activeCategory={activeCategory}
               searchQuery={searchQuery}
               showBookmarksOnly={showBookmarksOnly}
+              sections={sections}
             />
           </>
         ) : (
@@ -386,6 +387,7 @@ export default function HomePageExperience({
             activeCategory={activeCategory}
             searchQuery={searchQuery}
             showBookmarksOnly={showBookmarksOnly}
+            sections={sections}
           />
         )}
 

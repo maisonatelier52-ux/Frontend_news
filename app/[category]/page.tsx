@@ -271,10 +271,13 @@ export default function CategoryPage() {
   const heroArticle = hasArticles ? articlesWithDynamicStats[0] : null;
   const remainingArticles = hasArticles ? articlesWithDynamicStats.slice(1) : [];
 
-  // Left column: first 7 remaining articles in a scrollable list
-  // Sidebar: items beyond position 7 from same category, or trending fallback
-  const leftListArticles = remainingArticles.slice(0, 7);
-  const extraArticles = remainingArticles.slice(7);
+  // Slice for Spotlight Digest (3 articles)
+  const spotlightArticles = remainingArticles.slice(0, 3);
+  const subgridArticles = remainingArticles.slice(3);
+
+  // Left column: first 7 subgrid articles in a scrollable list
+  const leftListArticles = subgridArticles.slice(0, 7);
+  const extraArticles = subgridArticles.slice(7);
   const hasExtraArticles = extraArticles.length > 0;
   const sidebarArticles = (hasExtraArticles
     ? extraArticles
@@ -434,8 +437,48 @@ export default function CategoryPage() {
                   </div>
                 )}
 
+                {/* Spotlight Digest Row */}
+                {spotlightArticles.length > 0 && (
+                  <div className="mb-12 border-t border-b border-zinc-200/70 py-8 select-none">
+                    <div className="mb-5 flex items-center">
+                      <h3 className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-sans">
+                        <span className="w-2 h-2 bg-[#6366f1] rounded-full inline-block" />
+                        {decodedCategory} Spotlight Digest
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {spotlightArticles.map((article) => (
+                        <div
+                          key={article.id}
+                          onClick={() => setSelectedArticleId(article.id)}
+                          className="group cursor-pointer flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="overflow-hidden rounded-sm aspect-[16/9] mb-3 bg-zinc-100 relative">
+                              <img
+                                src={article.image}
+                                alt={article.title}
+                                className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-305 absolute inset-0"
+                              />
+                            </div>
+                            <h4 className="font-editorial-title text-[15px] font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                              {article.title}
+                            </h4>
+                            <p className="text-xs text-zinc-500 mt-1.5 line-clamp-3 leading-relaxed">
+                              {article.excerpt}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-zinc-400 mt-3 font-sans block">
+                            {article.author} &bull; {article.readTime}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Sub-grid of remaining articles & sidebar */}
-                {remainingArticles.length > 0 && (
+                {subgridArticles.length > 0 && (
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start">
                     {/* Left Column: flows naturally with page scroll (8/12) */}
                     <div className="lg:col-span-8">

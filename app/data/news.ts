@@ -72,7 +72,7 @@ export const NEWS_ARTICLES: Article[] = rawDataList
     return {
       id: String(index + 1),
       title: item.title,
-      excerpt: item.shortdescription || item.description?.substring(0, 150) || "",
+      excerpt: item.description || item.shortdescription || "",
       content: contentParagraphs,
       category: categoryName,
       author: item.author?.name || "Staff Reporter",

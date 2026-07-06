@@ -68,12 +68,26 @@ function getDesignOptions(sectionId: string) {
       { value: 'list', label: 'Compact List' }
     ]
   }
+  if (sectionId === 'us-politics' || sectionId === 'finance-markets') {
+    return [
+      { value: 'politics-hero', label: 'Editorial Lead & Bulletins' },
+      { value: 'politics-columns', label: 'Stacked Feature Rows' },
+      { value: 'politics-split', label: 'Split Wide Card & Side Grid' },
+      { value: 'politics-masonry-heavy', label: 'Bold Masonry Cards' },
+      { value: 'politics-minimal', label: 'Minimalist Editorial List' },
+      { value: 'politics-magazine', label: 'Magazine Banner Strip' }
+    ]
+  }
   return [
     { value: 'grid', label: 'Card Grid Layout' },
     { value: 'magazine', label: 'Magazine Row' },
     { value: 'list', label: 'Compact List' },
     { value: 'masonry', label: 'Masonry Grid' },
-    { value: 'columns', label: 'Multi-Column List' }
+    { value: 'columns', label: 'Multi-Column List' },
+    { value: 'carousel', label: 'Cinematic Slider Row' },
+    { value: 'editorial-strip', label: 'Visual Filmstrip' },
+    { value: 'split-trio', label: 'Split Hero & Double Stack' },
+    { value: 'headline-wall', label: 'Headline Editorial Wall' }
   ]
 }
 
@@ -328,6 +342,38 @@ export default function HomeLayoutConfigPage() {
   const [editZoom, setEditZoom] = useState(1)
 
   const renderLayoutIcon = (value: string) => {
+    // politics-columns: stacked horizontal rows with left accent bar + image + text
+    if (value === 'politics-columns') {
+      return (
+        <div className="w-full h-full flex flex-col gap-0.5 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          {/* Row 1 — red accent */}
+          <div className="flex-1 flex items-center gap-0.5 border-l-2 border-red-600 pl-0.5">
+            <div className="w-4 h-full bg-zinc-300 rounded-[1px] flex-shrink-0" />
+            <div className="flex-1 flex flex-col gap-0.5 justify-center px-0.5">
+              <div className="h-0.5 bg-zinc-700 rounded w-full" />
+              <div className="h-0.5 bg-zinc-400 rounded w-4/5" />
+            </div>
+          </div>
+          {/* Row 2 — blue accent */}
+          <div className="flex-1 flex items-center gap-0.5 border-l-2 border-blue-700 pl-0.5">
+            <div className="w-4 h-full bg-zinc-300 rounded-[1px] flex-shrink-0" />
+            <div className="flex-1 flex flex-col gap-0.5 justify-center px-0.5">
+              <div className="h-0.5 bg-zinc-700 rounded w-full" />
+              <div className="h-0.5 bg-zinc-400 rounded w-3/5" />
+            </div>
+          </div>
+          {/* Row 3 — green accent */}
+          <div className="flex-1 flex items-center gap-0.5 border-l-2 border-emerald-600 pl-0.5">
+            <div className="w-4 h-full bg-zinc-300 rounded-[1px] flex-shrink-0" />
+            <div className="flex-1 flex flex-col gap-0.5 justify-center px-0.5">
+              <div className="h-0.5 bg-zinc-700 rounded w-full" />
+              <div className="h-0.5 bg-zinc-400 rounded w-4/5" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     // Row 1, Col 1: 3 equal vertical columns
     if (value === 'columns' || value === 'spotlight-flex') {
       return (
@@ -520,6 +566,109 @@ export default function HomeLayoutConfigPage() {
       );
     }
 
+    // carousel: Cinematic Slider Row
+    if (value === 'carousel') {
+      return (
+        <div className="w-full h-full flex items-center gap-1.5 p-1 bg-white border border-zinc-300 rounded shadow-xs overflow-hidden">
+          <div className="flex-shrink-0 w-11 h-full bg-zinc-350 border border-zinc-400 rounded-sm relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 to-transparent" />
+          </div>
+          <div className="flex-shrink-0 w-11 h-full bg-zinc-200 border border-zinc-300 rounded-sm relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/40 to-transparent" />
+          </div>
+          <div className="flex-shrink-0 w-11 h-full bg-zinc-100 border border-zinc-200 rounded-sm relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/20 to-transparent" />
+          </div>
+        </div>
+      );
+    }
+
+    // editorial-strip: Visual Filmstrip
+    if (value === 'editorial-strip') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-1 rounded-[1px] bg-zinc-400 relative overflow-hidden">
+            <div className="absolute inset-x-0 bottom-0 h-2 bg-zinc-800" />
+          </div>
+          <div className="flex-1 rounded-[1px] bg-zinc-400 relative overflow-hidden">
+            <div className="absolute inset-x-0 bottom-0 h-2 bg-zinc-800" />
+          </div>
+          <div className="flex-1 rounded-[1px] bg-zinc-400 relative overflow-hidden">
+            <div className="absolute inset-x-0 bottom-0 h-2 bg-zinc-800" />
+          </div>
+        </div>
+      );
+    }
+
+    // split-trio: Split Hero & Double Stack
+    if (value === 'split-trio') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[4] bg-zinc-100 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-[3] flex flex-col gap-0.5 justify-center">
+            <div className="h-0.5 bg-zinc-400 rounded w-full" />
+            <div className="h-0.5 bg-zinc-300 rounded w-4/5" />
+            <div className="h-[1px] bg-zinc-200 w-full my-0.5" />
+            <div className="h-0.5 bg-zinc-400 rounded w-full" />
+            <div className="h-0.5 bg-zinc-300 rounded w-2/3" />
+          </div>
+        </div>
+      );
+    }
+
+    // headline-wall: Headline Editorial Wall
+    if (value === 'headline-wall') {
+      return (
+        <div className="w-full h-full grid grid-cols-2 gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="border border-zinc-200 bg-zinc-50/50 p-0.5 flex flex-col justify-center gap-0.5 rounded-[1px]">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-[2px] bg-zinc-400 rounded w-2/3" />
+          </div>
+          <div className="border border-zinc-200 bg-zinc-50/50 p-0.5 flex flex-col justify-center gap-0.5 rounded-[1px]">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-5/6" />
+            <div className="h-[2px] bg-zinc-400 rounded w-3/4" />
+          </div>
+          <div className="border border-zinc-200 bg-zinc-50/50 p-0.5 flex flex-col justify-center gap-0.5 rounded-[1px]">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-4/5" />
+            <div className="h-[2px] bg-zinc-400 rounded w-1/2" />
+          </div>
+          <div className="border border-zinc-200 bg-zinc-50/50 p-0.5 flex flex-col justify-center gap-0.5 rounded-[1px]">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-[2px] bg-zinc-400 rounded w-4/5" />
+          </div>
+        </div>
+      );
+    }
+
+    // politics-magazine: full-width dark banner image on top, 3 thumbnail cards in a row below
+    if (value === 'politics-magazine') {
+      return (
+        <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          {/* Wide dark banner */}
+          <div className="flex-[3] relative rounded-[1px] overflow-hidden bg-zinc-400">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-800/80 to-transparent" />
+            <div className="absolute bottom-0.5 left-0.5 right-0.5 flex flex-col gap-0.5">
+              <div className="w-4 h-1 bg-red-600 rounded-[1px]" />
+              <div className="h-1 bg-white/90 rounded-[1px] w-5/6" />
+              <div className="h-0.5 bg-white/50 rounded w-2/3" />
+            </div>
+          </div>
+          {/* 3 thumbnail cards in a row */}
+          <div className="flex-[2] flex gap-0.5">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="flex-1 flex gap-0.5 p-0.5 border border-zinc-200 rounded-[1px] bg-zinc-50">
+                <div className="w-4 h-full bg-zinc-300 rounded-[1px] flex-shrink-0" />
+                <div className="flex-1 flex flex-col gap-0.5 justify-center">
+                  <div className="h-0.5 bg-zinc-400 rounded w-full" />
+                  <div className="h-0.5 bg-zinc-300 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     // Default: text/list rows representation
     return (
       <div className="w-full h-full flex flex-col gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs justify-center">
@@ -557,9 +706,21 @@ export default function HomeLayoutConfigPage() {
         const layoutRes = await fetch('/api/home-layout')
         if (layoutRes.ok) {
           const layout = await layoutRes.json()
-          const sortedSections = (layout.sections as LayoutSection[]).sort((a, b) => a.order - b.order)
+          const REMOVED_SECTIONS = ['finance-markets', 'opinion-column']
+          const rawSections = (layout.sections as LayoutSection[]).filter(s => !REMOVED_SECTIONS.includes(s.id))
+          const sortedSections = rawSections.sort((a, b) => a.order - b.order)
           setSections(sortedSections)
           setOriginalSections(JSON.parse(JSON.stringify(sortedSections)))
+
+          // If DB still had the removed sections, auto-save the cleaned layout
+          const hadRemovedSections = (layout.sections as LayoutSection[]).some((s: LayoutSection) => REMOVED_SECTIONS.includes(s.id))
+          if (hadRemovedSections) {
+            await fetch('/api/home-layout', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ templateName: layout.templateName || 'custom', sections: sortedSections })
+            })
+          }
 
           // Store first-load layout configuration as factory original design for factory-reset
           if (typeof window !== 'undefined' && !localStorage.getItem('homepage_layout_factory_original')) {
@@ -1440,7 +1601,56 @@ export default function HomeLayoutConfigPage() {
     const customBg = section.settings?.bgColor || '#ffffff'
 
     const renderArticlesInLayout = (sec: LayoutSection, articles: any[], isSub: boolean) => {
-      const style = sec.designStyle || 'grid';
+      const heroSection = sections.find((s: any) => s.id === 'first-hero');
+      const heroStyle = heroSection?.designStyle || 'hero-split';
+
+      const getSectionStyle = (sectionId: string, currentStyle: string) => {
+        switch (heroStyle) {
+          case 'hero-split':
+            if (sectionId === 'us-politics') return 'politics-magazine';
+            if (sectionId === 'technology-section') return 'columns';
+            if (sectionId === 'world-affairs') return 'grid';
+            break;
+          case 'editorial-spotlight':
+            if (sectionId === 'us-politics') return 'politics-columns';
+            if (sectionId === 'technology-section') return 'split-trio';
+            if (sectionId === 'world-affairs') return 'editorial-strip';
+            break;
+          case 'cover-story':
+            if (sectionId === 'us-politics') return 'politics-minimal';
+            if (sectionId === 'technology-section') return 'carousel';
+            if (sectionId === 'world-affairs') return 'headline-wall';
+            break;
+          case 'split-detail':
+            if (sectionId === 'us-politics') return 'politics-hero';
+            if (sectionId === 'technology-section') return 'grid';
+            if (sectionId === 'world-affairs') return 'masonry';
+            break;
+          case 'featured-card':
+            if (sectionId === 'us-politics') return 'politics-split';
+            if (sectionId === 'technology-section') return 'headline-wall';
+            if (sectionId === 'world-affairs') return 'list';
+            break;
+          case 'classic-broadsheet':
+            if (sectionId === 'us-politics') return 'politics-columns';
+            if (sectionId === 'technology-section') return 'columns';
+            if (sectionId === 'world-affairs') return 'headline-wall';
+            break;
+          case 'hero-full':
+            if (sectionId === 'us-politics') return 'politics-magazine';
+            if (sectionId === 'technology-section') return 'carousel';
+            if (sectionId === 'world-affairs') return 'grid';
+            break;
+          case 'hero-minimal':
+            if (sectionId === 'us-politics') return 'politics-minimal';
+            if (sectionId === 'technology-section') return 'list';
+            if (sectionId === 'world-affairs') return 'columns';
+            break;
+        }
+        return currentStyle;
+      };
+
+      const style = getSectionStyle(sec.id, sec.designStyle || 'grid');
       const themeBadge = COLOR_MAP[sec.colorTheme] || COLOR_MAP.indigo;
       const accentBorder = sec.settings?.borderColor ? `3px solid ${sec.settings.borderColor}` : '';
 
@@ -1531,6 +1741,179 @@ export default function HomeLayoutConfigPage() {
         );
       }
 
+      if (style === 'politics-hero') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-12 gap-5">
+              {/* Left lead */}
+              <div className="col-span-8 flex flex-col gap-2">
+                <div className="w-full aspect-[16/10] bg-zinc-100 rounded-sm border border-zinc-250 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                  📸 Main Lead Photo
+                </div>
+                <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">
+                  {articles[0]?.title}
+                </h3>
+                <p className="text-[11px] text-zinc-550 line-clamp-2 leading-relaxed">{articles[0]?.excerpt}</p>
+                <div className="text-[9px] text-zinc-400 font-sans mt-0.5">By {articles[0]?.author} · {articles[0]?.readTime}</div>
+              </div>
+              {/* Right text bulletins */}
+              <div className="col-span-4 border-l border-zinc-200 pl-4 flex flex-col gap-3">
+                <div className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider border-b pb-1">Bulletins</div>
+                {articles.slice(1, 5).map((art, idx) => (
+                  <div key={idx} className="group flex gap-3.5 items-start py-0.5 last:border-0 border-b border-zinc-100 pb-2">
+                    <div className="font-serif text-base font-bold text-zinc-300">0{idx + 1}</div>
+                    <div className="flex-1">
+                      <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight group-hover:text-zinc-600">
+                        {art.title}
+                      </h4>
+                      <span className="text-[9px] text-zinc-400">{art.readTime}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'politics-columns') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="border-t border-b border-zinc-250 py-4 my-0.5">
+              <div className="grid grid-cols-3 gap-5 divide-x divide-zinc-200">
+                {articles.map((art, idx) => (
+                  <div key={idx} className={`flex flex-col gap-1.5 ${idx > 0 ? 'pl-4' : ''}`}>
+                    <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug hover:text-zinc-600">
+                      "{art.title}"
+                    </h3>
+                    <p className="text-[10px] text-zinc-550 leading-relaxed line-clamp-5 italic">{art.excerpt}</p>
+                    <div className="text-[9px] text-zinc-400 font-sans mt-1">By <i>{art.author}</i></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'politics-split') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-12 gap-5">
+              {/* Left Wide Card */}
+              <div className="col-span-6 flex flex-col gap-2">
+                <div className="w-full aspect-[16/9] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                  📸 Wide Photo
+                </div>
+                <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug">
+                  {articles[0]?.title}
+                </h3>
+                <p className="text-[10px] text-zinc-500 line-clamp-2 leading-tight">{articles[0]?.excerpt}</p>
+              </div>
+              {/* Right Stack */}
+              <div className="col-span-6 flex flex-col gap-3 justify-between">
+                {articles.slice(1, 3).map((art, idx) => (
+                  <div key={idx} className="flex gap-3 items-start border-b last:border-b-0 pb-2 last:pb-0">
+                    <div className="flex-1">
+                      <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight">
+                        {art.title}
+                      </h4>
+                      <p className="text-[9px] text-zinc-500 line-clamp-1 mt-0.5">{art.excerpt}</p>
+                    </div>
+                    <div className="w-12 h-9 bg-zinc-100 border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[6px] font-bold text-zinc-400">📸 Pic</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'politics-masonry-heavy') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-3 gap-4">
+              {articles.map((art, idx) => (
+                <div key={idx} className="bg-zinc-50 border-t-4 border-t-zinc-800 border border-zinc-200 p-3 rounded shadow-sm flex flex-col gap-2">
+                  <div className="w-full aspect-[16/11] bg-zinc-100 rounded-sm border border-zinc-200 flex items-center justify-center text-[8px] font-semibold text-zinc-400">
+                    📸 Photo
+                  </div>
+                  <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight line-clamp-2">
+                    {art.title}
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 line-clamp-2 leading-tight">{art.excerpt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'politics-minimal') {
+        const mockFinance = [
+          {
+            title: "Stocks Rally Following Fed Policy Announcement",
+            excerpt: "Market indexes climb as the Federal Reserve indicates plans to maintain interest rate stability for the upcoming quarters. Investors reacted with widespread enthusiasm to the policy guidance, triggering an immediate upward movement in tech and consumer sectors. Analysts suggest that keeping interest rates steady will allow businesses to confidently plan long-term capital investments, helping support ongoing workforce expansion across regional branches.",
+            readTime: "3 mins",
+          },
+          {
+            title: "Treasury Yields Ease as Inflation Metrics Cool",
+            excerpt: "Government bonds see increased demand following the release of favorable wholesale consumer pricing indices. The latest pricing index points to cooling wholesale inflation trends, offering key policymakers greater leeway in navigating fiscal transitions. Markets responded with stabilized trade activities as yields adjusted across multi-year maturity assets, signaling long-term macroeconomic stability.",
+            readTime: "4 mins",
+          }
+        ];
+
+        return (
+          <div className="w-full">
+            <div className="grid grid-cols-12 gap-5">
+              {/* Left side: U.S. News & Politics minimalist list (takes 7/12 cols) */}
+              <div className="col-span-7 flex flex-col gap-4">
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900">U.S. News & Politics</h2>
+                </div>
+                <div className="flex flex-col gap-0 border-t border-zinc-200">
+                  {articles.slice(0, 4).map((art, idx) => (
+                    <div key={idx} className="flex gap-4 items-center justify-between py-2">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] text-zinc-400 font-sans">{art.date || "July 1, 2026"}</span>
+                        <h4 className="font-editorial-title text-xs font-bold text-zinc-900 truncate mt-1">
+                          {art.title}
+                        </h4>
+                      </div>
+                      <div className="w-12 h-9 bg-zinc-100 rounded border border-zinc-200 flex-shrink-0 flex items-center justify-center text-[6px] text-zinc-450 font-bold">📸 Photo</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right side: Finance & Markets text-only list (takes 5/12 cols) */}
+              <div className="col-span-5 border-l border-zinc-200 pl-4 flex flex-col gap-4">
+                <div className="border-b border-zinc-200 pb-1 mb-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900">Finance & Markets</h2>
+                </div>
+                <div className="flex flex-col gap-4 border-t border-zinc-200 pt-2">
+                  {mockFinance.map((art, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 py-1 border-b last:border-0 border-zinc-100 pb-2">
+                      <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight">
+                        {art.title}
+                      </h3>
+                      <p className="text-[9px] text-zinc-500 line-clamp-5 leading-normal font-sans mt-1">
+                        {art.excerpt}
+                      </p>
+                      <span className="text-[8px] text-zinc-400 font-sans mt-0.5">{art.readTime}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       if (style === 'columns') {
         return (
           <div className="w-full">
@@ -1542,6 +1925,93 @@ export default function HomeLayoutConfigPage() {
                     "{art.title}"
                   </h3>
                   <p className="text-[10px] text-zinc-400 font-sans mt-1">By {art.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'carousel') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x">
+              {articles.map((art, idx) => (
+                <div key={idx} className="flex-shrink-0 w-[240px] snap-start bg-zinc-50 border border-zinc-200 rounded-md overflow-hidden p-2 flex flex-col gap-2">
+                  <div className="w-full aspect-[16/10] bg-zinc-200 rounded-sm relative overflow-hidden flex items-center justify-center text-[8px] font-bold text-zinc-400">
+                    📸 Photo
+                  </div>
+                  <div>
+                    <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug line-clamp-2">{art.title}</h3>
+                    <p className="text-[9px] text-zinc-500 line-clamp-1 mt-1">{art.excerpt}</p>
+                    <span className="text-[8px] text-zinc-400 block mt-1.5 font-sans">{art.readTime}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'editorial-strip') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-3 gap-3">
+              {articles.slice(0, 3).map((art, idx) => (
+                <div key={idx} className="relative aspect-[16/10] rounded-md overflow-hidden bg-zinc-800 border border-zinc-700">
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-900/35 to-transparent z-10" />
+                  <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-zinc-500">📸 Photo</div>
+                  <div className="absolute bottom-2 left-2 right-2 z-20">
+                    <span className="text-[8px] text-red-400 font-extrabold uppercase tracking-wider block mb-0.5">Editorial</span>
+                    <h4 className="font-editorial-title text-white text-[11px] font-bold leading-tight line-clamp-2">{art.title}</h4>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'split-trio') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-12 gap-5">
+              <div className="col-span-7 bg-zinc-50/70 border border-zinc-200/80 rounded-md p-3 flex flex-col gap-2.5">
+                <div className="w-full aspect-[16/10] bg-zinc-250 border border-zinc-300 rounded flex items-center justify-center text-[8px] font-bold text-zinc-400">📸 Photo</div>
+                <div>
+                  <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug">{articles[0]?.title}</h3>
+                  <p className="text-xs text-zinc-550 line-clamp-2 mt-1.5 leading-relaxed">{articles[0]?.excerpt}</p>
+                </div>
+              </div>
+              <div className="col-span-5 flex flex-col gap-3 justify-center">
+                {articles.slice(1, 3).map((art, idx) => (
+                  <div key={idx} className="border-b last:border-0 pb-2.5 last:pb-0 border-zinc-150">
+                    <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug">{art.title}</h4>
+                    <p className="text-[10px] text-zinc-550 line-clamp-1 mt-0.5">{art.excerpt}</p>
+                    <span className="text-[8px] text-zinc-400 font-sans block mt-1">{art.readTime}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (style === 'headline-wall') {
+        return (
+          <div className="w-full">
+            {headerEl}
+            <div className="grid grid-cols-2 gap-3">
+              {articles.slice(0, 4).map((art, idx) => (
+                <div key={idx} className="border border-zinc-200 rounded p-3 flex flex-col gap-1.5 bg-zinc-50/40 hover:bg-zinc-50 transition">
+                  <span className="text-[8px] text-zinc-400 font-bold uppercase tracking-wider">Opinion / Column</span>
+                  <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-tight">
+                    {art.title}
+                  </h3>
+                  <p className="text-[9.5px] text-zinc-500 leading-normal line-clamp-2">{art.excerpt}</p>
                 </div>
               ))}
             </div>
@@ -1893,6 +2363,27 @@ export default function HomeLayoutConfigPage() {
             author: "Staff Writer",
             date: "June 29, 2026",
             readTime: "5 mins",
+          },
+          {
+            title: "Supreme Court Hears Oral Arguments on Commerce Clause Limits",
+            excerpt: "Key justices questioned the limits of federal regulatory overreach in interstate trade governance briefs.",
+            author: "Legal Analyst",
+            date: "June 28, 2026",
+            readTime: "6 mins",
+          },
+          {
+            title: "Congressional Budget Office Releases Long-Term Growth Projections",
+            excerpt: "Economic reports suggest mild headwinds but sustainable productivity gains from workforce development projects.",
+            author: "Economics Correspondent",
+            date: "June 27, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "Federal Election Commission Approves New Disclosures Standards",
+            excerpt: "Committees must now list all contributions transparently under revised digital guidelines for upcoming terms.",
+            author: "Political Correspondent",
+            date: "June 26, 2026",
+            readTime: "3 mins",
           }
         ]
         return (
@@ -1923,6 +2414,27 @@ export default function HomeLayoutConfigPage() {
             author: "Staff Reporter",
             date: "June 29, 2026",
             readTime: "5 mins",
+          },
+          {
+            title: "Venture Capital Flows Slow Down in Q2 Funding Rounds",
+            excerpt: "Early stage startup valuation valuations see moderate corrections as venture funds tighten cash deployment criteria.",
+            author: "Tech Analyst",
+            date: "June 28, 2026",
+            readTime: "4 mins",
+          },
+          {
+            title: "Housing Starts Decline as Interest Rates Remain High",
+            excerpt: "New home constructions slide due to high lending rates but residential demanding factors remain steady.",
+            author: "Real Estate Writer",
+            date: "June 27, 2026",
+            readTime: "5 mins",
+          },
+          {
+            title: "Retail Sales Beat Estimates Despite Inflation Concerns",
+            excerpt: "Consumer spending indicators show resilient momentum in service categories and digital commerce sales.",
+            author: "Retail Reporter",
+            date: "June 26, 2026",
+            readTime: "3 mins",
           }
         ]
         return (
@@ -2034,32 +2546,132 @@ export default function HomeLayoutConfigPage() {
         )
       }
       case 'arts-marketing-pr': {
+        const heroSection = sections.find((s: any) => s.id === 'first-hero')
+        const heroStyle = heroSection?.designStyle || 'hero-split'
+
         const columnsData = [
           {
             title: "Arts & Entertainment",
             articles: [
-              { title: "Opera House Reopens Following Landmark Restoration", readTime: "4 mins" },
-              { title: "Indie Film Festival Showcases Rising Directors", readTime: "5 mins" },
-              { title: "Classic Betty Boop Enters Public Domain", readTime: "3 mins" }
+              { title: "Opera House Reopens Following Landmark Restoration", readTime: "4 mins", excerpt: "The historic theater restoration finishes ahead of schedule for the autumn season.", image: "/article-placeholder.jpg" },
+              { title: "Indie Film Festival Showcases Rising Directors", readTime: "5 mins", excerpt: "Underrepresented voices capture top prizes at the seasonal cinema expo.", image: "/article-placeholder.jpg" },
+              { title: "Classic Betty Boop Enters Public Domain", readTime: "3 mins", excerpt: "Artists celebrate early animation assets entering creative reuse rights.", image: "/article-placeholder.jpg" }
             ]
           },
           {
             title: "Marketing & Strategy",
             articles: [
-              { title: "Brand Tactics Adapt to Digital First Audiences", readTime: "4 mins" },
-              { title: "Social Platforms Update Enterprise Analytics Tools", readTime: "3 mins" },
-              { title: "Retailers Test Interactive Visual Placement Tech", readTime: "5 mins" }
+              { title: "Brand Tactics Adapt to Digital First Audiences", readTime: "4 mins", excerpt: "Legacy campaigns transition budgets into real-time interactive placements.", image: "/article-placeholder.jpg" },
+              { title: "Social Platforms Update Enterprise Analytics Tools", readTime: "3 mins", excerpt: "Revised reporting features offer clearer insights into engagement demographics.", image: "/article-placeholder.jpg" },
+              { title: "Retailers Test Interactive Visual Placement Tech", readTime: "5 mins", excerpt: "Augmented overlays boost customer conversions across lifestyle categories.", image: "/article-placeholder.jpg" }
             ]
           },
           {
             title: "Press Releases & News",
             articles: [
-              { title: "Corporate Rebranding Announcements Surge in Q2", readTime: "3 mins" },
-              { title: "AI Infrastructure Firm Secures Series B Funding", readTime: "5 mins" },
-              { title: "National Trade Council Hosts Global Commerce Summit", readTime: "4 mins" }
+              { title: "Corporate Rebranding Announcements Surge in Q2", readTime: "3 mins", excerpt: "Enterprises pivot brand visual systems to signal sustainability covenants.", image: "/article-placeholder.jpg" },
+              { title: "AI Infrastructure Firm Secures Series B Funding", readTime: "5 mins", excerpt: "Capital expansion planned to support regional datacenter cluster growth.", image: "/article-placeholder.jpg" },
+              { title: "National Trade Council Hosts Global Commerce Summit", readTime: "4 mins", excerpt: "Global delegates align on multi-lateral digital trade protocols.", image: "/article-placeholder.jpg" }
             ]
           }
         ]
+
+        // 1. VISUAL CARDS: Big images grid for editorial-spotlight, featured-card
+        if (heroStyle === 'editorial-spotlight' || heroStyle === 'featured-card') {
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="grid grid-cols-3 gap-6">
+                {columnsData.map((col, idx) => (
+                  <div key={idx} className="group cursor-pointer bg-zinc-50 border border-zinc-200/60 rounded-md overflow-hidden p-3 flex flex-col justify-between hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
+                    <div>
+                      <div className="text-[9px] text-[#6366f1] font-bold uppercase tracking-widest mb-1.5">{col.title}</div>
+                      <div className="w-full aspect-[16/10] bg-zinc-200 border rounded flex items-center justify-center text-[7px] font-bold text-zinc-400 mb-3 relative overflow-hidden">
+                        📸 Feature Photo
+                      </div>
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
+                        {col.articles[0].title}
+                      </h3>
+                      <p className="text-[10.5px] text-zinc-500 line-clamp-2 mt-2 leading-relaxed font-sans">{col.articles[0].excerpt}</p>
+                    </div>
+                    <div className="mt-4 pt-2.5 border-t border-zinc-150 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <span>Staff Writer</span>
+                      <span>{col.articles[0].readTime}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        // 2. SMOOTH SLIDER TRACK: horizontal carousel for cover-story
+        if (heroStyle === 'cover-story') {
+          const allFlatArticles = columnsData.flatMap(c => c.articles.slice(0, 2).map(a => ({ ...a, category: c.title })))
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="border-b border-zinc-200 pb-1.5 mb-4">
+                <h3 className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">Spotlight Filmstrip</h3>
+              </div>
+              <div 
+                className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x animate-[admin-fade-in_0.3s_ease]" 
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {allFlatArticles.map((art, idx) => (
+                  <div key={idx} className="flex-shrink-0 w-[220px] snap-start bg-zinc-50 border border-zinc-200 rounded p-2.5 flex flex-col gap-2.5 group cursor-pointer hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
+                    <div className="w-full aspect-[16/10] bg-zinc-200 border rounded flex items-center justify-center text-[7px] font-bold text-zinc-450 relative overflow-hidden">
+                      📸 Spotlight
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-red-655 font-bold uppercase tracking-widest block mb-0.5">{art.category}</span>
+                      <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug line-clamp-2">{art.title}</h4>
+                      <span className="text-[9px] text-zinc-450 block mt-2 font-sans">{art.readTime}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <style jsx global>{`
+                .scrollbar-none::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+            </div>
+          )
+        }
+
+        // 3. TYPOGRAPHY BROADSHEET: classic-broadsheet, hero-minimal
+        if (heroStyle === 'classic-broadsheet' || heroStyle === 'hero-minimal') {
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="grid grid-cols-3 gap-6 divide-x divide-zinc-200">
+                {columnsData.map((col, idx) => (
+                  <div key={idx} className={`space-y-4 ${idx > 0 ? 'pl-5' : ''}`}>
+                    <div className="border-b border-zinc-950 pb-1">
+                      <h3 className="text-[10px] font-bold text-zinc-900 uppercase tracking-widest">{col.title}</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {col.articles.map((art, aIdx) => (
+                        <div key={aIdx} className="group cursor-pointer flex gap-3.5 items-start py-0.5">
+                          <span className="font-serif text-lg font-extrabold text-zinc-300 group-hover:text-zinc-550 transition-colors leading-none pt-0.5">
+                            0{aIdx + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug group-hover:text-zinc-655 transition">
+                              "{art.title}"
+                            </h4>
+                            <p className="text-[9.5px] text-zinc-550 leading-relaxed font-serif italic mt-1.5 line-clamp-3">{art.excerpt}</p>
+                            <span className="text-[8px] text-zinc-400 block mt-1.5">{art.readTime}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        // 4. LIST HOVER LIFT (DEFAULT): hero-split, split-detail, hero-full
         return (
           <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -2070,17 +2682,17 @@ export default function HomeLayoutConfigPage() {
                   </div>
                   <div className="space-y-3">
                     {col.articles.map((art, aIdx) => (
-                      <div key={aIdx} className="flex gap-3 items-center py-0.5 border-b border-zinc-100 last:border-0 pb-2 last:pb-0">
-                        <div className="flex-1">
+                      <div key={aIdx} className="group cursor-pointer flex gap-3 items-center py-1.5 border-b border-zinc-100 last:border-0 pb-2.5 last:pb-0 hover:bg-zinc-50/65 px-1.5 rounded transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-xs">
+                        <div className="flex-1 min-w-0">
                           <h3 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug">
                             {art.title}
                           </h3>
-                          <div className="mt-1 text-[8px] text-zinc-400 flex justify-between">
-                            <span>Staff Correspondent</span>
+                          <div className="mt-1.5 text-[8px] text-zinc-400 flex justify-between font-sans">
+                            <span>Staff Writer</span>
                             <span className="font-semibold text-zinc-700">{art.readTime}</span>
                           </div>
                         </div>
-                        <div className="w-10 h-8 bg-zinc-100 border border-zinc-200 rounded-sm flex-shrink-0 flex items-center justify-center text-[6px] font-bold text-zinc-400">📸</div>
+                        <div className="w-10 h-8 bg-zinc-150 border border-zinc-250 rounded-sm flex-shrink-0 flex items-center justify-center text-[6px] font-bold text-zinc-400 relative overflow-hidden">📸</div>
                       </div>
                     ))}
                   </div>
@@ -2091,15 +2703,133 @@ export default function HomeLayoutConfigPage() {
         )
       }
       case 'latest-news': {
+        const heroSection = sections.find((s: any) => s.id === 'first-hero')
+        const heroStyle = heroSection?.designStyle || 'hero-split'
+
         const wireArticles = [
-          { title: "New Infrastructure Packaging Reaches Final Approval Stages", category: "US", time: "Just Now", readTime: "3 mins" },
-          { title: "Global Stocks Advance Following Treasury Yield Easing", category: "Finance", time: "10m ago", readTime: "4 mins" },
-          { title: "Bilateral Trade Framework Guidelines Signed", category: "World", time: "30m ago", readTime: "5 mins" }
+          { title: "New Infrastructure Packaging Reaches Final Approval Stages", category: "US", time: "Just Now", readTime: "3 mins", excerpt: "Officials align on multi-lateral digital trade protocols and budget transitions.", image: "/article-placeholder.jpg" },
+          { title: "Global Stocks Advance Following Treasury Yield Easing", category: "Finance", time: "10m ago", readTime: "4 mins", excerpt: "Markets react with widespread enthusiasm to policy guidance cues.", image: "/article-placeholder.jpg" },
+          { title: "Bilateral Trade Framework Guidelines Signed", category: "World", time: "30m ago", readTime: "5 mins", excerpt: "Diplomatic frameworks are set to be renewed to stabilize trade agreements.", image: "/article-placeholder.jpg" }
         ]
         const spotlightArticles = [
-          { title: "National grid upgrades boost rural connectivity metrics", category: "US", author: "Arthur Pendelton", date: "Today", readTime: "5 mins" },
-          { title: "NIST quantum cryptography standard clears review phases", category: "Technology", author: "Dev Architect", date: "Yesterday", readTime: "6 mins" }
+          { title: "National grid upgrades boost rural connectivity metrics", category: "US", author: "Arthur Pendelton", date: "Today", readTime: "5 mins", excerpt: "Upgrading rural grids is critical for agricultural tech integrations and enterprise growth.", image: "/article-placeholder.jpg" },
+          { title: "NIST quantum cryptography standard clears review phases", category: "Technology", author: "Dev Architect", date: "Yesterday", readTime: "6 mins", excerpt: "NIST completes review of post-quantum cryptographic primitives for enterprise adoption.", image: "/article-placeholder.jpg" }
         ]
+
+        // 1. VISUAL MASONRY GRID: editorial-spotlight, featured-card
+        if (heroStyle === 'editorial-spotlight' || heroStyle === 'featured-card') {
+          const combined = [...spotlightArticles, ...wireArticles.slice(0, 2)]
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="border-b border-zinc-950 pb-1 mb-4 text-center">
+                <h2 className="text-xs font-black uppercase tracking-widest text-zinc-955">LATEST SPOTLIGHT BOARD</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-5">
+                {combined.map((art, idx) => (
+                  <div key={idx} className="group cursor-pointer bg-zinc-50 border border-zinc-200/60 rounded-md overflow-hidden p-3.5 flex flex-col justify-between hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
+                    <div>
+                      <div className="w-full aspect-[16/9] bg-zinc-250 border rounded flex items-center justify-center text-[7px] font-bold text-zinc-400 mb-3 relative overflow-hidden">
+                        📸 News Photo
+                      </div>
+                      <span className="text-[8px] bg-zinc-900 text-white font-extrabold px-1.5 py-0.5 tracking-wider uppercase inline-block mb-2 rounded-sm">{art.category}</span>
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">{art.title}</h3>
+                      <p className="text-[10.5px] text-zinc-500 line-clamp-2 mt-1.5 leading-relaxed font-sans">{art.excerpt}</p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-[9px] text-zinc-400 font-sans border-t border-zinc-150 pt-2">
+                      <span>By Staff Writer</span>
+                      <span>{art.readTime}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        // 2. CINEMATIC FILMSTRIP CAROUSEL: cover-story
+        if (heroStyle === 'cover-story') {
+          const combined = [...spotlightArticles, ...wireArticles]
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="border-b border-zinc-200 pb-1.5 mb-4">
+                <h3 className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest">REAL-TIME STORIES SLIDER</h3>
+              </div>
+              <div 
+                className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x" 
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {combined.map((art, idx) => (
+                  <div key={idx} className="flex-shrink-0 w-[240px] snap-start bg-zinc-50 border border-zinc-200 rounded p-3 flex flex-col gap-3 group cursor-pointer hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
+                    <div className="w-full aspect-[16/10] bg-zinc-200 border rounded flex items-center justify-center text-[7px] font-bold text-zinc-450 relative overflow-hidden">
+                      📸 Photo Highlight
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-red-700 font-extrabold uppercase tracking-widest block mb-1">{art.category}</span>
+                      <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug line-clamp-2 group-hover:text-zinc-650 transition">{art.title}</h4>
+                      <div className="flex justify-between text-[9px] text-zinc-450 mt-3 font-sans border-t border-zinc-150 pt-1.5">
+                        <span>Staff Writer</span>
+                        <span>{art.readTime}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <style jsx global>{`
+                .scrollbar-none::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+            </div>
+          )
+        }
+
+        // 3. TYPOGRAPHICAL FEED: classic-broadsheet, hero-minimal
+        if (heroStyle === 'classic-broadsheet' || heroStyle === 'hero-minimal') {
+          const combined = [...spotlightArticles, ...wireArticles]
+          return (
+            <div key={section.id} className="w-full py-6 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
+              <div className="border-b border-zinc-950 pb-1.5 mb-4 text-center">
+                <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-900">LATEST NEWS COLUMN</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-6 divide-x divide-zinc-200">
+                <div className="space-y-4">
+                  <div className="border-b border-zinc-200 pb-1"><h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Live Updates</h3></div>
+                  {wireArticles.map((art, idx) => (
+                    <div key={idx} className="group cursor-pointer flex gap-3.5 items-start py-0.5">
+                      <span className="font-serif text-lg font-extrabold text-zinc-300 group-hover:text-zinc-550 transition-colors leading-none pt-0.5">
+                        0{idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-editorial-title text-xs font-bold text-[#6366f1] leading-snug">
+                          "{art.title}"
+                        </h4>
+                        <p className="text-[9.5px] text-zinc-550 leading-relaxed font-serif italic mt-1 line-clamp-2">{art.excerpt}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pl-5 space-y-4">
+                  <div className="border-b border-zinc-200 pb-1"><h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Featured Feed</h3></div>
+                  {spotlightArticles.map((art, idx) => (
+                    <div key={idx} className="group cursor-pointer flex gap-3.5 items-start py-0.5">
+                      <span className="font-serif text-lg font-extrabold text-zinc-300 group-hover:text-zinc-550 transition-colors leading-none pt-0.5">
+                        0{idx + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug">
+                          "{art.title}"
+                        </h4>
+                        <p className="text-[9.5px] text-zinc-550 leading-relaxed font-serif italic mt-1 line-clamp-2">{art.excerpt}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // 4. SPLIT TIMELINE & FEATURED (DEFAULT): hero-split, split-detail, hero-full
         return (
           <div key={section.id} className="w-full py-4 text-left border-t border-zinc-200 font-sans" style={{ borderTop: borderStyle || undefined, backgroundColor: customBg }}>
             <div className="border-b border-zinc-900 pb-1 mb-3 text-center">
@@ -2109,33 +2839,33 @@ export default function HomeLayoutConfigPage() {
               {/* Timeline Feed */}
               <div className="lg:col-span-7 space-y-3">
                 <div className="border-b border-zinc-200 pb-1 mb-2">
-                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">LIVE TIMELINE</h3>
+                  <h3 className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider font-semibold">LIVE TIMELINE</h3>
                 </div>
                 {wireArticles.map((art, idx) => (
-                  <div key={idx} className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center border-b border-zinc-100 last:border-b-0 pb-2 last:pb-0">
+                  <div key={idx} className="border-l-2 border-zinc-200 pl-3 py-1 flex gap-4 justify-between items-center border-b border-zinc-100 last:border-b-0 pb-2 last:pb-0 group cursor-pointer hover:bg-zinc-50/50 px-1.5 transition-all">
                     <div className="flex-1">
                       <div className="text-[8px] text-red-700 font-bold uppercase mb-0.5">{art.category} • {art.time}</div>
-                      <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-955 leading-snug">{art.title}</h4>
-                      <div className="mt-1 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                      <h4 className="font-editorial-title text-xs sm:text-sm font-bold text-zinc-955 leading-snug group-hover:text-zinc-650 transition">{art.title}</h4>
+                      <div className="mt-1.5 flex items-center justify-between text-[9px] text-zinc-400 font-sans">
                         <span>By Staff Reporter</span>
                         <span className="font-semibold text-zinc-700">{art.readTime}</span>
                       </div>
                     </div>
-                    <div className="w-12 h-10 bg-zinc-100 border rounded flex-shrink-0 flex items-center justify-center text-[7px] font-bold text-zinc-400">📸 Image</div>
+                    <div className="w-12 h-10 bg-zinc-150 border border-zinc-250 rounded flex-shrink-0 flex items-center justify-center text-[7px] font-bold text-zinc-400 relative overflow-hidden">📸</div>
                   </div>
                 ))}
               </div>
               {/* Featured spotlights */}
               <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
                 <div className="border-b border-zinc-200 pb-1">
-                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">FEATURED STORIES</h3>
+                  <h3 className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider font-semibold font-sans">FEATURED STORIES</h3>
                 </div>
                 {spotlightArticles.map((art, idx) => (
-                  <div key={idx} className="space-y-1.5 border-b border-zinc-100 last:border-b-0 pb-3 last:pb-0">
-                    <div className="w-full aspect-[16/9] bg-zinc-100 border rounded flex items-center justify-center text-[8px] font-bold text-zinc-400">📸 Spotlight Photo</div>
+                  <div key={idx} className="space-y-1.5 border-b border-zinc-100 last:border-b-0 pb-3 last:pb-0 group cursor-pointer hover:bg-zinc-50/50 p-1.5 rounded transition">
+                    <div className="w-full aspect-[16/9] bg-zinc-150 border border-zinc-250 rounded flex items-center justify-center text-[8px] font-bold text-zinc-400 relative overflow-hidden">📸 Spotlight Photo</div>
                     <div className="text-[8px] text-zinc-455 font-bold uppercase tracking-wider">{art.category}</div>
-                    <h4 className="font-editorial-title text-xs font-bold text-zinc-955 leading-snug">{art.title}</h4>
-                    <div className="flex items-center justify-between text-[9px] text-zinc-400 font-sans">
+                    <h4 className="font-editorial-title text-xs font-bold text-zinc-955 leading-snug group-hover:text-zinc-650 transition">{art.title}</h4>
+                    <div className="flex items-center justify-between text-[9px] text-zinc-400 font-sans mt-1">
                       <span>By <span className="text-zinc-500 font-medium">{art.author}</span> • {art.date}</span>
                       <span className="font-semibold text-zinc-700">{art.readTime}</span>
                     </div>
@@ -3083,31 +3813,68 @@ export default function HomeLayoutConfigPage() {
                 </div>
 
                 {/* 5-Option Design Style Visual Grid Selector */}
-                <div className="border-t pt-3">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Design Layout Style</label>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {getDesignOptions(draftSection.id).map(opt => {
-                      const isSelected = draftSection.designStyle === opt.value
-                      return (
-                        <button
-                          key={opt.value}
-                          onClick={() => updateDraftField('designStyle', opt.value)}
-                          className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition text-center cursor-pointer ${
-                            isSelected
-                              ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1] font-bold'
-                              : 'border-slate-200 bg-white text-slate-650 hover:border-slate-300'
-                          }`}
-                        >
-                          {/* Mini Visual Grid Icon representation */}
-                          <div className="w-16 h-10 flex-shrink-0">
-                            {renderLayoutIcon(opt.value)}
-                          </div>
-                          <span className="text-[10px] font-bold tracking-tight leading-none truncate max-w-full text-slate-700">{opt.label}</span>
-                        </button>
-                      )
-                    })}
+                {draftSection.id === 'first-hero' ? (
+                  <div className="border-t pt-3">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Design Layout Style</label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {getDesignOptions(draftSection.id).map(opt => {
+                        const isSelected = draftSection.designStyle === opt.value
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => updateDraftField('designStyle', opt.value)}
+                            className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition text-center cursor-pointer ${
+                              isSelected
+                                ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1] font-bold'
+                                : 'border-slate-200 bg-white text-slate-650 hover:border-slate-350'
+                            }`}
+                          >
+                            {/* Mini Visual Grid Icon representation */}
+                            <div className="w-16 h-10 flex-shrink-0">
+                              {renderLayoutIcon(opt.value)}
+                            </div>
+                            <span className="text-[10px] font-bold tracking-tight leading-none truncate max-w-full text-slate-700">{opt.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : ['us-politics', 'technology-section', 'world-affairs', 'trending-columns', 'arts-marketing-pr', 'latest-news'].includes(draftSection.id) ? (
+                  <div className="border-t pt-3">
+                    <div className="p-3 bg-[#6366f1]/5 border border-[#6366f1]/20 rounded-xl">
+                      <span className="text-[11.5px] font-extrabold text-[#6366f1] block mb-1">🔗 Managed Homepage Layout</span>
+                      <span className="text-[10.5px] text-slate-550 leading-relaxed block font-medium">
+                        The design style for this section is managed globally under the active template select on the **Main Hero Story** customizer.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-t pt-3">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase block mb-2">Design Layout Style</label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {getDesignOptions(draftSection.id).map(opt => {
+                        const isSelected = draftSection.designStyle === opt.value
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => updateDraftField('designStyle', opt.value)}
+                            className={`p-2.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition text-center cursor-pointer ${
+                              isSelected
+                                ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1] font-bold'
+                                : 'border-slate-200 bg-white text-slate-650 hover:border-slate-350'
+                            }`}
+                          >
+                            {/* Mini Visual Grid Icon representation */}
+                            <div className="w-16 h-10 flex-shrink-0">
+                              {renderLayoutIcon(opt.value)}
+                            </div>
+                            <span className="text-[10px] font-bold tracking-tight leading-none truncate max-w-full text-slate-700">{opt.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Color Theme Badge Selector & Top Border Color Accent */}
                 <div className="grid grid-cols-2 gap-3 border-t pt-3">
@@ -3458,7 +4225,7 @@ export default function HomeLayoutConfigPage() {
           Homepage Layout Sections
         </div>
         <div className="p-5 flex flex-col gap-3">
-          {sections.map((section, idx) => (
+          {sections.filter(s => s.id !== 'finance-markets' && s.id !== 'opinion-column').map((section, idx) => (
             <div
               key={section.id}
               className={`p-3 px-5 rounded-xl border flex items-center justify-between gap-4 transition-all ${section.isVisible
@@ -3481,7 +4248,7 @@ export default function HomeLayoutConfigPage() {
 
               {/* Status Info */}
               <div className="hidden sm:flex items-center gap-4 text-xs font-semibold text-slate-500">
-                <div>Style: <span className="text-slate-800 capitalize">{section.designStyle}</span></div>
+                <div>Style: <span className="text-slate-800 capitalize">{['us-politics', 'technology-section', 'world-affairs', 'trending-columns', 'arts-marketing-pr', 'latest-news'].includes(section.id) ? 'Managed globally' : section.designStyle}</span></div>
                 <div>Theme: <span className="text-slate-800 capitalize">{section.colorTheme}</span></div>
                 <div>Status: {section.isVisible ? <span className="text-emerald-600 font-bold">Visible</span> : <span className="text-slate-400 font-medium">Hidden</span>}</div>
               </div>
