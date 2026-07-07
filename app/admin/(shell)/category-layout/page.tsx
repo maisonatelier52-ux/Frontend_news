@@ -34,7 +34,7 @@ const COLOR_THEMES = [
 
 const LAYOUT_OPTIONS = [
   { value: 'original', label: 'Original Layout', desc: 'Default layout: Hero story and sidebar list (no spotlight section)' },
-  { value: 'modern-spotlight', label: 'Editorial Spotlight', desc: 'Hero banner + 3 visual cards digest + lists' },
+  { value: 'modern-spotlight', label: 'Editorial Spotlight', desc: 'Multi-column balanced grid layout with broadsheet, text-only, or premium options' },
   { value: 'split-timeline', label: 'Split Detail + Image', desc: '7/12 column live stream updates + 5/12 column featured stories' },
   { value: 'magazine-grid', label: 'Hero Split + Image', desc: '2x2 visual image grids with clean borders' },
   { value: 'classic-broadsheet', label: 'Classic Broadsheet', desc: 'Classical editorial text columns (no images)' },
@@ -567,19 +567,24 @@ export default function CategoryLayoutPage() {
 
   // Render miniature CSS layouts matching homepage customizer
   const renderLayoutIcon = (value: string) => {
-    // 1. modern-spotlight (editorial-spotlight): Big image LEFT, text panel RIGHT
+    // 1. modern-spotlight (editorial-spotlight): 3 equal columns layout
     if (value === 'modern-spotlight') {
       return (
-        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
-          <div className="flex-[3] bg-zinc-300 border border-zinc-350 rounded-[1px] relative">
-            <div className="absolute top-1 left-1 w-3 h-1 bg-red-500 rounded-[1px]" />
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-305 rounded shadow-xs">
+          <div className="flex-1 flex flex-col gap-0.5 border-r border-zinc-200 pr-0.5">
+            <div className="h-4 bg-zinc-250 rounded-[1px] w-full" />
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-0.5 bg-zinc-400 rounded-[1px] w-3/4" />
           </div>
-          <div className="flex-[2] flex flex-col justify-center gap-0.5 px-0.5">
-            <div className="h-0.5 bg-zinc-305 rounded w-1/2" />
-            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-full" />
-            <div className="h-1.5 bg-zinc-800 rounded-[1px] w-4/5" />
-            <div className="h-0.5 bg-zinc-305 rounded w-full mt-0.5" />
-            <div className="h-0.5 bg-zinc-305 rounded w-3/4" />
+          <div className="flex-1 flex flex-col gap-0.5 border-r border-zinc-200 px-0.5">
+            <div className="h-4 bg-zinc-250 rounded-[1px] w-full" />
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-0.5 bg-zinc-400 rounded-[1px] w-3/4" />
+          </div>
+          <div className="flex-1 flex flex-col gap-0.5 pl-0.5">
+            <div className="h-4 bg-zinc-250 rounded-[1px] w-full" />
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-0.5 bg-zinc-400 rounded-[1px] w-3/4" />
           </div>
         </div>
       );
