@@ -6,6 +6,8 @@ import { Article } from "../data/news";
 import Header from "../components/Header";
 import { StockTicker } from "../components/Widgets";
 import ArticleReader from "../components/ArticleReader";
+import OriginalCategoryLayout from "../components/OriginalCategoryLayout";
+
 
 interface Comment {
   name: string;
@@ -58,6 +60,13 @@ export default function CategoryPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [layout, setLayout] = useState({
+    designStyle: "original",
+    colorTheme: "indigo",
+    isVisibleSpotlight: true,
+    isVisibleSidebar: true,
+    spotlightStyle: "standard"
+  });
 
   // Fetch articles and trending fallbacks
   useEffect(() => {
@@ -125,8 +134,15 @@ export default function CategoryPage() {
             });
           setTrendingArticles(mappedTrend);
         }
+
+        // Load category layout configuration
+        const layoutRes = await fetch("/api/category-layout");
+        if (layoutRes.ok) {
+          const layoutData = await layoutRes.json();
+          setLayout(layoutData);
+        }
       } catch (err) {
-        console.error("Failed to load category articles:", err);
+        console.error("Failed to load category preview data:", err);
       } finally {
         setLoading(false);
       }
@@ -271,9 +287,11 @@ export default function CategoryPage() {
   const heroArticle = hasArticles ? articlesWithDynamicStats[0] : null;
   const remainingArticles = hasArticles ? articlesWithDynamicStats.slice(1) : [];
 
-  // Slice for Spotlight Digest (3 articles)
-  const spotlightArticles = remainingArticles.slice(0, 3);
-  const subgridArticles = remainingArticles.slice(3);
+  // Slicing depends on designStyle and visibility of spotlight
+  const showSpotlight = layout.isVisibleSpotlight;
+  const spotlightArticles = showSpotlight ? remainingArticles.slice(0, 3) : [];
+
+  const subgridArticles = showSpotlight ? remainingArticles.slice(3) : remainingArticles;
 
   // Left column: first 7 subgrid articles in a scrollable list
   const leftListArticles = subgridArticles.slice(0, 7);
@@ -285,6 +303,16 @@ export default function CategoryPage() {
   const sidebarTitle = hasExtraArticles
     ? `More in ${decodedCategory}`
     : "Trending Coverage";
+
+  const BADGE_COLOR_MAP: Record<string, string> = {
+    'indigo': 'text-[#6366f1]',
+    'crimson': 'text-rose-650',
+    'emerald': 'text-emerald-650',
+    'slate': 'text-slate-700',
+    'amber': 'text-amber-650',
+    'ocean': 'text-sky-650'
+  };
+  const themeTextColor = BADGE_COLOR_MAP[layout.colorTheme] || 'text-[#6366f1]';
 
   // One-line editorial tagline per category
   const categoryTaglines: Record<string, string> = {
@@ -400,147 +428,627 @@ export default function CategoryPage() {
               </div>
             ) : (
               <>
-                {/* Hero Feature Story */}
-                {heroArticle && (
-                  <div
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-10 pb-10 border-b border-zinc-200"
-                    onClick={() => setSelectedArticleId(heroArticle.id)}
-                  >
-                    {/* Hero Image (Left 7 Cols) */}
-                    <div className="lg:col-span-7 overflow-hidden relative aspect-[16/10] bg-zinc-100 rounded-sm">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={heroArticle.image}
-                        alt={heroArticle.title}
-                        className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-500 absolute inset-0"
-                      />
-                    </div>
+                {/* Hero Feature Story - Conditional on Selected designStyle */}
+                {heroArticle && (() => {
+                  // Style 1: Modern Magazine Layout Hero (modern-spotlight)
+                  if (layout.designStyle === 'modern-spotlight') {
+                    return (
+                      <div
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-10 pb-10 border-b border-zinc-200"
+                        onClick={() => setSelectedArticleId(heroArticle.id)}
+                      >
+                        <div className="lg:col-span-8 overflow-hidden relative aspect-[16/9] bg-zinc-100 rounded-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={heroArticle.image}
+                            alt={heroArticle.title}
+                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-505 absolute inset-0"
+                          />
+                        </div>
+                        <div className="lg:col-span-4 flex flex-col justify-between py-1 border-l-3 border-[#6366f1] pl-6">
+                          <div>
+                            <span className={`text-[10px] ${themeTextColor} font-extrabold uppercase tracking-widest mb-2 block`}>
+                              Editorial Spotlight
+                            </span>
+                            <h2 className="font-editorial-title text-xl sm:text-2.5xl font-extrabold text-zinc-900 leading-snug tracking-tight group-hover:text-zinc-700 transition">
+                              {heroArticle.title}
+                            </h2>
+                            <p className="mt-3 text-xs sm:text-sm text-zinc-500 leading-relaxed font-sans line-clamp-[11]">
+                              {heroArticle.excerpt} {heroArticle.content[0]}
+                            </p>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                            <span>By <span className="font-semibold text-zinc-700">{heroArticle.author}</span></span>
+                            <span>{heroArticle.readTime}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
 
-                    {/* Hero Text content (Right 5 Cols) */}
-                    <div className="lg:col-span-5 flex flex-col justify-between py-1">
-                      <div>
-                        <span className="text-[10px] text-red-700 font-extrabold uppercase tracking-widest mb-2.5 block">
-                          Latest in {decodedCategory}
-                        </span>
-                        <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-900 leading-tight tracking-tight group-hover:text-zinc-700 transition">
+                  // Style 2: Breaking News Layout Hero (split-timeline)
+                  if (layout.designStyle === 'split-timeline') {
+                    return (
+                      <div
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-10 pb-10 border-b border-zinc-200"
+                        onClick={() => setSelectedArticleId(heroArticle.id)}
+                      >
+                        <div className="lg:col-span-6 overflow-hidden relative aspect-[16/10] bg-zinc-100 rounded-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={heroArticle.image}
+                            alt={heroArticle.title}
+                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-500 absolute inset-0"
+                          />
+                        </div>
+                        <div className="lg:col-span-6 flex flex-col justify-between py-1 border-l-2 border-red-650 pl-6 bg-zinc-50/40 p-4 rounded-sm">
+                          <div>
+                            <span className="text-[10px] text-red-650 font-extrabold uppercase tracking-widest mb-2 block">
+                              Split Detail Cover
+                            </span>
+                            <h2 className="font-editorial-title text-xl sm:text-3xl font-extrabold text-zinc-900 leading-snug tracking-tight group-hover:text-zinc-750 transition">
+                              {heroArticle.title}
+                            </h2>
+                            <p className="mt-3 text-xs sm:text-sm text-zinc-550 leading-relaxed font-sans line-clamp-[10]">
+                              {heroArticle.excerpt} {heroArticle.content[0]}
+                            </p>
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-[10px] text-zinc-455 font-sans">
+                            <span>By <span className="font-semibold text-zinc-755">{heroArticle.author}</span> &bull; {heroArticle.date}</span>
+                            <span className="font-bold">{heroArticle.readTime}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Style 3: Visual Grid Layout Hero (magazine-grid)
+                  if (layout.designStyle === 'magazine-grid') {
+                    return (
+                      <div
+                        className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-10 pb-10 border-b border-zinc-200"
+                        onClick={() => setSelectedArticleId(heroArticle.id)}
+                      >
+                        <div className="lg:col-span-7 overflow-hidden relative aspect-[16/10] bg-zinc-100 rounded-sm">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={heroArticle.image}
+                            alt={heroArticle.title}
+                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-500 absolute inset-0"
+                          />
+                        </div>
+                        <div className="lg:col-span-5 flex flex-col justify-between py-1">
+                          <div>
+                            <span className={`text-[10px] ${themeTextColor} font-extrabold uppercase tracking-widest mb-2.5 block`}>
+                              Latest in {decodedCategory}
+                            </span>
+                            <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-900 leading-tight tracking-tight group-hover:text-zinc-700 transition">
+                              {heroArticle.title}
+                            </h2>
+                            <p className="mt-3 text-sm text-zinc-600 leading-relaxed font-sans line-clamp-[14]">
+                              {heroArticle.excerpt} {heroArticle.content[0]}
+                            </p>
+                          </div>
+                          <div className="mt-6 border-t border-zinc-100 pt-3 flex items-center justify-between text-[11px] text-zinc-400 font-sans">
+                            <span>By <span className="font-semibold text-zinc-700">{heroArticle.author}</span> • {heroArticle.date}</span>
+                            <span className="font-semibold text-zinc-700">{heroArticle.readTime}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Style 4: Newspaper Classic Layout Hero (classic-broadsheet)
+                  if (layout.designStyle === 'classic-broadsheet') {
+                    return (
+                      <div
+                        className="flex flex-col cursor-pointer group mb-10 pb-10 border-b-3 border-zinc-800"
+                        onClick={() => setSelectedArticleId(heroArticle.id)}
+                      >
+                        <div className="w-full aspect-[21/9] min-h-[300px] overflow-hidden relative bg-zinc-100 rounded-sm mb-6">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={heroArticle.image}
+                            alt={heroArticle.title}
+                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-505 absolute inset-0"
+                          />
+                        </div>
+                        <div className="border-t-2 border-b border-zinc-900 py-3 mb-4 text-center">
+                          <span className={`text-[10px] ${themeTextColor} font-extrabold uppercase tracking-widest`}>
+                            Broadsheet Special Report &bull; {heroArticle.date}
+                          </span>
+                        </div>
+                        <h2 className="font-editorial-title text-3xl sm:text-5xl font-extrabold text-zinc-900 leading-none text-center tracking-tight group-hover:text-zinc-700 transition">
                           {heroArticle.title}
                         </h2>
-                        <p className="mt-3 text-sm text-zinc-650 leading-relaxed font-sans line-clamp-[13]">
-                          {heroArticle.excerpt} {heroArticle.content[0]}
-                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mt-6">
+                          <div className="md:col-span-8">
+                            <p className="text-sm text-zinc-650 leading-relaxed font-serif line-clamp-[10]">
+                              {heroArticle.excerpt} {heroArticle.content[0]}
+                            </p>
+                          </div>
+                          <div className="md:col-span-4 border-l border-zinc-200 pl-6 flex flex-col justify-between py-1">
+                            <div className="text-xs text-zinc-505 leading-relaxed">
+                              <strong className="text-zinc-900 block mb-1">Editorial Desk</strong>
+                              This coverage is part of our ongoing commitment to independent journalism and deep-dive policy analytics.
+                            </div>
+                            <div className="text-[10px] text-zinc-400 font-sans mt-4">
+                              <span>Reporter: <span className="font-bold text-zinc-700">{heroArticle.author}</span></span>
+                              <span className="block mt-1">Reading Duration: {heroArticle.readTime}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-6 border-t border-zinc-100 pt-3 flex items-center justify-between text-[11px] text-zinc-400 font-sans">
-                        <span>By <span className="font-semibold text-zinc-700">{heroArticle.author}</span> • {heroArticle.date}</span>
-                        <span className="font-semibold text-zinc-700">{heroArticle.readTime}</span>
+                    );
+                  }
+
+                  // Style 5: Executive News Layout Hero (editorial-masonry)
+                  if (layout.designStyle === 'editorial-masonry') {
+                    return (
+                      <div
+                        className="bg-zinc-50/70 border-2 border-zinc-200 rounded-xl p-6 sm:p-8 cursor-pointer group mb-10 hover:shadow-md hover:border-zinc-300 transition-all duration-300 grid grid-cols-1 lg:grid-cols-12 gap-8"
+                        onClick={() => setSelectedArticleId(heroArticle.id)}
+                      >
+                        <div className="lg:col-span-6 overflow-hidden relative aspect-[4/3] bg-zinc-100 rounded-lg shadow-xs">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={heroArticle.image}
+                            alt={heroArticle.title}
+                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-102 transition duration-500 absolute inset-0"
+                          />
+                        </div>
+                        <div className="lg:col-span-6 flex flex-col justify-between py-1">
+                          <div>
+                            <span className="text-[10px] bg-[#6366f1] text-white font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-3.5 inline-block">
+                              Featured Card Box
+                            </span>
+                            <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-900 leading-tight tracking-tight group-hover:text-[#6366f1] transition duration-300">
+                              {heroArticle.title}
+                            </h2>
+                            <p className="mt-3.5 text-xs sm:text-sm text-zinc-650 leading-relaxed font-sans line-clamp-[12]">
+                              {heroArticle.excerpt} {heroArticle.content[0]}
+                            </p>
+                          </div>
+                          <div className="mt-6 pt-4 border-t border-zinc-200 flex items-center justify-between text-[10.5px] text-zinc-450 font-sans">
+                            <span>By <span className="font-bold text-zinc-755">{heroArticle.author}</span> &bull; {heroArticle.date}</span>
+                            <span className="font-semibold text-zinc-755 bg-white border px-2 py-0.5 rounded-md">{heroArticle.readTime}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Style 6: Original Editorial Layout Hero (original)
+                  if (layout.designStyle === 'original') {
+                    // Rendered by <OriginalCategoryLayout> below — return null here
+                    return null;
+                  }
+
+                  return null;
+                })()}
+
+                {/* 1. Modern Magazine Layout Sections (modern-spotlight) */}
+                {layout.designStyle === 'modern-spotlight' && (
+                  <>
+                    {layout.isVisibleSpotlight && spotlightArticles.length > 0 && (
+                      <div className="mb-12 border-t border-b border-zinc-200/70 py-8 select-none">
+                        <div className="mb-5 flex items-center justify-between">
+                          {layout.spotlightStyle === 'minimal' ? (
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 font-sans border-b border-zinc-900 pb-1 w-full text-left">
+                              {decodedCategory} Spotlight Digest
+                            </h3>
+                          ) : layout.spotlightStyle === 'premium' ? (
+                            <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor} flex items-center gap-1.5 font-sans`}>
+                              <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
+                              {decodedCategory} Premium Spotlight
+                            </h3>
+                          ) : (
+                            <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 font-sans ${themeTextColor}`}>
+                              • {decodedCategory.toUpperCase()} SPOTLIGHT DIGEST
+                            </h3>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {spotlightArticles.map((article) => {
+                            if (layout.spotlightStyle === 'minimal') {
+                              return (
+                                <div
+                                  key={article.id}
+                                  onClick={() => setSelectedArticleId(article.id)}
+                                  className="group cursor-pointer flex flex-col justify-between border-t border-zinc-200 pt-4"
+                                >
+                                  <div>
+                                    <span className={`text-[9px] font-bold uppercase tracking-wider ${themeTextColor} mb-1 block`}>
+                                      {article.category}
+                                    </span>
+                                    <h4 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                      {article.title}
+                                    </h4>
+                                    <p className="text-xs text-zinc-500 mt-2 line-clamp-3 leading-relaxed">
+                                      {article.excerpt}
+                                    </p>
+                                  </div>
+                                  <span className="text-[9.5px] text-zinc-400 mt-4 block font-mono">
+                                    By {article.author} &bull; {article.readTime}
+                                  </span>
+                                </div>
+                              );
+                            } else if (layout.spotlightStyle === 'premium') {
+                              return (
+                                <div
+                                  key={article.id}
+                                  onClick={() => setSelectedArticleId(article.id)}
+                                  className="group cursor-pointer bg-zinc-50/40 hover:bg-zinc-50 border border-zinc-200/80 p-4 rounded-lg shadow-sm hover:shadow transition-all duration-305 transform hover:-translate-y-1 flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <div className="overflow-hidden rounded-md aspect-[16/9] mb-3.5 bg-zinc-100 relative">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={article.image}
+                                        alt={article.title}
+                                        className="w-full h-full object-cover filter brightness-95 group-hover:scale-103 transition duration-500 absolute inset-0"
+                                      />
+                                    </div>
+                                    <span className={`text-[9px] font-bold uppercase tracking-wider ${themeTextColor} mb-1.5 block`}>
+                                      {article.category}
+                                    </span>
+                                    <h4 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                      {article.title}
+                                    </h4>
+                                    <p className="text-xs text-zinc-600 mt-2 line-clamp-2 leading-relaxed">
+                                      {article.excerpt}
+                                    </p>
+                                  </div>
+                                  <div className="mt-4 pt-3 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                                    <span>By <span className="text-zinc-600 font-medium">{article.author}</span></span>
+                                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div
+                                  key={article.id}
+                                  onClick={() => setSelectedArticleId(article.id)}
+                                  className="group cursor-pointer flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <div className="overflow-hidden rounded-sm aspect-[16/9] mb-3 bg-zinc-100 relative">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={article.image}
+                                        alt={article.title}
+                                        className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-305 absolute inset-0"
+                                      />
+                                    </div>
+                                    <h4 className="font-editorial-title text-base sm:text-[17px] font-bold text-zinc-900 group-hover:text-zinc-650 transition leading-snug">
+                                      {article.title}
+                                    </h4>
+                                    <p className="text-xs text-zinc-550 mt-2 line-clamp-3 leading-relaxed">
+                                      {article.excerpt}
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] text-zinc-400 mt-3 font-sans block">
+                                    {article.author} - {article.readTime}
+                                  </span>
+                                </div>
+                              );
+                            }
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {leftListArticles.length > 0 && (
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start">
+                        <div className={layout.isVisibleSidebar ? "lg:col-span-8" : "lg:col-span-12"}>
+                          <div className="space-y-0">
+                            {leftListArticles.map((article, idx) => (
+                              <div
+                                key={article.id}
+                                onClick={() => setSelectedArticleId(article.id)}
+                                className={`group cursor-pointer flex gap-6 justify-between items-start py-5 ${
+                                  idx < leftListArticles.length - 1 ? "border-b border-zinc-150" : ""
+                                }`}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-editorial-title text-base sm:text-lg font-bold text-zinc-900 leading-snug group-hover:text-[#6366f1] transition">
+                                    {article.title}
+                                  </h3>
+                                  <p className="mt-1.5 text-xs text-zinc-600 line-clamp-2 leading-relaxed">
+                                    {article.excerpt}
+                                  </p>
+                                  <div className="mt-2.5 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                                    <span>By <span className="text-zinc-550 font-medium">{article.author}</span> &bull; {article.date}</span>
+                                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                                  </div>
+                                </div>
+                                <div className="w-24 sm:w-32 overflow-hidden rounded-sm aspect-[4/3] bg-zinc-100 flex-shrink-0 relative">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={article.image}
+                                    alt={article.title}
+                                    className="w-full h-full object-cover brightness-95 group-hover:scale-101 transition duration-300 absolute inset-0"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {layout.isVisibleSidebar && (
+                          <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-8 lg:sticky lg:top-6 lg:self-start">
+                            <div className="border-b border-zinc-200 pb-1.5 mb-4">
+                              <h3 className={`text-xs font-bold uppercase tracking-wider ${themeTextColor}`}>{sidebarTitle}</h3>
+                            </div>
+                            <div className="divide-y divide-zinc-100">
+                              {sidebarArticles.map((article) => (
+                                <div key={article.id} onClick={() => setSelectedArticleId(article.id)} className="group cursor-pointer py-3 first:pt-0">
+                                  <h4 className="font-editorial-title text-sm font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                    {article.title}
+                                  </h4>
+                                  <div className="mt-1 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                                    <span>By <span className="text-zinc-555 font-medium">{article.author}</span> • {article.date}</span>
+                                    <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* 2. Breaking News Layout (split-timeline) */}
+                {layout.designStyle === 'split-timeline' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start border-t border-zinc-200 pt-6">
+                    <div className={layout.isVisibleSidebar ? "lg:col-span-7 space-y-4" : "lg:col-span-12"}>
+                      <div className="border-b border-zinc-200 pb-1.5">
+                        <h3 className={`text-xs font-bold uppercase tracking-wider ${themeTextColor} flex items-center gap-1.5`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-650 animate-ping" />
+                          Category Live Feed
+                        </h3>
+                      </div>
+                      <div className="space-y-4">
+                        {leftListArticles.map((article) => (
+                          <div
+                            key={article.id}
+                            onClick={() => setSelectedArticleId(article.id)}
+                            className="group cursor-pointer border-l-2 border-zinc-200 hover:border-zinc-800 pl-4 py-2 hover:bg-zinc-50/50 rounded transition-all duration-200 flex gap-4 justify-between"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[9.5px] text-red-600 font-bold tracking-widest uppercase block mb-0.5">
+                                UPDATE &bull; {article.readTime}
+                              </span>
+                              <h4 className="font-editorial-title text-sm sm:text-base font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
+                                {article.title}
+                              </h4>
+                              <p className="text-xs text-zinc-500 mt-1 line-clamp-2 leading-relaxed">
+                                {article.excerpt}
+                              </p>
+                            </div>
+                            <div className="w-16 h-12 bg-zinc-100 rounded flex-shrink-0 overflow-hidden relative">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
+
+                    {layout.isVisibleSidebar && (
+                      <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4 lg:sticky lg:top-6 lg:self-start">
+                        <div className="border-b border-zinc-200 pb-1.5">
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Spotlight Cover</h3>
+                        </div>
+                        <div className="space-y-6">
+                          {sidebarArticles.map((article) => (
+                            <div
+                              key={article.id}
+                              onClick={() => setSelectedArticleId(article.id)}
+                              className="group cursor-pointer flex flex-col justify-between py-2 border-b border-zinc-200 last:border-0 first:pt-0"
+                            >
+                              <div>
+                                <div className="overflow-hidden rounded aspect-[16/9] mb-3.5 bg-zinc-100 relative">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={article.image}
+                                    alt={article.title}
+                                    className="w-full h-full object-cover group-hover:scale-101 transition duration-305 absolute inset-0"
+                                  />
+                                </div>
+                                <h3 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                  {article.title}
+                                </h3>
+                                <p className="text-xs text-zinc-650 mt-1.5 line-clamp-3 leading-relaxed">
+                                  {article.excerpt}
+                                </p>
+                              </div>
+                              <span className="text-[10px] text-zinc-400 mt-3 font-sans block">
+                                {article.author} &bull; {article.readTime}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Spotlight Digest Row */}
-                {spotlightArticles.length > 0 && (
-                  <div className="mb-12 border-t border-b border-zinc-200/70 py-8 select-none">
-                    <div className="mb-5 flex items-center">
-                      <h3 className="text-[11px] font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-2 font-sans">
-                        <span className="w-2 h-2 bg-[#6366f1] rounded-full inline-block" />
-                        {decodedCategory} Spotlight Digest
-                      </h3>
+                {/* 3. Visual Grid Layout (magazine-grid) */}
+                {layout.designStyle === 'magazine-grid' && (
+                  <div className="space-y-8 border-t border-zinc-200 pt-6">
+                    <div className="border-b border-zinc-250 pb-2">
+                      <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor}`}>Visual Magazine Grid Cover</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {spotlightArticles.map((article) => (
+                    <div className={layout.isVisibleSidebar ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "grid grid-cols-1 md:grid-cols-3 gap-6"}>
+                      {leftListArticles.map((article) => (
                         <div
                           key={article.id}
                           onClick={() => setSelectedArticleId(article.id)}
-                          className="group cursor-pointer flex flex-col justify-between"
+                          className="group cursor-pointer bg-zinc-50/50 border border-zinc-200 p-4 rounded-md flex flex-col justify-between hover:shadow-md transition-all duration-305 transform hover:-translate-y-0.5 hover:bg-zinc-50"
                         >
                           <div>
-                            <div className="overflow-hidden rounded-sm aspect-[16/9] mb-3 bg-zinc-100 relative">
+                            <div className="w-full aspect-[16/9] overflow-hidden rounded relative bg-zinc-100 mb-3.5">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={article.image}
                                 alt={article.title}
-                                className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-305 absolute inset-0"
+                                className="w-full h-full object-cover brightness-95 group-hover:scale-102 transition duration-500 absolute inset-0"
                               />
                             </div>
-                            <h4 className="font-editorial-title text-[15px] font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
-                              {article.title}
-                            </h4>
-                            <p className="text-xs text-zinc-500 mt-1.5 line-clamp-3 leading-relaxed">
-                              {article.excerpt}
-                            </p>
+                            <span className="text-[8.5px] bg-zinc-900 text-white font-extrabold px-1.5 py-0.5 tracking-wider uppercase inline-block mb-2 rounded-sm">{article.category}</span>
+                            <h3 className="font-editorial-title text-base sm:text-lg font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">{article.title}</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed font-sans line-clamp-2 mt-2">{article.excerpt}</p>
                           </div>
-                          <span className="text-[10px] text-zinc-400 mt-3 font-sans block">
-                            {article.author} &bull; {article.readTime}
-                          </span>
+                          <div className="mt-4 pt-3 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                            <span>By {article.author}</span>
+                            <span>{article.readTime}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {layout.isVisibleSidebar && sidebarArticles.length > 0 && (
+                      <div className="border-t border-zinc-100 pt-6">
+                        <div className="space-y-4">
+                          {sidebarArticles.map((article) => (
+                            <div
+                              key={article.id}
+                              onClick={() => setSelectedArticleId(article.id)}
+                              className="group cursor-pointer flex gap-4 justify-between items-center py-2 border-b border-zinc-100 last:border-b-0 pb-2"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-editorial-title text-sm font-bold text-zinc-900 group-hover:text-zinc-650 transition leading-snug">{article.title}</h4>
+                                <span className="text-[10px] text-zinc-400 block mt-1">{article.author} &bull; {article.readTime}</span>
+                              </div>
+                              <div className="w-16 h-12 bg-zinc-100 border rounded flex-shrink-0 overflow-hidden relative">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. Newspaper Classic Layout (classic-broadsheet) */}
+                {layout.designStyle === 'classic-broadsheet' && (
+                  <div className="space-y-8 border-t border-zinc-200 pt-6">
+                    <div className="border-b border-zinc-950 pb-2 text-center">
+                      <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor}`}>Editorial Broadsheet Board</h3>
+                    </div>
+                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-zinc-200`}>
+                      {[
+                        { title: "Lead Highlights", list: leftListArticles },
+                        { title: "Weekly Currents", list: sidebarArticles.slice(0, 2) },
+                        { title: "Briefing Chronicles", list: sidebarArticles.slice(2, 4) }
+                      ].map((col, idx) => (
+                        <div key={idx} className={`space-y-5 ${idx > 0 ? 'md:pl-6' : ''} pt-4 md:pt-0`}>
+                          <div className="border-b border-zinc-200 pb-1">
+                            <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{col.title}</h4>
+                          </div>
+                          <div className="space-y-4">
+                            {col.list.map((art, aIdx) => (
+                              <div key={art.id} onClick={() => setSelectedArticleId(art.id)} className="group cursor-pointer flex gap-4 items-start py-1">
+                                <span className="font-serif text-lg font-extrabold text-zinc-350 group-hover:text-zinc-555 transition-colors leading-none pt-0.5">
+                                  0{aIdx + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="font-editorial-title text-sm font-bold text-zinc-950 leading-snug group-hover:text-[#6366f1] transition-colors">
+                                    "{art.title}"
+                                  </h5>
+                                  <p className="text-[11px] text-zinc-500 leading-relaxed font-serif italic mt-1.5 line-clamp-3">{art.excerpt}</p>
+                                  <span className="text-[9px] text-zinc-400 block mt-2 font-mono">{art.readTime}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Sub-grid of remaining articles & sidebar */}
-                {subgridArticles.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start">
-                    {/* Left Column: flows naturally with page scroll (8/12) */}
-                    <div className="lg:col-span-8">
-                      <div className="space-y-0">
-                        {leftListArticles.map((article, idx) => (
-                          <div
-                            key={article.id}
-                            onClick={() => setSelectedArticleId(article.id)}
-                            className={`group cursor-pointer flex gap-6 justify-between items-start py-5 ${idx < leftListArticles.length - 1 ? "border-b border-zinc-150" : ""
-                              }`}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-editorial-title text-base sm:text-lg font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
-                                {article.title}
-                              </h3>
-                              <p className="mt-1.5 text-xs text-zinc-600 line-clamp-2 leading-relaxed">
-                                {article.excerpt}
-                              </p>
-                              <div className="mt-2.5 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
-                                <span>By <span className="text-zinc-500 font-medium">{article.author}</span> &bull; {article.date}</span>
-                                <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                {/* 5. Executive News Layout (editorial-masonry) */}
+                {layout.designStyle === 'editorial-masonry' && (
+                  <div className="space-y-8 border-t border-zinc-200 pt-6 animate-fade-in">
+                    <div className="border-b border-zinc-900 pb-2">
+                      <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor}`}>Editorial Masonry Row</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                      {/* Left Column: Cards list */}
+                      <div className="space-y-6">
+                        {leftListArticles.slice(0, 2).map((article) => (
+                          <div key={article.id} onClick={() => setSelectedArticleId(article.id)} className="group cursor-pointer bg-zinc-50 border border-zinc-200 p-4 rounded hover:shadow transition duration-300">
+                            <div className="w-full aspect-[16/10] overflow-hidden rounded relative mb-3 bg-zinc-100">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={article.image} alt={article.title} className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-500 absolute inset-0" />
+                            </div>
+                            <h4 className="font-editorial-title text-sm sm:text-base font-bold text-zinc-900 leading-snug group-hover:text-[#6366f1] transition">{article.title}</h4>
+                            <span className="text-[10px] text-zinc-400 block mt-2">{article.author} &bull; {article.readTime}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Middle Column: Heavy highlighted card */}
+                      <div className="space-y-6 md:border-l md:border-r md:border-zinc-200 md:px-6">
+                        {leftListArticles.length > 2 && (() => {
+                          const article = leftListArticles[2];
+                          return (
+                            <div onClick={() => setSelectedArticleId(article.id)} className="group cursor-pointer flex flex-col justify-between">
+                              <div className="w-full aspect-[4/5] overflow-hidden rounded relative mb-4 bg-zinc-100">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={article.image} alt={article.title} className="w-full h-full object-cover brightness-95 group-hover:scale-101 transition duration-500 absolute inset-0" />
+                              </div>
+                              <span className={`text-[10px] font-extrabold uppercase tracking-wider ${themeTextColor} mb-2 block`}>Featured Highlight</span>
+                              <h4 className="font-editorial-title text-base sm:text-lg font-bold text-zinc-900 leading-snug group-hover:text-zinc-655 transition">{article.title}</h4>
+                              <p className="text-xs text-zinc-650 leading-relaxed font-sans line-clamp-3 mt-2">{article.excerpt}</p>
+                              <span className="text-[10px] text-zinc-400 mt-4 block">{article.author} &bull; {article.readTime}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Right Column: Mini news links list */}
+                      <div className="space-y-4">
+                        <div className="border-b border-zinc-200 pb-1.5">
+                          <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">More Coverage</h4>
+                        </div>
+                        <div className="divide-y divide-zinc-100">
+                          {sidebarArticles.map((article) => (
+                            <div key={article.id} onClick={() => setSelectedArticleId(article.id)} className="group cursor-pointer py-3 first:pt-0">
+                              <h4 className="font-editorial-title text-sm font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">{article.title}</h4>
+                              <div className="mt-1 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
+                                <span>{article.author}</span>
+                                <span className="font-semibold text-zinc-705">{article.readTime}</span>
                               </div>
                             </div>
-
-                            <div className="w-24 sm:w-32 overflow-hidden rounded-sm aspect-[4/3] bg-zinc-100 flex-shrink-0 relative">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={article.image}
-                                alt={article.title}
-                                className="w-full h-full object-cover brightness-95 group-hover:scale-101 transition duration-300 absolute inset-0"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Right Column: Sticky sidebar — sticks while left scrolls (4/12) */}
-                    <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-8 lg:sticky lg:top-6 lg:self-start">
-                      <div className="border-b border-zinc-200 pb-1.5 mb-4">
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">{sidebarTitle}</h3>
-                      </div>
-
-                      <div className="divide-y divide-zinc-100">
-                        {sidebarArticles.map((article) => (
-                          <div
-                            key={article.id}
-                            onClick={() => setSelectedArticleId(article.id)}
-                            className="group cursor-pointer py-3 first:pt-0"
-                          >
-                            <h4 className="font-editorial-title text-sm font-bold text-zinc-900 group-hover:text-zinc-650 transition leading-snug">
-                              {article.title}
-                            </h4>
-                            <div className="mt-1 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
-                              <span>By <span className="text-zinc-500 font-medium">{article.author}</span> • {article.date}</span>
-                              <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* 6. Original Editorial Layout — shared component */}
+                {layout.designStyle === 'original' && (
+                  <OriginalCategoryLayout
+                    decodedCategory={decodedCategory}
+                    heroArticle={heroArticle}
+                    spotlightArticles={spotlightArticles}
+                    leftListArticles={leftListArticles}
+                    sidebarArticles={sidebarArticles}
+                    sidebarTitle={sidebarTitle}
+                    isVisibleSidebar={layout.isVisibleSidebar}
+                    isVisibleSpotlight={layout.isVisibleSpotlight}
+                    onArticleClick={(id) => setSelectedArticleId(id)}
+                  />
                 )}
               </>
             )}

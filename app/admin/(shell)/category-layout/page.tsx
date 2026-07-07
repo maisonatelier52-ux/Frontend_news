@@ -11,14 +11,16 @@ interface CategoryLayout {
   colorTheme: string;
   isVisibleSpotlight: boolean;
   isVisibleSidebar: boolean;
+  spotlightStyle?: string;
 }
 
 const FACTORY_DEFAULT_LAYOUT: CategoryLayout = {
   categoryId: "global",
-  designStyle: "modern-spotlight",
+  designStyle: "original",
   colorTheme: "indigo",
   isVisibleSpotlight: true,
-  isVisibleSidebar: true
+  isVisibleSidebar: true,
+  spotlightStyle: "standard"
 };
 
 const COLOR_THEMES = [
@@ -31,6 +33,7 @@ const COLOR_THEMES = [
 ];
 
 const LAYOUT_OPTIONS = [
+  { value: 'original', label: 'Original Layout', desc: 'Default layout: Hero story and sidebar list (no spotlight section)' },
   { value: 'modern-spotlight', label: 'Editorial Spotlight', desc: 'Hero banner + 3 visual cards digest + lists' },
   { value: 'split-timeline', label: 'Split Detail + Image', desc: '7/12 column live stream updates + 5/12 column featured stories' },
   { value: 'magazine-grid', label: 'Hero Split + Image', desc: '2x2 visual image grids with clean borders' },
@@ -213,8 +216,10 @@ function SimulatorViewport({
   const outerRef = React.useRef<HTMLDivElement>(null)
   const [iframeRef, setIframeRef] = React.useState<HTMLIFrameElement | null>(null)
   const [baseScale, setBaseScale] = React.useState(1)
-  const [contentHeight, setContentHeight] = React.useState(1800)
   const NATURAL_WIDTH = naturalWidth
+
+  // Fixed viewport heights for realistic simulator scrolling
+  const VIEWPORT_HEIGHT = NATURAL_WIDTH === 375 ? 680 : NATURAL_WIDTH === 768 ? 850 : 900
 
   const iframeDoc = iframeRef?.contentWindow?.document
   const mountNode = iframeDoc?.body
@@ -234,28 +239,6 @@ function SimulatorViewport({
 
     return () => ro.disconnect()
   }, [NATURAL_WIDTH])
-
-  // Track height changes inside the iframe content document to stretch height
-  React.useEffect(() => {
-    if (!iframeDoc) return;
-
-    // Initial check
-    if (iframeDoc.body) {
-      setContentHeight(iframeDoc.body.scrollHeight || 1800);
-    }
-
-    const observer = new ResizeObserver(() => {
-      if (iframeDoc.body) {
-        setContentHeight(iframeDoc.body.scrollHeight + 30);
-      }
-    });
-
-    if (iframeDoc.body) {
-      observer.observe(iframeDoc.body);
-    }
-
-    return () => observer.disconnect();
-  }, [iframeDoc, children]);
 
   // Copy document styles to iframe doc
   React.useEffect(() => {
@@ -281,8 +264,22 @@ function SimulatorViewport({
       body {
         margin: 0;
         padding: 0;
-        overflow-y: hidden !important; /* Let parent container handle scroll to solve scaled cropping */
-        height: auto !important;
+        overflow-y: auto !important; /* Enable native vertical scrolling inside simulator frame */
+        height: 100%;
+      }
+      /* Custom scrollbar styling for the simulator view window */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
       }
       /* Custom style overrides to ensure the viewport background is solid white */
       html, body {
@@ -290,18 +287,10 @@ function SimulatorViewport({
       }
     `
     head.appendChild(style)
-    if (iframeRef?.contentWindow) {
-      iframeRef.contentWindow.scrollTo(0, 0)
-    }
-  }, [iframeDoc, iframeRef])
+  }, [iframeDoc])
 
   const effectiveScale = baseScale * zoom
-  const transformedWidth = Math.round(NATURAL_WIDTH * effectiveScale)
-  const transformedHeight = Math.round(contentHeight * effectiveScale)
-
-  // Clean fixed scroll container height: Mobile is 560px, Tablet is 700px, Desktop is 750px
-  const scrollContainerHeight = NATURAL_WIDTH === 375 ? 560 : NATURAL_WIDTH === 768 ? 700 : 750
-
+  const outerHeight = Math.round(VIEWPORT_HEIGHT * baseScale * Math.min(zoom, 1))
   const outerW = centered
     ? baseScale >= 1
       ? `${NATURAL_WIDTH * Math.min(zoom, 1)}px`
@@ -310,32 +299,17 @@ function SimulatorViewport({
 
   const maxW = centered ? `${NATURAL_WIDTH}px` : '100%'
 
+  const transformedWidth = Math.round(NATURAL_WIDTH * effectiveScale)
+  const transformedHeight = Math.round(VIEWPORT_HEIGHT * effectiveScale)
+
   return (
     <div ref={outerRef} className={`flex ${centered ? 'justify-center py-3' : ''} relative group w-full`}>
-      <style>{`
-        .admin-scrollbar::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        .admin-scrollbar::-webkit-scrollbar-track {
-          background: #f8fafc;
-          border-radius: 4px;
-        }
-        .admin-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 4px;
-          border: 2px solid #f8fafc;
-        }
-        .admin-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
       <div
-        className="overflow-y-auto overflow-x-hidden bg-white transition-all duration-200 border border-slate-100 rounded-xl admin-scrollbar"
+        className="overflow-hidden bg-white border border-slate-100 rounded-xl"
         style={{
           width: outerW,
           maxWidth: maxW,
-          height: `${scrollContainerHeight}px`,
+          height: `${outerHeight}px`,
           ...(centered ? {
             borderRadius: '12px',
             border: '1px solid #e2e8f0',
@@ -359,7 +333,7 @@ function SimulatorViewport({
               top: 0,
               left: 0,
               width: `${NATURAL_WIDTH}px`,
-              height: `${contentHeight}px`,
+              height: `${VIEWPORT_HEIGHT}px`,
               border: 'none',
               transformOrigin: 'top left',
               transform: `scale(${effectiveScale})`
@@ -376,17 +350,19 @@ function SimulatorViewport({
 export default function CategoryLayoutPage() {
   const [layout, setLayout] = useState<CategoryLayout>({
     categoryId: "global",
-    designStyle: "modern-spotlight",
+    designStyle: "original",
     colorTheme: "indigo",
     isVisibleSpotlight: true,
-    isVisibleSidebar: true
+    isVisibleSidebar: true,
+    spotlightStyle: "standard"
   });
   const [originalLayout, setOriginalLayout] = useState<CategoryLayout>({
     categoryId: "global",
-    designStyle: "modern-spotlight",
+    designStyle: "original",
     colorTheme: "indigo",
     isVisibleSpotlight: true,
-    isVisibleSidebar: true
+    isVisibleSidebar: true,
+    spotlightStyle: "standard"
   });
 
   // Undo / History stacks
@@ -496,12 +472,29 @@ export default function CategoryLayoutPage() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // Revert completely back to original fetched data, clearing undo history
-  const revertToDatabaseLayout = () => {
-    setLayout({ ...originalLayout });
-    setLayoutHistory([]);
-    setMessage('reset');
-    setTimeout(() => setMessage(null), 3000);
+  // Revert completely back to factory defaults — resets DB via PATCH
+  const revertToDatabaseLayout = async () => {
+    try {
+      const res = await fetch('/api/category-layout', { method: 'PATCH' });
+      if (res.ok) {
+        const data = await res.json();
+        const reset = {
+          categoryId: data.categoryId || 'global',
+          designStyle: data.designStyle || 'original',
+          colorTheme: data.colorTheme || 'indigo',
+          isVisibleSpotlight: data.isVisibleSpotlight !== undefined ? data.isVisibleSpotlight : true,
+          isVisibleSidebar: data.isVisibleSidebar !== undefined ? data.isVisibleSidebar : true,
+          spotlightStyle: data.spotlightStyle || 'standard'
+        };
+        setLayout(reset);
+        setOriginalLayout(reset);
+        setLayoutHistory([]);
+        setMessage('reset');
+        setTimeout(() => setMessage(null), 3000);
+      }
+    } catch (err) {
+      console.error('Revert failed:', err);
+    }
   };
 
   // Revert draft layout back to factory defaults (Reset to Original Design option)
@@ -662,6 +655,21 @@ export default function CategoryLayoutPage() {
       );
     }
 
+    // 6. original: Image LEFT (55%), text RIGHT (45%)
+    if (value === 'original') {
+      return (
+        <div className="w-full h-full flex gap-1 p-1 bg-white border border-zinc-300 rounded shadow-xs">
+          <div className="flex-[7] bg-zinc-200 border border-zinc-250 rounded-[1px]" />
+          <div className="flex-[5] flex flex-col justify-center gap-0.5 px-0.5">
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-full" />
+            <div className="h-1 bg-zinc-800 rounded-[1px] w-4/5" />
+            <div className="h-0.5 bg-zinc-300 rounded w-full mt-0.5" />
+            <div className="h-0.5 bg-zinc-300 rounded w-2/3" />
+          </div>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -785,17 +793,18 @@ export default function CategoryLayoutPage() {
                     <button
                       key={opt.value}
                       onClick={() => updateField('designStyle', opt.value)}
-                      className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition text-center cursor-pointer ${
+                      className={`p-3 min-h-[135px] rounded-xl border-2 flex flex-col items-center justify-start gap-1.5 transition text-center cursor-pointer hover:scale-[1.01] duration-150 ${
                         isSelected
-                          ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1] font-bold'
-                          : 'border-slate-200 bg-white text-slate-650 hover:border-slate-350'
+                          ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-350 hover:bg-slate-50/50'
                       }`}
                     >
                       {/* Mini Visual Grid Icon */}
                       <div className="w-16 h-10 flex-shrink-0">
                         {renderLayoutIcon(opt.value)}
                       </div>
-                      <span className="text-[10.5px] font-bold tracking-tight leading-none truncate max-w-full text-slate-700">{opt.label}</span>
+                      <span className={`text-[10.5px] font-extrabold tracking-tight leading-none block text-slate-700 ${isSelected ? 'text-[#6366f1]' : ''}`}>{opt.label}</span>
+                      <span className="text-[8.5px] text-slate-400 font-medium leading-tight block max-w-full line-clamp-3">{opt.desc}</span>
                     </button>
                   );
                 })}
@@ -825,20 +834,47 @@ export default function CategoryLayoutPage() {
 
             {/* Toggles */}
             <div className="border-t pt-4 space-y-3.5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-slate-700 block">Category Spotlight Grid</span>
-                  <span className="text-[10px] text-slate-400 font-medium">Show 3 Curated Spotlight Cards Digest</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 block">Category Spotlight Grid</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Show 3 Curated Spotlight Cards Digest</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={layout.isVisibleSpotlight}
+                      onChange={e => updateField('isVisibleSpotlight', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
+                  </label>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={layout.isVisibleSpotlight}
-                    onChange={e => updateField('isVisibleSpotlight', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
-                </label>
+
+                {layout.isVisibleSpotlight && (
+                  <div className="pl-4 border-l-2 border-slate-100 space-y-2 mt-1 py-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block">Spotlight Design Option</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: 'standard', label: 'Standard' },
+                        { value: 'minimal', label: 'Minimal' },
+                        { value: 'premium', label: 'Better' }
+                      ].map(styleOpt => (
+                        <button
+                          key={styleOpt.value}
+                          onClick={() => updateField('spotlightStyle', styleOpt.value)}
+                          className={`py-1.5 px-1 rounded-lg border text-[10px] font-bold transition text-center cursor-pointer ${
+                            (layout.spotlightStyle || 'standard') === styleOpt.value
+                              ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]'
+                              : 'border-slate-200 bg-white text-slate-650 hover:border-slate-350'
+                          }`}
+                        >
+                          {styleOpt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between">
@@ -862,7 +898,7 @@ export default function CategoryLayoutPage() {
         </div>
 
         {/* Right Side: Device simulator */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-[115px] self-start space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-200 flex-wrap gap-3">
             <div className="flex items-center gap-3 flex-wrap">
               {/* Device view toggles */}
@@ -1019,7 +1055,7 @@ export default function CategoryLayoutPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-450">Spotlight Row:</span>
-                <span className="font-bold text-slate-650">{layout.isVisibleSpotlight ? "✅ Visible" : "❌ Hidden"}</span>
+                <span className="font-bold text-slate-650">{layout.isVisibleSpotlight ? `✅ Visible (${layout.spotlightStyle || 'standard'})` : "❌ Hidden"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-450">Trending Sidebar:</span>

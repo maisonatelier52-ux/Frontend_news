@@ -214,6 +214,22 @@ async function seedDatabase() {
       await HomeLayoutModel.create(defaultLayout);
       console.log('Seeded default home layout successfully!');
     }
+
+    // 5. Seed CategoryLayout if empty
+    const { CategoryLayoutModel } = await import('@/models/CategoryLayout');
+    const categoryLayoutCount = await CategoryLayoutModel.countDocuments();
+    if (categoryLayoutCount === 0) {
+      const defaultCategoryLayout = {
+        categoryId: 'global',
+        designStyle: 'original',
+        colorTheme: 'indigo',
+        isVisibleSpotlight: true,
+        isVisibleSidebar: true,
+        spotlightStyle: 'standard'
+      };
+      await CategoryLayoutModel.create(defaultCategoryLayout);
+      console.log('Seeded default category layout successfully!');
+    }
   } catch (err) {
     console.error('Database seeding failed:', err);
   }

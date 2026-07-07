@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import ArticleReader from "./ArticleReader";
 import type { Article } from "../data/news";
+import OriginalCategoryLayout from "./OriginalCategoryLayout";
+
 
 interface Comment {
   name: string;
@@ -39,6 +41,7 @@ interface CategoryPageExperienceProps {
     colorTheme: string;
     isVisibleSpotlight: boolean;
     isVisibleSidebar: boolean;
+    spotlightStyle?: string;
   };
   articles: Article[];
   trendingArticles: Article[];
@@ -56,10 +59,6 @@ export default function CategoryPageExperience({
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const ARTICLES_PER_PAGE_REST = 12; // Page size for pages > 1
 
   // Bookmarks State
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
@@ -181,31 +180,29 @@ export default function CategoryPageExperience({
     commentsCount: getCommentsCount(selectedArticle),
   } : null;
 
-  // Pagination Variables
+  // ─── Data slicing (mirrors real app/[category]/page.tsx exactly) ───────────
   const hasArticles = articlesWithDynamicStats.length > 0;
   const heroArticle = hasArticles ? articlesWithDynamicStats[0] : null;
-  const spotlightArticles = articlesWithDynamicStats.slice(1, 4);
+  const remainingArticles = hasArticles ? articlesWithDynamicStats.slice(1) : [];
 
-  // Subgrid list on Page 1: we show 8 items max (indexes 4 to 12)
-  const subgridArticles = articlesWithDynamicStats.slice(4, 12);
-  const leftListArticles = subgridArticles.slice(0, 4);
-  const extraArticles = subgridArticles.slice(4);
+  // Spotlight: always slice first 3 of remaining when enabled (same as real page)
+  const showSpotlight = layout.isVisibleSpotlight;
+  const spotlightArticles = showSpotlight ? remainingArticles.slice(0, 3) : [];
+
+  // Subgrid: starts after spotlight if shown
+  const subgridArticles = showSpotlight ? remainingArticles.slice(3) : remainingArticles;
+
+  // Left list: first 7 subgrid articles
+  const leftListArticles = subgridArticles.slice(0, 7);
+  const extraArticles = subgridArticles.slice(7);
   const hasExtraArticles = extraArticles.length > 0;
 
-  // Sidebar contains either the rest of Page 1 category articles, or falls back to trending articles
-  const sidebarArticles = (hasExtraArticles ? extraArticles : trendingArticles).slice(0, 4);
+  // Sidebar: extra category articles or trending fallback (up to 7)
+  const sidebarArticles = (hasExtraArticles ? extraArticles : trendingArticles).slice(0, 7);
   const sidebarTitle = hasExtraArticles ? `More in ${decodedCategory}` : "Trending Coverage";
 
-  // Total pages calculation
-  const totalCategoryArticles = articlesWithDynamicStats.length;
-  const totalPages = totalCategoryArticles <= 12
-    ? 1
-    : 1 + Math.ceil((totalCategoryArticles - 12) / ARTICLES_PER_PAGE_REST);
 
-  // Paginated articles for Pages > 1
-  const paginatedGridStartIndex = 12 + (currentPage - 2) * ARTICLES_PER_PAGE_REST;
-  const paginatedGridEndIndex = 12 + (currentPage - 1) * ARTICLES_PER_PAGE_REST;
-  const paginatedGridArticles = articlesWithDynamicStats.slice(paginatedGridStartIndex, paginatedGridEndIndex);
+
 
   const BADGE_COLOR_MAP: Record<string, string> = {
     'indigo': 'text-[#6366f1]',
@@ -313,10 +310,8 @@ export default function CategoryPageExperience({
               </div>
             ) : (
               <>
-                {/* PAGE 1 CONTENT: Normal visual layout options */}
-                {currentPage === 1 && (
-                  <>
-                    {/* Hero Feature Story - Conditional on Selected designStyle */}
+                {/* Normal visual layout options */}
+                {/* Hero Feature Story - Conditional on Selected designStyle */}
                     {heroArticle && (() => {
                       // Style 1: Editorial Spotlight Hero (modern-spotlight)
                       if (layout.designStyle === 'modern-spotlight') {
@@ -501,6 +496,12 @@ export default function CategoryPageExperience({
                         );
                       }
 
+                      // Style 6: Original Category Page Layout Hero (original)
+                      // Rendered entirely by <OriginalCategoryLayout> below — return null here
+                      if (layout.designStyle === 'original') {
+                        return null;
+                      }
+
                       return null;
                     })()}
 
@@ -509,25 +510,111 @@ export default function CategoryPageExperience({
                       <>
                         {layout.isVisibleSpotlight && spotlightArticles.length > 0 && (
                           <div className="mb-12 border-t border-b border-zinc-200/70 py-8 select-none">
+                            {/* Heading */}
                             <div className="mb-5 flex items-center justify-between">
-                              <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor} flex items-center gap-1.5 font-sans`}>
-                                <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
-                                {decodedCategory} Spotlight Digest
-                              </h3>
+                              {(layout.spotlightStyle === 'minimal') ? (
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 font-sans border-b border-zinc-900 pb-1 w-full text-left">
+                                  {decodedCategory} Spotlight Digest
+                                </h3>
+                              ) : (layout.spotlightStyle === 'premium') ? (
+                                <h3 className={`text-xs font-bold uppercase tracking-widest ${themeTextColor} flex items-center gap-1.5 font-sans`}>
+                                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
+                                  {decodedCategory} Premium Spotlight
+                                </h3>
+                              ) : (
+                                <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 font-sans ${themeTextColor}`}>
+                                  • {decodedCategory.toUpperCase()} SPOTLIGHT DIGEST
+                                </h3>
+                              )}
                             </div>
+
+                            {/* Cards Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                              {spotlightArticles.map((article) => (
-                                <div key={article.id} onClick={() => setSelectedArticleId(article.id)} className="group cursor-pointer flex flex-col justify-between">
-                                  <div>
-                                    <div className="overflow-hidden rounded-sm aspect-[16/9] mb-3 bg-zinc-100 relative">
-                                      <img src={article.image} alt={article.title} className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-300 absolute inset-0" />
+                              {spotlightArticles.map((article) => {
+                                if (layout.spotlightStyle === 'minimal') {
+                                  return (
+                                    <div
+                                      key={article.id}
+                                      onClick={() => setSelectedArticleId(article.id)}
+                                      className="group cursor-pointer flex flex-col justify-between border-t border-zinc-200 pt-4"
+                                    >
+                                      <div>
+                                        <span className={`text-[9px] font-bold uppercase tracking-wider ${themeTextColor} mb-1 block`}>
+                                          {article.category}
+                                        </span>
+                                        <h4 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                          {article.title}
+                                        </h4>
+                                        <p className="text-xs text-zinc-500 mt-2 line-clamp-3 leading-relaxed">
+                                          {article.excerpt}
+                                        </p>
+                                      </div>
+                                      <span className="text-[9.5px] text-zinc-400 mt-4 block font-mono">
+                                        By {article.author} &bull; {article.readTime}
+                                      </span>
                                     </div>
-                                    <h4 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">{article.title}</h4>
-                                    <p className="text-xs text-zinc-500 mt-1.5 line-clamp-3 leading-relaxed">{article.excerpt}</p>
-                                  </div>
-                                  <span className="text-[10px] text-zinc-400 mt-3 font-sans block">{article.author} &bull; {article.readTime}</span>
-                                </div>
-                              ))}
+                                  );
+                                } else if (layout.spotlightStyle === 'premium') {
+                                  return (
+                                    <div
+                                      key={article.id}
+                                      onClick={() => setSelectedArticleId(article.id)}
+                                      className="group cursor-pointer bg-zinc-50/40 hover:bg-zinc-50 border border-zinc-200/80 p-4 rounded-lg shadow-sm hover:shadow transition-all duration-305 transform hover:-translate-y-1 flex flex-col justify-between"
+                                    >
+                                      <div>
+                                        <div className="overflow-hidden rounded-md aspect-[16/9] mb-3.5 bg-zinc-100 relative">
+                                          <img
+                                            src={article.image}
+                                            alt={article.title}
+                                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-103 transition duration-500 absolute inset-0"
+                                          />
+                                        </div>
+                                        <span className={`text-[9px] font-bold uppercase tracking-wider ${themeTextColor} mb-1.5 block`}>
+                                          {article.category}
+                                        </span>
+                                        <h4 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">
+                                          {article.title}
+                                        </h4>
+                                        <p className="text-xs text-zinc-600 mt-2 line-clamp-2 leading-relaxed">
+                                          {article.excerpt}
+                                        </p>
+                                      </div>
+                                      <div className="mt-4 pt-3 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
+                                        <span>By <span className="text-zinc-600 font-medium">{article.author}</span></span>
+                                        <span className="font-semibold text-zinc-700">{article.readTime}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                } else {
+                                  // Standard
+                                  return (
+                                    <div
+                                      key={article.id}
+                                      onClick={() => setSelectedArticleId(article.id)}
+                                      className="group cursor-pointer flex flex-col justify-between"
+                                    >
+                                      <div>
+                                        <div className="overflow-hidden rounded-sm aspect-[16/9] mb-3 bg-zinc-100 relative">
+                                          <img
+                                            src={article.image}
+                                            alt={article.title}
+                                            className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-300 absolute inset-0"
+                                          />
+                                        </div>
+                                        <h4 className="font-editorial-title text-base sm:text-[17px] font-bold text-zinc-900 group-hover:text-zinc-650 transition leading-snug">
+                                          {article.title}
+                                        </h4>
+                                        <p className="text-xs text-zinc-550 mt-2 line-clamp-3 leading-relaxed">
+                                          {article.excerpt}
+                                        </p>
+                                      </div>
+                                      <span className="text-[10px] text-zinc-400 mt-3 font-sans block">
+                                        {article.author} - {article.readTime}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                              })}
                             </div>
                           </div>
                         )}
@@ -788,107 +875,25 @@ export default function CategoryPageExperience({
                         </div>
                       </div>
                     )}
+
+                    {/* 6. ORIGINAL LAYOUT — shared component, exact match to real category page */}
+                    {layout.designStyle === 'original' && (
+                      <OriginalCategoryLayout
+                        decodedCategory={decodedCategory}
+                        heroArticle={heroArticle}
+                        spotlightArticles={spotlightArticles}
+                        leftListArticles={leftListArticles}
+                        sidebarArticles={sidebarArticles}
+                        sidebarTitle={sidebarTitle}
+                        isVisibleSidebar={layout.isVisibleSidebar}
+                        isVisibleSpotlight={layout.isVisibleSpotlight}
+                        onArticleClick={(id) => setSelectedArticleId(id)}
+                      />
+                    )}
                   </>
                 )}
-
-                {/* PAGES > 1 CONTENT: Clean visual index grid for directory browsing */}
-                {currentPage > 1 && (
-                  <div className="space-y-8 animate-fade-in select-none">
-                    <div className="border-b border-zinc-200 pb-2 mb-6 flex justify-between items-end">
-                      <h2 className="text-xl font-editorial-title font-bold text-zinc-900 uppercase tracking-wide">
-                        {decodedCategory} News Archives — Page {currentPage}
-                      </h2>
-                      <span className="text-xs text-zinc-400 font-mono font-semibold">
-                        Showing {paginatedGridStartIndex + 1} &ndash; {Math.min(paginatedGridEndIndex, totalCategoryArticles)} of {totalCategoryArticles} Articles
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedGridArticles.map((article) => (
-                        <div
-                          key={article.id}
-                          onClick={() => setSelectedArticleId(article.id)}
-                          className="group cursor-pointer border border-zinc-200 p-4 rounded-sm flex flex-col justify-between hover:border-zinc-400 transition animate-fade-in"
-                        >
-                          <div>
-                            <div className="overflow-hidden bg-zinc-100 rounded-sm aspect-[16/9] mb-3 relative">
-                              <img
-                                src={article.image}
-                                alt={article.title}
-                                className="w-full h-full object-cover filter brightness-95 group-hover:scale-101 transition duration-300 absolute inset-0"
-                              />
-                            </div>
-                            <div className={`flex items-center gap-2 mb-1.5 text-[10px] ${themeTextColor} font-extrabold uppercase tracking-widest`}>
-                              <span>{article.category}</span>
-                            </div>
-                            <h3 className="font-editorial-title text-base font-bold text-zinc-900 leading-snug group-hover:text-[#6366f1] transition">
-                              {article.title}
-                            </h3>
-                            <p className="mt-2 text-xs text-zinc-500 leading-relaxed line-clamp-3">
-                              {article.excerpt}
-                            </p>
-                          </div>
-
-                          <div className="mt-4 pt-3 border-t border-zinc-100 flex justify-between items-center text-[10px] text-zinc-400 font-sans">
-                            <span>By <span className="text-zinc-550 font-medium">{article.author}</span> • {article.date}</span>
-                            <span className="font-semibold text-zinc-700">{article.readTime}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* THEMED PAGINATION BAR CONTROL */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-12 pt-6 border-t border-zinc-200 select-none">
-                    <button
-                      disabled={currentPage === 1}
-                      onClick={() => { setCurrentPage(p => Math.max(p - 1, 1)); if (typeof window !== 'undefined') window.scrollTo(0, 0); }}
-                      className={`px-4 py-2 rounded border text-xs font-extrabold tracking-wider uppercase transition cursor-pointer ${
-                        currentPage === 1
-                          ? 'border-zinc-150 text-zinc-300 bg-zinc-50 cursor-not-allowed'
-                          : 'border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white bg-white'
-                      }`}
-                    >
-                      Prev
-                    </button>
-
-                    {Array.from({ length: totalPages }).map((_, idx) => {
-                      const pageNum = idx + 1;
-                      const isCurrent = currentPage === pageNum;
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => { setCurrentPage(pageNum); if (typeof window !== 'undefined') window.scrollTo(0, 0); }}
-                          className={`w-9 h-9 rounded border text-xs font-bold font-mono transition cursor-pointer ${
-                            isCurrent
-                              ? 'border-zinc-950 bg-zinc-950 text-white'
-                              : 'border-zinc-200 text-zinc-600 bg-white hover:border-zinc-450'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      disabled={currentPage === totalPages}
-                      onClick={() => { setCurrentPage(p => Math.min(p + 1, totalPages)); if (typeof window !== 'undefined') window.scrollTo(0, 0); }}
-                      className={`px-4 py-2 rounded border text-xs font-extrabold tracking-wider uppercase transition cursor-pointer ${
-                        currentPage === totalPages
-                          ? 'border-zinc-150 text-zinc-300 bg-zinc-50 cursor-not-allowed'
-                          : 'border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white bg-white'
-                      }`}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+              </div>
             )}
-          </div>
-        )}
       </main>
 
       {/* Newsletter signup section */}
