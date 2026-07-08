@@ -3,7 +3,14 @@
 import { useState, useEffect, useRef } from 'react'
 import StatusBadge from '../../components/StatusBadge'
 
-const adPositions = ['Header Banner', 'Sidebar Top', 'Sidebar Bottom', 'In-Article', 'Footer Banner', 'Sticky Bottom']
+const adPositions = [
+  'Header Banner', 
+  'Homepage Middle', 
+  'Category Page Middle', 
+  'Detail Page Below Subscription', 
+  'Footer Banner', 
+  'Sticky Bottom'
+]
 const adSizes = ['728×90', '300×250', '320×50', '640×200', '160×600', '300×600']
 
 interface Ad {
@@ -522,31 +529,31 @@ export default function AdvertisementsPage() {
         </div>
         <div className="border border-dashed border-zinc-200 rounded-md overflow-hidden bg-zinc-50/50 p-4 max-w-2xl mx-auto space-y-3">
           {/* Header Banner Zone */}
-          <div className="bg-indigo-50/60 border border-indigo-200 rounded-md py-2.5 text-center text-xs text-indigo-700 font-bold tracking-wide select-none">
-            📢 Header Banner (728×90 Horizontal Scale)
+          <div className="bg-indigo-50/60 border border-indigo-200 rounded-md py-2 text-center text-xs text-indigo-700 font-bold tracking-wide select-none">
+            📢 Header Banner (Shared: Home, Category, Detail)
           </div>
           
-          {/* Body structure split */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-grow bg-zinc-100/50 border border-zinc-200 rounded-md p-6 text-center text-xs text-zinc-500 font-medium select-none">
-              Article Content Grid
-              <div className="bg-amber-50/60 border border-amber-200 rounded-sm py-1.5 px-3 mt-4 text-[10px] text-amber-700 font-bold tracking-wide">
-                📢 In-Article Native Banner (640×200 Medium banner)
-              </div>
+          {/* Main content area mapping */}
+          <div className="grid grid-cols-1 gap-2.5">
+            <div className="bg-emerald-50/60 border border-emerald-200 rounded-md py-2.5 px-3 text-center text-xs text-emerald-700 font-bold select-none">
+              📢 Homepage Middle (Home Page Section Ad)
             </div>
-            <div className="w-full sm:w-48 flex flex-col gap-2 shrink-0">
-              <div className="bg-purple-50/60 border border-purple-200 rounded-md py-4 px-3 text-center text-[10px] text-purple-700 font-bold tracking-wide select-none">
-                📢 Sidebar Top (300×250 Rectangular Grid)
-              </div>
-              <div className="bg-zinc-200/40 border border-zinc-300 rounded-md py-4 px-3 text-center text-[10px] text-zinc-400 font-bold tracking-wide select-none">
-                Sidebar Bottom Ad Slot
-              </div>
+            <div className="bg-amber-50/60 border border-amber-200 rounded-md py-2.5 px-3 text-center text-xs text-amber-700 font-bold select-none">
+              📢 Category Page Middle (Category Page Section Ad)
+            </div>
+            <div className="bg-purple-50/60 border border-purple-200 rounded-md py-2.5 px-3 text-center text-xs text-purple-700 font-bold select-none">
+              📢 Detail Page Below Subscription (Article Page Section Ad)
             </div>
           </div>
 
           {/* Footer Banner Zone */}
-          <div className="bg-indigo-50/60 border border-indigo-200 rounded-md py-2.5 text-center text-xs text-indigo-700 font-bold tracking-wide select-none">
-            📢 Footer Banner (728×90 Horizontal Scale)
+          <div className="bg-indigo-50/60 border border-indigo-200 rounded-md py-2 text-center text-xs text-indigo-700 font-bold tracking-wide select-none">
+            📢 Footer Banner (Shared: Home, Category, Detail)
+          </div>
+          
+          {/* Sticky Bottom Zone */}
+          <div className="bg-zinc-800 text-white rounded-md py-1.5 text-center text-[10px] font-bold tracking-wide select-none">
+            📢 Sticky Bottom Banner (Shared Floating Banner)
           </div>
         </div>
       </div>

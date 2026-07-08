@@ -45,6 +45,25 @@ export default function ArticleDetailPage() {
   });
   const designStyle = detailLayout.designStyle === "classic-sidebar" ? "original" : detailLayout.designStyle;
   const [ads, setAds] = useState<any[]>([]);
+  const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    function syncClosedAds() {
+      try {
+        const closed = localStorage.getItem("domain_closed_ads");
+        if (closed) {
+          setClosedAdIds(JSON.parse(closed));
+        }
+      } catch (e) {}
+    }
+    syncClosedAds();
+    window.addEventListener("storage", syncClosedAds);
+    window.addEventListener("domain_ad_dismissed", syncClosedAds);
+    return () => {
+      window.removeEventListener("storage", syncClosedAds);
+      window.removeEventListener("domain_ad_dismissed", syncClosedAds);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadAds() {
@@ -514,11 +533,17 @@ export default function ArticleDetailPage() {
   const accentHoverTextClass = themeHoverTextClasses[detailLayout.colorTheme] || "hover:text-red-700";
   const accentHoverBorderClass = themeHoverBorderClasses[detailLayout.colorTheme] || "hover:border-red-750";
 
-  const sidebarTopAd = ads.find((ad: any) => ad.position === "Sidebar Top");
-  const sidebarBottomAd = ads.find((ad: any) => ad.position === "Sidebar Bottom");
-  const inArticleAd = ads.find((ad: any) => ad.position === "In-Article");
-  const footerBannerAd = ads.find((ad: any) => ad.position === "Footer Banner");
-  const stickyBottomAd = ads.find((ad: any) => ad.position === "Sticky Bottom");
+  const parseAdSize = (sizeStr: string, fallbackW = 300, fallbackH = 250) => {
+    const parts = (sizeStr || "").split(/[x×]/);
+    const w = parseInt(parts[0]) || fallbackW;
+    const h = parseInt(parts[1]) || fallbackH;
+    return { w, h };
+  };
+
+  const visibleAds = ads.filter((ad: any) => !closedAdIds.includes(ad._id));
+  const detailPageBelowSubscriptionAd = visibleAds.find((ad: any) => ad.position === "Detail Page Below Subscription");
+  const footerBannerAds = visibleAds.filter((ad: any) => ad.position === "Footer Banner");
+  const stickyBottomAd = visibleAds.find((ad: any) => ad.position === "Sticky Bottom");
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
@@ -762,23 +787,7 @@ export default function ArticleDetailPage() {
 
             {/* Dynamic Article Blocks Rendering */}
             <article className="mt-8 font-editorial-body space-y-6 pb-2 text-left">
-              {article.blocks?.map((block: any, idx: number) => {
-                const element = renderBlock(block, idx);
-                if (idx === 1 && inArticleAd) {
-                  return (
-                    <React.Fragment key={`ad-${idx}`}>
-                      {element}
-                      <div className="w-full my-8 flex flex-col items-center">
-                        <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
-                        <div className="relative overflow-hidden border border-zinc-200 shadow-3xs max-w-full" style={{ width: 640, height: 200 }}>
-                          <img src={inArticleAd.imageUrl} alt={inArticleAd.name} className="w-full h-full object-cover" />
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                }
-                return element;
-              })}
+              {article.blocks?.map((block: any, idx: number) => renderBlock(block, idx))}
             </article>
             {/* Share options */}
             {detailLayout.showShareBar && detailLayout.shareBarPosition === "bottom" && (
@@ -1118,6 +1127,19 @@ export default function ArticleDetailPage() {
                     </button>
                   </form>
                 </div>
+                {detailPageBelowSubscriptionAd && (
+                  <div className="w-full mt-6 flex flex-col items-center select-none">
+                    <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
+                    {(() => {
+                      const { w, h } = parseAdSize(detailPageBelowSubscriptionAd.size, 728, 90);
+                      return (
+                        <div className="relative overflow-hidden border border-zinc-200 shadow-3xs max-w-full" style={{ width: `${w}px`, height: `${h}px` }}>
+                          <img src={detailPageBelowSubscriptionAd.imageUrl} alt={detailPageBelowSubscriptionAd.name} className="w-full h-full object-cover" />
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1128,17 +1150,6 @@ export default function ArticleDetailPage() {
               lg:col-span-4 space-y-8 lg:sticky lg:top-8 lg:self-start h-fit border-t lg:border-t-0 lg:border-l border-zinc-200 pt-8 lg:pt-0 lg:pl-8
               ${designStyle === "left-sidebar" ? "lg:order-1" : ""}
             `}>
-              
-              {/* Sidebar Top Ad */}
-              {sidebarTopAd && (
-                <div className="w-full flex flex-col items-center border-b border-zinc-150 pb-6">
-                  <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
-                  <div className="relative overflow-hidden border border-zinc-200 shadow-3xs" style={{ width: 300, height: 250 }}>
-                    <img src={sidebarTopAd.imageUrl} alt={sidebarTopAd.name} className="w-full h-full object-cover" />
-                  </div>
-                </div>
-              )}
-
               {/* Trending Stories */}
               <div className="space-y-6">
                 <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2">
@@ -1195,13 +1206,18 @@ export default function ArticleDetailPage() {
                 </form>
               </div>
 
-              {/* Sidebar Bottom Ad */}
-              {sidebarBottomAd && (
+              {/* Detail Page Below Subscription Ad */}
+              {detailPageBelowSubscriptionAd && (
                 <div className="w-full flex flex-col items-center border-t border-zinc-150 pt-6">
                   <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
-                  <div className="relative overflow-hidden border border-zinc-200 shadow-3xs" style={{ width: 300, height: 250 }}>
-                    <img src={sidebarBottomAd.imageUrl} alt={sidebarBottomAd.name} className="w-full h-full object-cover" />
-                  </div>
+                  {(() => {
+                    const { w, h } = parseAdSize(detailPageBelowSubscriptionAd.size, 300, 250);
+                    return (
+                      <div className="relative overflow-hidden border border-zinc-200 shadow-3xs max-w-full" style={{ width: `${w}px`, height: `${h}px` }}>
+                        <img src={detailPageBelowSubscriptionAd.imageUrl} alt={detailPageBelowSubscriptionAd.name} className="w-full h-full object-cover" />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1210,13 +1226,57 @@ export default function ArticleDetailPage() {
       </div>
     </main>
 
-      {footerBannerAd && (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 flex justify-center items-center select-none">
-          <div className="flex flex-col items-center border-t border-zinc-150 pt-6 w-full">
-            <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
-            <div className="relative overflow-hidden border border-zinc-200 shadow-3xs" style={{ width: 728, height: 90 }}>
-              <img src={footerBannerAd.imageUrl} alt={footerBannerAd.name} className="w-full h-full object-cover" />
-            </div>
+      {footerBannerAds.length > 0 && (
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 select-none border-t border-zinc-150 pt-6">
+          <div className="relative bg-zinc-50/50 p-3 rounded border border-zinc-200 flex flex-col items-center justify-center animate-[admin-fade-in_0.3s_ease-out]">
+            <button
+              onClick={() => {
+                const adToClose = footerBannerAds[0];
+                if (adToClose) {
+                  const nextClosed = [...closedAdIds, adToClose._id];
+                  setClosedAdIds(nextClosed);
+                  try {
+                    localStorage.setItem("domain_closed_ads", JSON.stringify(nextClosed));
+                  } catch (e) {}
+                  window.dispatchEvent(new Event("domain_ad_dismissed"));
+                }
+              }}
+              className="absolute top-2 right-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px] cursor-pointer transition z-10"
+              title="Close Ad"
+            >
+              ✕
+            </button>
+            <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1.5">Advertisement</span>
+            
+            {/* Mobile Footer Banner */}
+            {(() => {
+              const mobileAd = footerBannerAds.find(a => a.size.includes("320")) || footerBannerAds[0];
+              if (!mobileAd) return null;
+              const { w, h } = parseAdSize(mobileAd.size, 320, 50);
+              return (
+                <div 
+                  className="md:hidden relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                  style={{ width: `${w}px`, height: `${h}px` }}
+                >
+                  <img src={mobileAd.imageUrl} alt={mobileAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
+
+            {/* Desktop/Tablet Footer Banner */}
+            {(() => {
+              const desktopAd = footerBannerAds.find(a => a.size.includes("728")) || footerBannerAds.find(a => a.size.includes("300")) || footerBannerAds[0];
+              if (!desktopAd) return null;
+              const { w, h } = parseAdSize(desktopAd.size, 728, 90);
+              return (
+                <div 
+                  className="hidden md:block relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                  style={{ width: `${w}px`, height: `${h}px` }}
+                >
+                  <img src={desktopAd.imageUrl} alt={desktopAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1477,11 +1537,30 @@ export default function ArticleDetailPage() {
       )}
       {stickyBottomAd && (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center items-end pointer-events-none pb-2 select-none">
-          <div className="bg-white border border-zinc-250 p-1.5 shadow-lg rounded-md flex flex-col items-center pointer-events-auto">
+          <div className="relative bg-zinc-100/95 border border-zinc-300 p-1.5 shadow-lg rounded-none flex flex-col items-center pointer-events-auto">
+            <button 
+              onClick={() => {
+                const nextClosed = [...closedAdIds, stickyBottomAd._id];
+                setClosedAdIds(nextClosed);
+                try {
+                  localStorage.setItem("domain_closed_ads", JSON.stringify(nextClosed));
+                } catch (e) {}
+                window.dispatchEvent(new Event("domain_ad_dismissed"));
+              }} 
+              className="absolute -top-2 -right-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px] font-bold border border-zinc-200 cursor-pointer shadow-md transition"
+              title="Close Ad"
+            >
+              ✕
+            </button>
             <span className="text-[8px] text-zinc-400 font-mono tracking-widest uppercase mb-0.5 leading-none">Advertisement</span>
-            <div className="relative overflow-hidden border border-zinc-100" style={{ width: 320, height: 50 }}>
-              <img src={stickyBottomAd.imageUrl} alt={stickyBottomAd.name} className="w-full h-full object-cover" />
-            </div>
+            {(() => {
+              const { w, h } = parseAdSize(stickyBottomAd.size, 320, 50);
+              return (
+                <div className="relative overflow-hidden border border-zinc-200 bg-white" style={{ width: `${w}px`, height: `${h}px` }}>
+                  <img src={stickyBottomAd.imageUrl} alt={stickyBottomAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

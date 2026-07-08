@@ -62,7 +62,27 @@ export default function Header({
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>([]);
-  const [headerAd, setHeaderAd] = useState<any | null>(null);
+  const [headerAds, setHeaderAds] = useState<any[]>([]);
+  const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    function syncClosedAds() {
+      try {
+        const closed = localStorage.getItem("domain_closed_ads");
+        if (closed) {
+          setClosedAdIds(JSON.parse(closed));
+        }
+      } catch (e) {}
+    }
+    syncClosedAds();
+    window.addEventListener("storage", syncClosedAds);
+    // Listen for custom events too for intra-page navigation updates
+    window.addEventListener("domain_ad_dismissed", syncClosedAds);
+    return () => {
+      window.removeEventListener("storage", syncClosedAds);
+      window.removeEventListener("domain_ad_dismissed", syncClosedAds);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -80,8 +100,8 @@ export default function Header({
           const adsRes = await fetch("/api/advertisements");
           if (adsRes.ok) {
             const adsData = await adsRes.json();
-            const activeHeaderAd = adsData.find((a: any) => a.position === "Header Banner" && a.status === "active");
-            setHeaderAd(activeHeaderAd || null);
+            const activeHeaderAds = adsData.filter((a: any) => a.position === "Header Banner" && a.status === "active");
+            setHeaderAds(activeHeaderAds);
           }
         } catch (adErr) {
           console.error("Failed to load header ad:", adErr);
@@ -441,16 +461,64 @@ export default function Header({
         { id: "category-nav", order: 3 }
       ] as HeaderLayoutSection[];
 
+  const visibleHeaderAds = headerAds.filter((ad: any) => !closedAdIds.includes(ad._id));
+
   return (
     <header className="w-full bg-white select-none">
-      {headerAd && (
-        <div className="w-full bg-zinc-55 border-b border-zinc-200 py-3.5 flex justify-center items-center">
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
-            <div className="relative overflow-hidden border border-zinc-200 shadow-3xs" style={{ width: 728, height: 90 }}>
-              <img src={headerAd.imageUrl} alt={headerAd.name} className="w-full h-full object-cover" />
-            </div>
-          </div>
+      {visibleHeaderAds.length > 0 && (
+        <div className="relative w-full bg-zinc-50 border-b border-zinc-200 py-3.5 flex flex-col items-center justify-center select-none animate-[admin-fade-in_0.3s_ease-out]">
+          <button
+            onClick={() => {
+              const adToClose = visibleHeaderAds[0];
+              if (adToClose) {
+                const nextClosed = [...closedAdIds, adToClose._id];
+                setClosedAdIds(nextClosed);
+                try {
+                  localStorage.setItem("domain_closed_ads", JSON.stringify(nextClosed));
+                } catch (e) {}
+                window.dispatchEvent(new Event("domain_ad_dismissed"));
+              }
+            }}
+            className="absolute top-2 right-4 bg-zinc-200 hover:bg-zinc-300 text-zinc-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px] cursor-pointer transition z-10"
+            title="Close Ad"
+          >
+            ✕
+          </button>
+          <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
+          
+          {/* Mobile Viewport Ad (under 768px) - Shows mobile scale 320x50 vacation ad */}
+          {(() => {
+            const mobileAd = visibleHeaderAds.find(a => a.size.includes("320")) || visibleHeaderAds[0];
+            if (!mobileAd) return null;
+            const parts = mobileAd.size.split(/[x×]/);
+            const w = parseInt(parts[0]) || 320;
+            const h = parseInt(parts[1]) || 50;
+            return (
+              <div 
+                className="md:hidden relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                style={{ width: `${w}px`, height: `${h}px` }}
+              >
+                <img src={mobileAd.imageUrl} alt={mobileAd.name} className="w-full h-full object-cover" />
+              </div>
+            );
+          })()}
+
+          {/* Desktop/Tablet Viewport Ad (768px and above) - Shows desktop scale 728x90 */}
+          {(() => {
+            const desktopAd = visibleHeaderAds.find(a => a.size.includes("728")) || visibleHeaderAds.find(a => a.size.includes("300")) || visibleHeaderAds[0];
+            if (!desktopAd) return null;
+            const parts = desktopAd.size.split(/[x×]/);
+            const w = parseInt(parts[0]) || 728;
+            const h = parseInt(parts[1]) || 90;
+            return (
+              <div 
+                className="hidden md:block relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                style={{ width: `${w}px`, height: `${h}px` }}
+              >
+                <img src={desktopAd.imageUrl} alt={desktopAd.name} className="w-full h-full object-cover" />
+              </div>
+            );
+          })()}
         </div>
       )}
       {sortedHeaderSections.map((section) => {

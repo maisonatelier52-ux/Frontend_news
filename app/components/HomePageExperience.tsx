@@ -100,7 +100,53 @@ export default function HomePageExperience({
   const articles = articlesOverride || loadedArticles;
   const loading = articlesOverride ? false : articlesLoading;
 
-  // Load layout sections from API when not in admin preview mode
+  const [ads, setAds] = useState<any[]>([]);
+  const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    function syncClosedAds() {
+      try {
+        const closed = localStorage.getItem("domain_closed_ads");
+        if (closed) {
+          setClosedAdIds(JSON.parse(closed));
+        }
+      } catch (e) {}
+    }
+    syncClosedAds();
+    window.addEventListener("storage", syncClosedAds);
+    window.addEventListener("domain_ad_dismissed", syncClosedAds);
+    return () => {
+      window.removeEventListener("storage", syncClosedAds);
+      window.removeEventListener("domain_ad_dismissed", syncClosedAds);
+    };
+  }, []);
+
+  useEffect(() => {
+    async function loadAds() {
+      try {
+        const res = await fetch("/api/advertisements");
+        if (res.ok) {
+          const data = await res.json();
+          setAds(data.filter((ad: any) => ad.status === "active"));
+        }
+      } catch (err) {
+        console.error("Failed to load ads in home:", err);
+      }
+    }
+    loadAds();
+  }, []);
+
+  const parseAdSize = (sizeStr: string, fallbackW = 300, fallbackH = 250) => {
+    const parts = (sizeStr || "").split(/[x×]/);
+    const w = parseInt(parts[0]) || fallbackW;
+    const h = parseInt(parts[1]) || fallbackH;
+    return { w, h };
+  };
+
+  const visibleAds = ads.filter((ad: any) => !closedAdIds.includes(ad._id));
+  const homepageMiddleAd = visibleAds.find((ad: any) => ad.position === "Homepage Middle");
+  const footerBannerAds = visibleAds.filter((ad: any) => ad.position === "Footer Banner");
+  const stickyBottomAd = visibleAds.find((ad: any) => ad.position === "Sticky Bottom");
   useEffect(() => {
     if (layoutSectionsOverride) return; // admin preview supplies its own sections
     async function loadLayout() {
@@ -394,6 +440,19 @@ export default function HomePageExperience({
               settings={leadSection?.settings}
               designStyle={leadSection?.designStyle}
             />
+            {homepageMiddleAd && (
+              <div className="w-full my-8 flex flex-col items-center select-none">
+                <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
+                {(() => {
+                  const { w, h } = parseAdSize(homepageMiddleAd.size, 728, 90);
+                  return (
+                    <div className="relative overflow-hidden border border-zinc-200 shadow-3xs max-w-full" style={{ width: `${w}px`, height: `${h}px` }}>
+                      <img src={homepageMiddleAd.imageUrl} alt={homepageMiddleAd.name} className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
             <NewsGrid
               articles={articlesWithDynamicStats}
               onSelectArticle={handleSelectArticle}
@@ -538,9 +597,94 @@ export default function HomePageExperience({
             <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
           </div>
         </div>
+      {footerBannerAds.length > 0 && (
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 select-none border-t border-zinc-150 pt-6">
+          <div className="relative bg-zinc-50/50 p-3 rounded border border-zinc-200 flex flex-col items-center justify-center animate-[admin-fade-in_0.3s_ease-out]">
+            <button
+              onClick={() => {
+                const adToClose = footerBannerAds[0];
+                if (adToClose) {
+                  const nextClosed = [...closedAdIds, adToClose._id];
+                  setClosedAdIds(nextClosed);
+                  try {
+                    localStorage.setItem("domain_closed_ads", JSON.stringify(nextClosed));
+                  } catch (e) {}
+                  window.dispatchEvent(new Event("domain_ad_dismissed"));
+                }
+              }}
+              className="absolute top-2 right-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px] cursor-pointer transition z-10"
+              title="Close Ad"
+            >
+              ✕
+            </button>
+            <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1.5">Advertisement</span>
+            
+            {/* Mobile Footer Banner */}
+            {(() => {
+              const mobileAd = footerBannerAds.find(a => a.size.includes("320")) || footerBannerAds[0];
+              if (!mobileAd) return null;
+              const { w, h } = parseAdSize(mobileAd.size, 320, 50);
+              return (
+                <div 
+                  className="md:hidden relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                  style={{ width: `${w}px`, height: `${h}px` }}
+                >
+                  <img src={mobileAd.imageUrl} alt={mobileAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
+
+            {/* Desktop/Tablet Footer Banner */}
+            {(() => {
+              const desktopAd = footerBannerAds.find(a => a.size.includes("728")) || footerBannerAds.find(a => a.size.includes("300")) || footerBannerAds[0];
+              if (!desktopAd) return null;
+              const { w, h } = parseAdSize(desktopAd.size, 728, 90);
+              return (
+                <div 
+                  className="hidden md:block relative overflow-hidden border border-zinc-200 shadow-3xs bg-white" 
+                  style={{ width: `${w}px`, height: `${h}px` }}
+                >
+                  <img src={desktopAd.imageUrl} alt={desktopAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       </footer>
 
       {/* Standalone detail page navigation is handled via routing */}
+
+      {stickyBottomAd && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center items-end pointer-events-none pb-2 select-none">
+          <div className="relative bg-zinc-100/95 border border-zinc-300 p-1.5 shadow-lg rounded-none flex flex-col items-center pointer-events-auto">
+            <button 
+              onClick={() => {
+                const nextClosed = [...closedAdIds, stickyBottomAd._id];
+                setClosedAdIds(nextClosed);
+                try {
+                  localStorage.setItem("domain_closed_ads", JSON.stringify(nextClosed));
+                } catch (e) {}
+                window.dispatchEvent(new Event("domain_ad_dismissed"));
+              }} 
+              className="absolute -top-2 -right-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[9px] font-bold border border-zinc-200 cursor-pointer shadow-md transition"
+              title="Close Ad"
+            >
+              ✕
+            </button>
+            <span className="text-[8px] text-zinc-400 font-mono tracking-widest uppercase mb-0.5 leading-none">Advertisement</span>
+            {(() => {
+              const { w, h } = parseAdSize(stickyBottomAd.size, 320, 50);
+              return (
+                <div className="relative overflow-hidden border border-zinc-200 bg-white" style={{ width: `${w}px`, height: `${h}px` }}>
+                  <img src={stickyBottomAd.imageUrl} alt={stickyBottomAd.name} className="w-full h-full object-cover" />
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
     </div>
   );
