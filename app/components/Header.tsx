@@ -62,6 +62,7 @@ export default function Header({
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>([]);
+  const [headerAd, setHeaderAd] = useState<any | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -73,6 +74,17 @@ export default function Header({
             .filter((c) => c.isVisible !== false && (c.articles || 0) > 0)
             .map((c) => c.name);
           setCategories(["All", ...visibleCats]);
+        }
+
+        try {
+          const adsRes = await fetch("/api/advertisements");
+          if (adsRes.ok) {
+            const adsData = await adsRes.json();
+            const activeHeaderAd = adsData.find((a: any) => a.position === "Header Banner" && a.status === "active");
+            setHeaderAd(activeHeaderAd || null);
+          }
+        } catch (adErr) {
+          console.error("Failed to load header ad:", adErr);
         }
 
         if (!overrideSections) {
@@ -431,6 +443,16 @@ export default function Header({
 
   return (
     <header className="w-full bg-white select-none">
+      {headerAd && (
+        <div className="w-full bg-zinc-55 border-b border-zinc-200 py-3.5 flex justify-center items-center">
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
+            <div className="relative overflow-hidden border border-zinc-200 shadow-3xs" style={{ width: 728, height: 90 }}>
+              <img src={headerAd.imageUrl} alt={headerAd.name} className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+      )}
       {sortedHeaderSections.map((section) => {
         if (section.id === "breaking-news") {
           return (
