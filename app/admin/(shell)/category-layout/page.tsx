@@ -12,6 +12,7 @@ interface CategoryLayout {
   isVisibleSpotlight: boolean;
   isVisibleSidebar: boolean;
   spotlightStyle?: string;
+  broadsheetStyle?: string;
 }
 
 const FACTORY_DEFAULT_LAYOUT: CategoryLayout = {
@@ -20,7 +21,8 @@ const FACTORY_DEFAULT_LAYOUT: CategoryLayout = {
   colorTheme: "indigo",
   isVisibleSpotlight: true,
   isVisibleSidebar: true,
-  spotlightStyle: "standard"
+  spotlightStyle: "standard",
+  broadsheetStyle: "illustrated"
 };
 
 const COLOR_THEMES = [
@@ -37,13 +39,13 @@ const LAYOUT_OPTIONS = [
   { value: 'modern-spotlight', label: 'Editorial Spotlight', desc: 'Multi-column balanced grid layout with broadsheet, text-only, or premium options' },
   { value: 'split-timeline', label: 'Split Detail + Image', desc: '7/12 column live stream updates + 5/12 column featured stories' },
   { value: 'magazine-grid', label: 'Hero Split + Image', desc: '2x2 visual image grids with clean borders' },
-  { value: 'classic-broadsheet', label: 'Classic Broadsheet', desc: 'Classical editorial text columns (no images)' },
   { value: 'editorial-masonry', label: 'Featured Card Box', desc: 'Asymmetrical columns: visual grids, middle highlights & text lists' }
 ];
 
 const FALLBACK_ARTICLES: Article[] = [
   {
     id: "fallback-US-0",
+    slug: "supreme-court-reviews-landmark-administrative-state-regulations",
     title: "Supreme Court Reviews Landmark Administrative State Regulations",
     excerpt: "Justices hear arguments that could redefine agency regulatory power across multiple industries.",
     content: ["Justices hear arguments that could redefine agency regulatory power across multiple industries."],
@@ -60,6 +62,7 @@ const FALLBACK_ARTICLES: Article[] = [
   },
   {
     id: "fallback-US-1",
+    slug: "clean-energy-grids-see-record-infrastructure-investments",
     title: "Clean Energy Grids See Record Infrastructure Investments",
     excerpt: "State departments authorize $12B funding package for transmission lines and grid resilience.",
     content: ["State departments authorize $12B funding package for transmission lines and grid resilience."],
@@ -76,6 +79,7 @@ const FALLBACK_ARTICLES: Article[] = [
   },
   {
     id: "fallback-US-2",
+    slug: "midterm-legislative-priorities-shift-in-bipartisan-consensus",
     title: "Midterm Legislative Priorities Shift in Bipartisan Consensus",
     excerpt: "Congressional leaders outline draft strategy focusing on rural broadband and regional transit frameworks.",
     content: ["Congressional leaders outline draft strategy focusing on rural broadband and regional transit frameworks."],
@@ -92,6 +96,7 @@ const FALLBACK_ARTICLES: Article[] = [
   },
   {
     id: "fallback-US-3",
+    slug: "urban-housing-affordability-initiatives-show-early-success",
     title: "Urban Housing Affordability Initiatives Show Early Success",
     excerpt: "Metropolitan zoning reforms increase residential construction permits by 22% in pilot program areas.",
     content: ["Metropolitan zoning reforms increase residential construction permits by 22% in pilot program areas."],
@@ -108,6 +113,7 @@ const FALLBACK_ARTICLES: Article[] = [
   },
   {
     id: "fallback-US-4",
+    slug: "federal-cybersecurity-framework-standardized-across-agencies",
     title: "Federal Cybersecurity Framework Standardized Across Agencies",
     excerpt: "Zero-trust verification mandate goes into full effect to counter infrastructure vulnerabilities.",
     content: ["Zero-trust verification mandate goes into full effect to counter infrastructure vulnerabilities."],
@@ -127,6 +133,7 @@ const FALLBACK_ARTICLES: Article[] = [
 const FALLBACK_TRENDING: Article[] = [
   {
     id: "fallback-World-0",
+    slug: "global-supply-chains-rerouted-amid-maritime-corridor-pressure",
     title: "Global Supply Chains Rerouted Amid Maritime Corridor Pressure",
     excerpt: "Shipping conglomerates shift trade lanes around southern ports to secure transport schedules.",
     content: ["Shipping conglomerates shift trade lanes around southern ports to secure transport schedules."],
@@ -143,6 +150,7 @@ const FALLBACK_TRENDING: Article[] = [
   },
   {
     id: "fallback-Finance-0",
+    slug: "central-banks-signal-flexible-inflation-strategy-measures",
     title: "Central Banks Signal Flexible Inflation Strategy Measures",
     excerpt: "Global treasury heads emphasize yield stability and domestic productivity indices.",
     content: ["Global treasury heads emphasize yield stability and domestic productivity indices."],
@@ -354,7 +362,8 @@ export default function CategoryLayoutPage() {
     colorTheme: "indigo",
     isVisibleSpotlight: true,
     isVisibleSidebar: true,
-    spotlightStyle: "standard"
+    spotlightStyle: "standard",
+    broadsheetStyle: "illustrated"
   });
   const [originalLayout, setOriginalLayout] = useState<CategoryLayout>({
     categoryId: "global",
@@ -362,7 +371,8 @@ export default function CategoryLayoutPage() {
     colorTheme: "indigo",
     isVisibleSpotlight: true,
     isVisibleSidebar: true,
-    spotlightStyle: "standard"
+    spotlightStyle: "standard",
+    broadsheetStyle: "illustrated"
   });
 
   // Undo / History stacks
@@ -370,6 +380,7 @@ export default function CategoryLayoutPage() {
 
   // Confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
@@ -484,7 +495,8 @@ export default function CategoryLayoutPage() {
           colorTheme: data.colorTheme || 'indigo',
           isVisibleSpotlight: data.isVisibleSpotlight !== undefined ? data.isVisibleSpotlight : true,
           isVisibleSidebar: data.isVisibleSidebar !== undefined ? data.isVisibleSidebar : true,
-          spotlightStyle: data.spotlightStyle || 'standard'
+          spotlightStyle: data.spotlightStyle || 'standard',
+          broadsheetStyle: data.broadsheetStyle || 'illustrated'
         };
         setLayout(reset);
         setOriginalLayout(reset);
@@ -715,9 +727,9 @@ export default function CategoryLayoutPage() {
             🔄 Reset Draft
           </button>
           <button
-            onClick={resetToFactoryDefaults}
+            onClick={() => setShowResetModal(true)}
             className="bg-white/10 hover:bg-white/15 text-white transition px-4 py-2.5 rounded-xl text-[12.5px] font-bold border border-white/10 cursor-pointer"
-            title="Revert current draft to factory system defaults"
+            title="Revert layout back to the original factory default design"
           >
             ⚙️ Reset to Original Design
           </button>
@@ -897,6 +909,37 @@ export default function CategoryLayoutPage() {
                   <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#6366f1]"></div>
                 </label>
               </div>
+
+              {layout.designStyle === 'classic-broadsheet' && (
+                <div className="flex flex-col gap-2 border-t pt-4">
+                  <div className="flex flex-col gap-1.5">
+                    <div>
+                      <span className="text-xs font-bold text-slate-700 block">Broadsheet Grid Option</span>
+                      <span className="text-[10px] text-slate-400 font-medium">Select broadsheet layout style variant</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      {[
+                        { value: 'illustrated', label: 'Illustrated Banner' },
+                        { value: 'text-only', label: 'Pure Typographical' },
+                        { value: 'asymmetric', label: 'Asymmetric Editorial' },
+                        { value: 'vintage-columns', label: 'Vintage Columns' }
+                      ].map(broadsheetOpt => (
+                        <button
+                          key={broadsheetOpt.value}
+                          onClick={() => updateField('broadsheetStyle', broadsheetOpt.value)}
+                          className={`py-2 px-1 rounded-lg border text-[10px] font-bold transition text-center cursor-pointer ${
+                            (layout.broadsheetStyle || 'illustrated') === broadsheetOpt.value
+                              ? 'border-[#6366f1] bg-[#6366f1]/5 text-[#6366f1]'
+                              : 'border-slate-200 bg-white text-slate-650 hover:border-slate-350'
+                          }`}
+                        >
+                          {broadsheetOpt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
@@ -1080,6 +1123,39 @@ export default function CategoryLayoutPage() {
                 className="bg-[#6366f1] hover:bg-[#4f46e5] text-white transition px-5 py-2.5 rounded-xl text-xs font-bold shadow-[0_4px_12px_rgba(99,102,241,0.2)] cursor-pointer"
               >
                 Confirm & Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Reset to Original Design Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-[9999] animate-[admin-fade-in_0.2s_ease_both]">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] max-w-md w-full p-6 animate-[admin-zoom-in_0.2s_ease_both] text-slate-800">
+            <div className="flex items-center gap-3 border-b pb-4 mb-4">
+              <span className="text-2xl">⚠️</span>
+              <h2 className="text-base font-extrabold uppercase tracking-wide text-slate-800">Reset to Original Design</h2>
+            </div>
+            
+            <p className="text-xs text-slate-550 leading-relaxed mb-6">
+              Are you sure you want to reset the category page layout to the original design? This will restore the factory default settings (Original Layout, Brand Indigo theme, and default feeds) and publish them to the live site immediately.
+            </p>
+
+            <div className="flex justify-end gap-3 font-sans">
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 transition px-4.5 py-2.5 rounded-xl text-xs font-bold border border-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setShowResetModal(false);
+                  await revertToDatabaseLayout();
+                }}
+                className="bg-red-650 hover:bg-red-700 text-white transition px-5 py-2.5 rounded-xl text-xs font-bold shadow-[0_4px_12px_rgba(220,38,38,0.2)] cursor-pointer"
+              >
+                Confirm & Reset
               </button>
             </div>
           </div>

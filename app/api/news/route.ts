@@ -13,8 +13,12 @@ export async function GET(request: Request) {
     const category = searchParams.get('category');
     const status = searchParams.get('status');
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const slug = searchParams.get('slug');
 
     let query: any = {};
+    if (slug) {
+      query.slug = slug;
+    }
     if (category && category !== 'all' && category !== 'All') {
       query.category = category;
     }

@@ -225,7 +225,8 @@ async function seedDatabase() {
         colorTheme: 'indigo',
         isVisibleSpotlight: true,
         isVisibleSidebar: true,
-        spotlightStyle: 'standard'
+        spotlightStyle: 'standard',
+        broadsheetStyle: 'illustrated'
       };
       await CategoryLayoutModel.create(defaultCategoryLayout);
       console.log('Seeded default category layout successfully!');

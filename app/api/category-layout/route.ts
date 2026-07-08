@@ -15,7 +15,8 @@ export async function GET() {
         colorTheme: 'indigo',
         isVisibleSpotlight: true,
         isVisibleSidebar: true,
-        spotlightStyle: 'standard'
+        spotlightStyle: 'standard',
+        broadsheetStyle: 'illustrated'
       };
       layout = await CategoryLayoutModel.create(defaultLayout);
     }
@@ -36,7 +37,8 @@ export async function PATCH() {
       colorTheme: 'indigo',
       isVisibleSpotlight: true,
       isVisibleSidebar: true,
-      spotlightStyle: 'standard'
+      spotlightStyle: 'standard',
+      broadsheetStyle: 'illustrated'
     };
     const layout = await CategoryLayoutModel.findOneAndUpdate(
       {},
@@ -54,7 +56,7 @@ export async function PATCH() {
 export async function PUT(req: Request) {
   try {
     await connectToDatabase();
-    const { designStyle, colorTheme, isVisibleSpotlight, isVisibleSidebar, spotlightStyle } = await req.json();
+    const { designStyle, colorTheme, isVisibleSpotlight, isVisibleSidebar, spotlightStyle, broadsheetStyle } = await req.json();
 
     let layout = await CategoryLayoutModel.findOne();
     if (!layout) {
@@ -66,6 +68,7 @@ export async function PUT(req: Request) {
     layout.isVisibleSpotlight = isVisibleSpotlight !== undefined ? isVisibleSpotlight : true;
     layout.isVisibleSidebar = isVisibleSidebar !== undefined ? isVisibleSidebar : true;
     layout.spotlightStyle = spotlightStyle || 'standard';
+    layout.broadsheetStyle = broadsheetStyle || 'illustrated';
 
     await layout.save();
     return NextResponse.json(layout);

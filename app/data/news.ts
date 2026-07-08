@@ -8,6 +8,7 @@ import worldData from "../../public/data/world.json";
 
 export interface Article {
   id: string;
+  slug: string;
   title: string;
   excerpt: string;
   content: string[];
@@ -71,6 +72,7 @@ export const NEWS_ARTICLES: Article[] = rawDataList
 
     return {
       id: String(index + 1),
+      slug: item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `article-${index + 1}`,
       title: item.title,
       excerpt: item.description || item.shortdescription || "",
       content: contentParagraphs,

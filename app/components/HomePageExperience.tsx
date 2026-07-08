@@ -46,6 +46,7 @@ interface NewsApiBlock {
 
 interface NewsApiArticle {
   _id: string;
+  slug?: string;
   title: string;
   excerpt?: string;
   blocks?: NewsApiBlock[];
@@ -120,6 +121,20 @@ export default function HomePageExperience({
   }, [layoutSectionsOverride]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const search = params.get("search");
+      const bookmarks = params.get("bookmarks");
+      if (search) {
+        setSearchQuery(search);
+      }
+      if (bookmarks === "true") {
+        setShowBookmarksOnly(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (articlesOverride) {
       return;
     }
@@ -136,6 +151,7 @@ export default function HomePageExperience({
 
             return {
               id: art._id,
+              slug: art.slug || art.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || art._id,
               title: art.title,
               excerpt: art.excerpt || '',
               content: paragraphs.length > 0 ? paragraphs : [art.excerpt || ''],
@@ -171,6 +187,13 @@ export default function HomePageExperience({
       setActiveCategory(cat);
       setShowBookmarksOnly(false);
       if (!previewMode) router.push(`/${cat}`);
+    }
+  };
+
+  const handleSelectArticle = (id: string) => {
+    const article = articles.find((a) => a.id === id);
+    if (article) {
+      router.push(`/article/${article.slug}`);
     }
   };
 
@@ -305,6 +328,7 @@ export default function HomePageExperience({
     commentsCount: getCommentsCount(leadArticle),
   } : {
     id: "",
+    slug: "",
     title: "",
     excerpt: "",
     content: [],
@@ -366,13 +390,13 @@ export default function HomePageExperience({
               leadArticle={leadArticleWithStats}
               secondaryArticles={breakingArticlesWithStats}
               subArticles={leadSubArticlesWithStats}
-              onSelectArticle={setSelectedArticleId}
+              onSelectArticle={handleSelectArticle}
               settings={leadSection?.settings}
               designStyle={leadSection?.designStyle}
             />
             <NewsGrid
               articles={articlesWithDynamicStats}
-              onSelectArticle={setSelectedArticleId}
+              onSelectArticle={handleSelectArticle}
               activeCategory={activeCategory}
               searchQuery={searchQuery}
               showBookmarksOnly={showBookmarksOnly}
@@ -383,7 +407,7 @@ export default function HomePageExperience({
           /* Render search result grids directly */
           <NewsGrid
             articles={articlesWithDynamicStats}
-            onSelectArticle={setSelectedArticleId}
+            onSelectArticle={handleSelectArticle}
             activeCategory={activeCategory}
             searchQuery={searchQuery}
             showBookmarksOnly={showBookmarksOnly}
@@ -516,17 +540,7 @@ export default function HomePageExperience({
         </div>
       </footer>
 
-      {/* 5. Immersive Article Reader Drawer (Opened if active selection exists) */}
-      {activeArticleWithStats && (
-        <ArticleReader
-          article={activeArticleWithStats}
-          onClose={() => setSelectedArticleId(null)}
-          isBookmarked={bookmarkedIds.includes(activeArticleWithStats.id)}
-          onToggleBookmark={handleToggleBookmark}
-          comments={getComments(activeArticleWithStats.id)}
-          onAddComment={handleAddComment}
-        />
-      )}
+      {/* Standalone detail page navigation is handled via routing */}
 
     </div>
   );

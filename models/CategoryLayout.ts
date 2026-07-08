@@ -6,7 +6,8 @@ const CategoryLayoutSchema = new Schema({
   colorTheme: { type: String, default: 'indigo' },
   isVisibleSpotlight: { type: Boolean, default: true },
   isVisibleSidebar: { type: Boolean, default: true },
-  spotlightStyle: { type: String, default: 'standard' }
+  spotlightStyle: { type: String, default: 'standard' },
+  broadsheetStyle: { type: String, default: 'illustrated' }
 }, {
   timestamps: true,
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "./Header";
 import ArticleReader from "./ArticleReader";
 import type { Article } from "../data/news";
@@ -42,6 +42,7 @@ interface CategoryPageExperienceProps {
     isVisibleSpotlight: boolean;
     isVisibleSidebar: boolean;
     spotlightStyle?: string;
+    broadsheetStyle?: string;
   };
   articles: Article[];
   trendingArticles: Article[];
@@ -189,11 +190,11 @@ export default function CategoryPageExperience({
   const showSpotlight = layout.isVisibleSpotlight;
   const spotlightArticles = showSpotlight ? remainingArticles.slice(0, 3) : [];
 
-  // Subgrid: starts after spotlight if shown
-  const subgridArticles = showSpotlight ? remainingArticles.slice(3) : remainingArticles;
+  // Subgrid: starts after spotlight only for original layout style
+  const subgridArticles = (layout.designStyle === 'original' && showSpotlight) ? remainingArticles.slice(3) : remainingArticles;
 
-  // Left list: first 7 subgrid articles
-  const leftListArticles = subgridArticles.slice(0, 7);
+  // Left list: all subgrid articles in a scrollable list
+  const leftListArticles = subgridArticles;
   const extraArticles = subgridArticles.slice(7);
   const hasExtraArticles = extraArticles.length > 0;
 
@@ -213,6 +214,69 @@ export default function CategoryPageExperience({
     'ocean': 'text-sky-650'
   };
   const themeTextColor = BADGE_COLOR_MAP[layout.colorTheme] || 'text-[#6366f1]';
+
+  const splitTimelineParentRef = useRef<HTMLDivElement>(null);
+  const magazineGridParentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const parent = splitTimelineParentRef.current;
+    if (!parent) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const container = parent.querySelector('[data-scrollable-feed="true"]') as HTMLDivElement;
+      if (!container) return;
+
+      const isScrollingDown = e.deltaY > 0;
+      const isScrollingUp = e.deltaY < 0;
+
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+
+      if (isScrollingDown && scrollTop < scrollHeight - clientHeight - 1) {
+        container.scrollTop += e.deltaY;
+        e.preventDefault();
+      } else if (isScrollingUp && scrollTop > 0.5) {
+        container.scrollTop += e.deltaY;
+        e.preventDefault();
+      }
+    };
+
+    parent.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      parent.removeEventListener('wheel', handleWheel);
+    };
+  }, [layout.designStyle, articles]);
+
+  useEffect(() => {
+    const parent = magazineGridParentRef.current;
+    if (!parent) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const container = parent.querySelector('[data-scrollable-feed="true"]') as HTMLDivElement;
+      if (!container) return;
+
+      const isScrollingDown = e.deltaY > 0;
+      const isScrollingUp = e.deltaY < 0;
+
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+
+      if (isScrollingDown && scrollTop < scrollHeight - clientHeight - 1) {
+        container.scrollTop += e.deltaY;
+        e.preventDefault();
+      } else if (isScrollingUp && scrollTop > 0.5) {
+        container.scrollTop += e.deltaY;
+        e.preventDefault();
+      }
+    };
+
+    parent.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      parent.removeEventListener('wheel', handleWheel);
+    };
+  }, [layout.designStyle, articles]);
 
   // Helper to retrieve description text exclusively from the body paragraphs
   const getHeroDescription = (article: any) => {
@@ -401,6 +465,186 @@ export default function CategoryPageExperience({
 
                       // Style 4: Classic Broadsheet / Wide Banner Hero (classic-broadsheet)
                       if (layout.designStyle === 'classic-broadsheet') {
+                        const broadsheetStyle = layout.broadsheetStyle || 'illustrated';
+
+                        if (broadsheetStyle === 'text-only') {
+                          return (
+                            <div
+                              className="flex flex-col cursor-pointer group mb-10 pb-10 border-b-3 border-zinc-800 select-none"
+                              onClick={() => setSelectedArticleId(heroArticle.id)}
+                            >
+                              {/* Classic double border banner */}
+                              <div className="border-t-4 border-t-double border-b-2 border-zinc-900 py-3 mb-6 flex justify-between items-center text-[10px] font-extrabold uppercase tracking-widest text-zinc-850">
+                                <span>{decodedCategory} SPECIAL REPORT</span>
+                                <span>{heroArticle.date}</span>
+                                <span>VOLUME IV</span>
+                              </div>
+
+                              <h2 className="font-editorial-title text-4xl sm:text-6xl font-black text-zinc-950 leading-none text-center tracking-tight group-hover:text-zinc-700 transition uppercase max-w-5xl mx-auto">
+                                {heroArticle.title}
+                              </h2>
+
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mt-8 border-t border-zinc-200 pt-6">
+                                {/* Column 1: Lead with Drop Cap + Scrollable Full Article */}
+                                <div className="md:col-span-8 text-sm text-zinc-650 leading-relaxed font-serif text-justify md:border-r md:border-zinc-200 md:pr-6">
+                                  <div className="max-h-[350px] overflow-y-auto pr-4 scrollbar-thin space-y-4">
+                                    {(Array.isArray(heroArticle.content) ? heroArticle.content : [heroArticle.content || heroArticle.excerpt || '']).map((paragraph: string, pIdx: number) => (
+                                      <p 
+                                        key={pIdx} 
+                                        className={pIdx === 0 ? "first-letter:text-6xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-zinc-955" : ""}
+                                      >
+                                        {paragraph}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Column 2: Stacked Editorial Board Quote & Briefing Info */}
+                                <div className="md:col-span-4 flex flex-col justify-between pl-2 space-y-6">
+                                  <div className="border-b border-zinc-200 pb-6 text-center">
+                                    <p className="font-serif italic text-base font-medium text-zinc-850 leading-relaxed">
+                                      "Independent journalism is the cornerstone of accountability and public interest."
+                                    </p>
+                                    <span className="block text-[9px] font-mono uppercase tracking-widest text-zinc-400 mt-2">— Editorial Board</span>
+                                  </div>
+
+                                  <div className="flex flex-col justify-between flex-1 py-1">
+                                    <div className="text-xs text-zinc-505 leading-relaxed text-justify">
+                                      <strong className="text-zinc-900 block mb-1">EDITORIAL BRIEFING</strong>
+                                      We present a rigorous investigation and coverage analysis regarding this category. Our team ensures that clarity, truth, and analytical rigor remain at the heart of all reporting.
+                                    </div>
+                                    <div className="mt-6 pt-4 border-t border-zinc-100 flex flex-col gap-1 text-[10px] text-zinc-550 font-sans">
+                                      <div>
+                                        <span className="text-zinc-455 font-medium">WRITTEN BY:</span> <span className="font-bold text-zinc-850">{heroArticle.author}</span>
+                                      </div>
+                                      <div className="flex justify-between mt-1 font-mono text-[9px] text-zinc-400">
+                                        <span>READ TIME: {heroArticle.readTime}</span>
+                                        <span>EST. 2026</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (broadsheetStyle === 'vintage-columns') {
+                          return (
+                            <div
+                              className="flex flex-col cursor-pointer group mb-10 pb-10 border-b-3 border-[#c1b5a5] select-none bg-[#faf8f5] border-2 border-[#e8dfd5] p-6 rounded shadow-xs relative"
+                              onClick={() => setSelectedArticleId(heroArticle.id)}
+                            >
+                              {/* Classic double border banner */}
+                              <div className="border-t-4 border-t-double border-b-2 border-zinc-900 py-3 mb-6 flex flex-col justify-center items-center">
+                                <span className="font-editorial-title font-black uppercase tracking-[0.25em] text-zinc-955 text-2xl md:text-3xl text-center block mb-1 font-serif animate-fade-in">
+                                  The Daily Chronicle
+                                </span>
+                                <span className="text-[9px] text-zinc-550 font-bold uppercase tracking-widest">
+                                  INDEPENDENT JOURNALISM &bull; TRUTH & INTEGRITY &bull; EST. 2026 &bull; {decodedCategory.toUpperCase()} EDITION
+                                </span>
+                              </div>
+
+                              <h2 className="font-editorial-title text-4xl sm:text-5.5xl font-black text-zinc-955 leading-none text-center tracking-tight group-hover:text-zinc-700 transition uppercase max-w-5xl mx-auto mb-6">
+                                {heroArticle.title}
+                              </h2>
+
+                              <div className="border-y border-[#e3d7c7] py-2 text-[10px] text-zinc-505 font-mono tracking-wider uppercase flex justify-between mb-4">
+                                <span>Reporter: {heroArticle.author}</span>
+                                <span>Date: {heroArticle.date}</span>
+                                <span>{heroArticle.readTime}</span>
+                              </div>
+
+                              {/* Multi-column layout with scrolling */}
+                              <div className="max-h-[380px] overflow-y-auto pr-4 scrollbar-thin md:columns-3 gap-8 pt-2 text-sm text-zinc-700 leading-relaxed font-serif text-justify">
+                                {(Array.isArray(heroArticle.content) ? heroArticle.content : [heroArticle.content || heroArticle.excerpt || '']).map((paragraph: string, pIdx: number) => (
+                                  <p 
+                                    key={pIdx} 
+                                    className={`mb-4 ${pIdx === 0 ? "first-letter:text-6xl first-letter:font-black first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-zinc-955" : ""}`}
+                                  >
+                                    {paragraph}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (broadsheetStyle === 'asymmetric') {
+                          return (
+                            <div
+                              className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10 pb-10 border-b-3 border-zinc-800 select-none cursor-pointer"
+                              onClick={() => setSelectedArticleId(heroArticle.id)}
+                            >
+                              {/* Left column (3/12): Highlights Index list */}
+                              <div className="lg:col-span-3 flex flex-col justify-between lg:border-r lg:border-zinc-205 pr-2 lg:pr-6">
+                                <div>
+                                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-900 border-b border-zinc-900 pb-2 mb-4">
+                                    Coverage Index
+                                  </h3>
+                                  <ul className="space-y-4 text-xs leading-snug font-sans text-zinc-600">
+                                    <li className="flex gap-2">
+                                      <span className="font-bold text-zinc-900">01.</span>
+                                      <span>Major policy reviews reviewed by legislative leaders.</span>
+                                    </li>
+                                    <li className="flex gap-2">
+                                      <span className="font-bold text-zinc-900">02.</span>
+                                      <span>Infrastructure spending package details authorized.</span>
+                                    </li>
+                                    <li className="flex gap-2">
+                                      <span className="font-bold text-zinc-900">03.</span>
+                                      <span>Long-term outcomes of urban housing initiatives.</span>
+                                    </li>
+                                  </ul>
+                                </div>
+                                <div className="mt-8 pt-4 border-t border-zinc-150 text-[9px] font-mono text-zinc-400">
+                                  <span>{decodedCategory.toUpperCase()} CHRONICLE BRIEFING</span>
+                                </div>
+                              </div>
+
+                              {/* Center column (6/12): Main Article with scrollable full text */}
+                              <div className="lg:col-span-6 group flex flex-col justify-between px-2 lg:border-r lg:border-zinc-205 lg:pr-6">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2 text-[9px] font-bold tracking-widest text-zinc-400 uppercase">
+                                    <span>Special Dispatch</span>
+                                    <span>&bull;</span>
+                                    <span>{heroArticle.date}</span>
+                                  </div>
+                                  <h2 className="font-editorial-title text-3xl sm:text-4.5xl font-extrabold text-zinc-950 leading-tight tracking-tight mb-4 group-hover:text-zinc-700 transition">
+                                    {heroArticle.title}
+                                  </h2>
+                                  <div className="max-h-[300px] overflow-y-auto pr-4 scrollbar-thin space-y-4 text-xs text-zinc-650 leading-relaxed font-serif text-justify">
+                                    {(Array.isArray(heroArticle.content) ? heroArticle.content : [heroArticle.content || heroArticle.excerpt || '']).map((paragraph: string, pIdx: number) => (
+                                      <p key={pIdx}>{paragraph}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-between items-center text-[10px] text-zinc-400 font-mono">
+                                  <span>BY {heroArticle.author.toUpperCase()}</span>
+                                  <span>{heroArticle.readTime}</span>
+                                </div>
+                              </div>
+
+                              {/* Right column (3/12): Highlight block / Archival quote card */}
+                              <div className="lg:col-span-3 bg-zinc-50 border border-zinc-200 p-5 rounded-xs flex flex-col justify-between">
+                                <div className="space-y-4">
+                                  <span className="text-[9px] font-extrabold uppercase tracking-widest text-zinc-400 block border-b border-zinc-200 pb-2">
+                                    Analyst Focus
+                                  </span>
+                                  <p className="text-xs text-zinc-655 font-serif italic leading-relaxed text-justify">
+                                    "The structural shifting of frameworks suggests a critical turning point in policy analytics."
+                                  </p>
+                                </div>
+                                <div className="mt-6 pt-4 border-t border-zinc-200">
+                                  <span className="text-[10px] font-bold text-zinc-800 block">Juliana Vance</span>
+                                  <span className="text-[9px] text-zinc-400 font-mono">Chief Policy Analyst</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // Default 'illustrated' (with 21:9 image and scrollable full text)
                         return (
                           <div
                             className="flex flex-col cursor-pointer group mb-10 pb-10 border-b-3 border-zinc-800"
@@ -422,12 +666,19 @@ export default function CategoryPageExperience({
                               {heroArticle.title}
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mt-6">
-                              <div className="md:col-span-8">
-                                <p className="text-sm text-zinc-600 leading-relaxed font-serif line-clamp-[10]">
-                                  {getHeroDescription(heroArticle)}
-                                </p>
+                              <div className="md:col-span-8 md:border-r md:border-zinc-200 md:pr-6">
+                                <div className="max-h-[250px] overflow-y-auto pr-4 scrollbar-thin space-y-4">
+                                  {(Array.isArray(heroArticle.content) ? heroArticle.content : [heroArticle.content || heroArticle.excerpt || '']).map((paragraph: string, pIdx: number) => (
+                                    <p 
+                                      key={pIdx} 
+                                      className="text-sm text-zinc-650 leading-relaxed font-serif text-justify first-letter:text-3xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:mt-1"
+                                    >
+                                      {paragraph}
+                                    </p>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="md:col-span-4 border-l border-zinc-200 pl-6 flex flex-col justify-between py-1">
+                              <div className="md:col-span-4 pl-2 flex flex-col justify-between py-1">
                                 <div className="text-xs text-zinc-505 leading-relaxed">
                                   <strong className="text-zinc-900 block mb-1">Editorial Desk</strong>
                                   This coverage is part of our ongoing commitment to independent journalism and deep-dive policy analytics.
@@ -772,77 +1023,84 @@ export default function CategoryPageExperience({
                               )}
                             </div>
                           )}
-
-                        </>
+</>
                       );
                     })()}
 
                     {/* 2. SPLIT TIMELINE: 7/12 timeline stream + 5/12 featured items */}
-                    {layout.designStyle === 'split-timeline' && (
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start border-t border-zinc-200 pt-6">
-                        <div className={layout.isVisibleSidebar ? "lg:col-span-7 space-y-4" : "lg:col-span-12 space-y-4"}>
-                          <div className="border-b border-zinc-200 pb-1.5">
-                            <h3 className={`text-xs font-bold uppercase tracking-wider ${themeTextColor} flex items-center gap-1.5`}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-650 animate-ping" />
-                              Category Live Feed
-                            </h3>
-                          </div>
-                          <div className="space-y-4">
-                            {leftListArticles.map((article) => (
-                              <div
-                                key={article.id}
-                                onClick={() => setSelectedArticleId(article.id)}
-                                className="group cursor-pointer border-l-2 border-zinc-200 hover:border-zinc-800 pl-4 py-2 hover:bg-zinc-50/50 rounded transition-all duration-200 flex gap-4 justify-between"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-[9.5px] text-red-600 font-bold tracking-widest uppercase block mb-0.5">UPDATE &bull; {article.readTime}</span>
-                                  <h4 className="font-editorial-title text-sm sm:text-base font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">{article.title}</h4>
-                                  <p className="text-xs text-zinc-500 mt-1 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-                                </div>
-                                <div className="w-16 h-12 bg-zinc-100 rounded flex-shrink-0 overflow-hidden relative">
-                                  <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {layout.isVisibleSidebar && (
-                          <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4 lg:sticky lg:top-6 lg:self-start">
+                    {layout.designStyle === 'split-timeline' && (() => {
+                      const remainingCategoryArticles = articlesWithDynamicStats.slice(1);
+                      const leftFeedArticles = remainingCategoryArticles.slice(0, 6);
+                      const rightSidebarArticles = remainingCategoryArticles.slice(6, 12);
+                      return (
+                        <div ref={splitTimelineParentRef} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start border-t border-zinc-200 pt-6">
+                          <div className={layout.isVisibleSidebar ? "lg:col-span-7 space-y-4" : "lg:col-span-12 space-y-4"}>
                             <div className="border-b border-zinc-200 pb-1.5">
-                              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Spotlight Cover</h3>
+                              <h3 className={`text-xs font-bold uppercase tracking-wider ${themeTextColor} flex items-center gap-1.5`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-650 animate-ping" />
+                                Category Live Feed
+                              </h3>
                             </div>
-                            <div className="space-y-6">
-                              {sidebarArticles.map((article) => (
+                            <div data-scrollable-feed="true" className="space-y-4 max-h-[680px] overflow-y-auto pr-3 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                              {leftFeedArticles.map((article) => (
                                 <div
                                   key={article.id}
                                   onClick={() => setSelectedArticleId(article.id)}
-                                  className="group cursor-pointer flex flex-col justify-between py-2 border-b border-zinc-200 last:border-0 first:pt-0"
+                                  className="group cursor-pointer border-l-2 border-zinc-200 hover:border-zinc-800 pl-4 py-2 hover:bg-zinc-50/50 rounded transition-all duration-200 flex gap-4 justify-between"
                                 >
-                                  <div>
-                                    <div className="overflow-hidden rounded aspect-[16/9] mb-3.5 relative bg-zinc-100">
-                                      <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-101 transition duration-300 absolute inset-0" />
-                                    </div>
-                                    <h3 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">{article.title}</h3>
-                                    <p className="text-xs text-zinc-650 mt-1.5 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-[9.5px] text-red-600 font-bold tracking-widest uppercase block mb-0.5">UPDATE &bull; {article.readTime}</span>
+                                    <h4 className="font-editorial-title text-sm sm:text-base font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">{article.title}</h4>
+                                    <p className="text-xs text-zinc-500 mt-1 line-clamp-2 leading-relaxed">{article.excerpt}</p>
                                   </div>
-                                  <span className="text-[10px] text-zinc-400 mt-3 font-sans block">{article.author} &bull; {article.readTime}</span>
+                                  <div className="w-16 h-12 bg-zinc-100 rounded flex-shrink-0 overflow-hidden relative">
+                                    <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
+
+                          {layout.isVisibleSidebar && (
+                            <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4 lg:sticky lg:top-6 lg:self-start">
+                              <div className="border-b border-zinc-200 pb-1.5">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Spotlight Cover</h3>
+                              </div>
+                              <div className="space-y-6">
+                                {rightSidebarArticles.map((article) => (
+                                  <div
+                                    key={article.id}
+                                    onClick={() => setSelectedArticleId(article.id)}
+                                    className="group cursor-pointer flex flex-col justify-between py-2 border-b border-zinc-200 last:border-0 first:pt-0"
+                                  >
+                                    <div>
+                                      <div className="overflow-hidden rounded aspect-[16/9] mb-3.5 relative bg-zinc-100">
+                                        <img src={article.image} alt={article.title} className="w-full h-full object-cover group-hover:scale-101 transition duration-300 absolute inset-0" />
+                                      </div>
+                                      <h3 className="font-editorial-title text-base font-bold text-zinc-900 group-hover:text-[#6366f1] transition leading-snug">{article.title}</h3>
+                                      <p className="text-xs text-zinc-650 mt-1.5 line-clamp-3 leading-relaxed">{article.excerpt}</p>
+                                    </div>
+                                    <span className="text-[10px] text-zinc-400 mt-3 font-sans block">{article.author} &bull; {article.readTime}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* 3. MAGAZINE GRID: Bold editorial split + curated stream */}
                     {layout.designStyle === 'magazine-grid' && (() => {
                       const remainingCategoryArticles = articlesWithDynamicStats.slice(1);
                       const heroCard = remainingCategoryArticles[0];
-                      const stackCards = remainingCategoryArticles.slice(1, 5);
-                      const streamCards = remainingCategoryArticles.slice(5);
+                      const stackCards = remainingCategoryArticles.slice(1, Math.min(5, remainingCategoryArticles.length));
+                      
+                      const showBottomCoverage = remainingCategoryArticles.length > 8;
+                      const streamCards = showBottomCoverage ? remainingCategoryArticles.slice(5, 8) : [];
+                      const leftFeedArticles = showBottomCoverage ? remainingCategoryArticles.slice(8) : remainingCategoryArticles.slice(5);
 
-                      return (
+return (
                         <div className="space-y-0 border-t-2 border-zinc-900 pt-8 animate-fade-in select-none">
                           {/* Section label */}
                           <div className="flex items-center justify-between mb-8">
@@ -851,40 +1109,68 @@ export default function CategoryPageExperience({
                           </div>
 
                           {/* Main split: big hero left + stacked right */}
-                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
-                            {/* Left: Big Hero */}
-                            {heroCard && (
-                              <div
-                                onClick={() => setSelectedArticleId(heroCard.id)}
-                                className="lg:col-span-7 group cursor-pointer relative overflow-hidden min-h-[420px] bg-zinc-900"
-                              >
-                                <img
-                                  src={heroCard.image}
-                                  alt={heroCard.title}
-                                  className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-80 group-hover:scale-103 transition-all duration-700"
-                                />
-                                {/* Dark gradient overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-900/40 to-transparent" />
-                                <div className="absolute bottom-0 left-0 right-0 p-7">
-                                  <span className={`inline-block text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded mb-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white`}>
-                                    {heroCard.category}
-                                  </span>
-                                  <h2 className="font-editorial-title text-xl sm:text-2xl lg:text-3xl font-black text-white leading-snug group-hover:text-zinc-100 transition mb-3">
-                                    {heroCard.title}
-                                  </h2>
-                                  <p className="text-sm text-white/75 leading-relaxed line-clamp-3 font-sans">
-                                    {heroCard.excerpt}
-                                  </p>
-                                  <div className="mt-4 flex items-center gap-3 text-[10px] text-white/55 font-mono uppercase tracking-wider">
-                                    <span>By {heroCard.author}</span>
-                                    <span>&bull;</span>
-                                    <span>{heroCard.readTime}</span>
-                                    <span>&bull;</span>
-                                    <span>{heroCard.date}</span>
+                          <div ref={magazineGridParentRef} className="grid grid-cols-1 lg:grid-cols-12 gap-0 border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
+                            {/* Left: Scrollable Hero + News feed */}
+                            <div className="lg:col-span-7 bg-[#fcfcfc] border-r border-zinc-250 flex flex-col">
+                              <div data-scrollable-feed="true" className="max-h-[580px] overflow-y-auto pr-3 [&::-webkit-scrollbar]:hidden space-y-6 p-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                {/* Big Featured Hero card at the top */}
+                                {heroCard && (
+                                  <div
+                                    onClick={() => setSelectedArticleId(heroCard.id)}
+                                    className="group cursor-pointer relative overflow-hidden min-h-[300px] rounded bg-zinc-900 shadow-sm"
+                                  >
+                                    <img
+                                      src={heroCard.image}
+                                      alt={heroCard.title}
+                                      className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-85 group-hover:scale-102 transition-all duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-955 via-zinc-900/40 to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                                      <span className="inline-block text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded mb-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white">
+                                        {heroCard.category}
+                                      </span>
+                                      <h2 className="font-editorial-title text-lg sm:text-xl lg:text-2xl font-black text-white leading-snug mb-2 group-hover:text-zinc-100 transition">
+                                        {heroCard.title}
+                                      </h2>
+                                      <p className="text-xs text-white/75 leading-relaxed line-clamp-2 font-sans">
+                                        {heroCard.excerpt}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* More news list below the hero */}
+                                <div className="space-y-4">
+                                  <div className="border-b border-zinc-200 pb-1.5 flex items-center justify-between">
+                                    <h4 className={`text-[9px] font-black uppercase tracking-widest ${themeTextColor}`}>Related Feeds</h4>
+                                    <span className="text-[8px] text-zinc-400 font-mono">SCROLL FOR MORE</span>
+                                  </div>
+                                  <div className="divide-y divide-zinc-150">
+                                    {leftFeedArticles.map((article) => (
+                                      <div
+                                        key={article.id}
+                                        onClick={() => setSelectedArticleId(article.id)}
+                                        className="group cursor-pointer flex gap-5 py-5 hover:bg-zinc-50/30 transition duration-200"
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-1.5 mb-1.5">
+                                            <span className={`text-[8.5px] font-black uppercase tracking-widest ${themeTextColor}`}>{article.category}</span>
+                                            <span className="text-zinc-300 text-[10px]">&bull;</span>
+                                            <span className="text-[8.5px] text-zinc-400">{article.date}</span>
+                                          </div>
+                                          <h4 className="font-editorial-title text-base font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">{article.title}</h4>
+                                          <p className="text-xs text-zinc-500 leading-relaxed mt-1.5 line-clamp-3 font-sans">{article.excerpt}</p>
+                                          <span className="text-[9px] text-zinc-400 font-mono mt-2 block">{article.author} &bull; {article.readTime}</span>
+                                        </div>
+                                        <div className="w-24 sm:w-28 h-20 sm:h-24 flex-shrink-0 overflow-hidden rounded relative bg-zinc-100 shadow-2xs">
+                                          <img src={article.image} alt={article.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-103 transition duration-500" />
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
                               </div>
-                            )}
+                            </div>
 
                             {/* Right: 2x2 stacked cards */}
                             <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 divide-y divide-zinc-100 bg-white">
@@ -914,7 +1200,7 @@ export default function CategoryPageExperience({
 
                           {/* Below: Full-width horizontal stream list */}
                           {streamCards.length > 0 && (
-                            <div className="mt-10 pt-8 border-t border-zinc-200">
+                            <div className="mt-6 pt-5 border-t border-zinc-200">
                               <div className="flex items-center gap-3 mb-6">
                                 <h4 className={`text-[10px] font-black uppercase tracking-widest ${themeTextColor}`}>More Coverage</h4>
                                 <div className="flex-1 h-px bg-zinc-200" />
@@ -949,7 +1235,224 @@ export default function CategoryPageExperience({
                       const leadArticle = remainingArticles[0];
                       const secondaryArticles = remainingArticles.slice(1, 4);
                       const bottomArticles = remainingArticles.slice(4);
+                      const broadsheetStyle = layout.broadsheetStyle || 'illustrated';
 
+                      if (broadsheetStyle === 'text-only') {
+                        return (
+                          <div className="space-y-12 pt-6 animate-fade-in select-none">
+                            {/* Elegant Thin Top Header */}
+                            <div className="border-y border-zinc-200 py-3 flex justify-between items-center text-xs tracking-[0.2em] font-medium text-zinc-550 uppercase">
+                              <span>{decodedCategory} Chronicle</span>
+                              <span>Est. 2026</span>
+                              <span>Volume IV</span>
+                            </div>
+
+                            {/* Split layout: Asymmetric 2-column structure with zero box containers */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                              {/* Left: Lead Article Column (col-span-8) - Strictly Text-Only Columns */}
+                              {leadArticle && (
+                                <div
+                                  onClick={() => setSelectedArticleId(leadArticle.id)}
+                                  className="lg:col-span-8 group cursor-pointer space-y-5"
+                                >
+                                  <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-[9px] font-black uppercase tracking-widest ${themeTextColor}`}>
+                                        Lead Feature
+                                      </span>
+                                      <span className="text-zinc-350 text-xs">&bull;</span>
+                                      <span className="text-[10px] text-zinc-400 font-mono tracking-wider">{leadArticle.date}</span>
+                                    </div>
+                                    <h2 className="font-editorial-title text-2.5xl sm:text-3.5xl lg:text-4xl font-extrabold text-zinc-955 leading-tight group-hover:text-zinc-700 transition">
+                                      {leadArticle.title}
+                                    </h2>
+                                  </div>
+
+                                  <div className="border-y border-zinc-150 py-2 text-[10px] text-zinc-450 font-mono tracking-wider uppercase flex justify-between">
+                                    <span>Reporter: {leadArticle.author}</span>
+                                    <span>{leadArticle.readTime}</span>
+                                  </div>
+
+                                  <div className="text-sm text-zinc-650 leading-relaxed font-serif text-justify columns-1 sm:columns-2 gap-6 pt-2">
+                                    <p className="first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:text-zinc-955">
+                                      {leadArticle.content?.[0] || leadArticle.excerpt}
+                                    </p>
+                                    {leadArticle.content?.[1] && (
+                                      <p className="mt-4">{leadArticle.content[1]}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Right: Secondary Articles Stack (col-span-4) - Text-Only */}
+                              <div className="lg:col-span-4 space-y-8 divide-y divide-zinc-200/85 lg:pl-6 lg:border-l lg:border-zinc-205">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-405 pb-1">
+                                  Category Context
+                                </h4>
+                                
+                                {secondaryArticles.map((article, index) => (
+                                  <div
+                                    key={article.id}
+                                    onClick={() => setSelectedArticleId(article.id)}
+                                    className={`group cursor-pointer pt-6 first:pt-0 ${index > 0 ? 'border-t border-zinc-100' : ''} space-y-3`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-405">0{index + 1}</span>
+                                      <span className="text-zinc-350 text-xs">&bull;</span>
+                                      <span className="text-[9px] font-mono text-zinc-450 tracking-wider">{article.date}</span>
+                                    </div>
+                                    <h3 className="font-editorial-title text-base sm:text-lg font-bold text-zinc-955 leading-snug group-hover:text-zinc-700 transition">
+                                      {article.title}
+                                    </h3>
+                                    <p className="text-xs text-zinc-550 leading-relaxed line-clamp-4 font-sans text-justify">
+                                      {article.excerpt}
+                                    </p>
+                                    <div className="flex justify-between items-center text-[9px] text-zinc-400 font-mono tracking-wider pt-1 border-t border-zinc-100">
+                                      <span>BY {article.author.toUpperCase()}</span>
+                                      <span>{article.readTime}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Divider Line */}
+                                            {/* Bottom Row: In Brief Horizontal Stream */}
+                            {bottomArticles.length > 0 && (
+                              <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                  <h3 className={`text-[10px] font-black uppercase tracking-[0.25em] ${themeTextColor}`}>
+                                    Editorial Dispatch
+                                  </h3>
+                                  <div className="flex-1 h-px bg-zinc-150" />
+                                </div>
+
+                                <div className="flex gap-6 overflow-x-auto pb-6 pt-2 scrollbar-thin select-none">
+                                  {bottomArticles.map((article, idx) => (
+                                    <div
+                                      key={article.id}
+                                      onClick={() => setSelectedArticleId(article.id)}
+                                      className="min-w-[280px] sm:min-w-[320px] max-w-[320px] flex-shrink-0 group cursor-pointer flex flex-col justify-between border border-zinc-150 p-4 rounded bg-white hover:bg-zinc-50/50 hover:border-zinc-350 hover:shadow-xs transition duration-300"
+                                    >
+                                      <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-[9px] text-zinc-400 font-mono tracking-wider">
+                                          <span>REPORT {idx + 1}</span>
+                                          <span>{article.readTime}</span>
+                                        </div>
+                                        <h4 className="font-editorial-title text-base font-bold text-zinc-955 leading-snug group-hover:text-zinc-700 transition">
+                                          {article.title}
+                                        </h4>
+                                        <p className="text-xs text-zinc-505 line-clamp-4 leading-relaxed font-sans text-justify">
+                                          {article.excerpt}
+                                        </p>
+                                      </div>
+                                      <div className="mt-4 pt-2 border-t border-zinc-100 flex items-center justify-between text-[9px] text-zinc-400 font-mono">
+                                        <span>By {article.author}</span>
+                                        <span>{article.date}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (broadsheetStyle === 'asymmetric') {
+                        return (
+                          <div className="space-y-12 pt-6 animate-fade-in select-none">
+                            {/* Elegant Thin Top Header */}
+                            <div className="border-y border-zinc-200 py-3 flex justify-between items-center text-xs tracking-[0.2em] font-medium text-zinc-505 uppercase">
+                              <span>{decodedCategory} Briefings</span>
+                              <span>Est. 2026</span>
+                              <span>Volume IV</span>
+                            </div>
+
+                            {/* Asymmetrical 3-Column Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                              {/* Left: Category Feed Index (col-span-3) */}
+                              <div className="lg:col-span-3 space-y-6 lg:border-r lg:border-zinc-200 pr-2 lg:pr-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 border-b border-zinc-900 pb-2">
+                                  Brief updates
+                                </h4>
+                                <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 scrollbar-thin">
+                                  {bottomArticles.map((article, index) => (
+                                    <div 
+                                      key={article.id}
+                                      onClick={() => setSelectedArticleId(article.id)}
+                                      className="group cursor-pointer space-y-1.5 border-b border-zinc-100 pb-3 last:border-0"
+                                    >
+                                      <div className="flex justify-between items-center text-[8px] text-zinc-400 font-mono">
+                                        <span>0{index + 1}</span>
+                                        <span>{article.date}</span>
+                                      </div>
+                                      <h5 className="font-editorial-title text-xs font-bold text-zinc-900 leading-snug group-hover:text-zinc-655 transition">
+                                        {article.title}
+                                      </h5>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Middle: Primary Feature Story (col-span-6) */}
+                              {leadArticle && (
+                                <div 
+                                  onClick={() => setSelectedArticleId(leadArticle.id)}
+                                  className="lg:col-span-6 group cursor-pointer space-y-4 flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1.5 text-[9px] font-bold tracking-widest text-zinc-400 uppercase">
+                                      <span>Dispatch Feature</span>
+                                      <span>&bull;</span>
+                                      <span>{leadArticle.date}</span>
+                                    </div>
+                                    <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-955 leading-tight group-hover:text-zinc-700 transition">
+                                      {leadArticle.title}
+                                    </h2>
+                                    <div className="text-xs text-zinc-655 leading-relaxed font-serif text-justify lg:columns-2 gap-5 pt-3">
+                                      <p className="first-letter:text-4xl first-letter:font-bold first-letter:float-left first-letter:mr-2">
+                                        {leadArticle.content?.[0] || leadArticle.excerpt}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="pt-4 border-t border-zinc-100 flex justify-between items-center text-[10px] text-zinc-400 font-mono">
+                                    <span>BY {leadArticle.author.toUpperCase()}</span>
+                                    <span>{leadArticle.readTime}</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Right: Asymmetric highlights (col-span-3) */}
+                              <div className="lg:col-span-3 space-y-6 lg:border-l lg:border-zinc-200 pl-2 lg:pl-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 border-b border-zinc-900 pb-2">
+                                  Editorial Spotlight
+                                </h4>
+                                {secondaryArticles.slice(0, 2).map((article, index) => (
+                                  <div
+                                    key={article.id}
+                                    onClick={() => setSelectedArticleId(article.id)}
+                                    className="group cursor-pointer space-y-2 border-b border-zinc-100 pb-4 last:border-0"
+                                  >
+                                    <h4 className="font-editorial-title text-sm font-bold text-zinc-955 leading-snug group-hover:text-zinc-650 transition">
+                                      {article.title}
+                                    </h4>
+                                    <p className="text-[11px] text-zinc-505 line-clamp-3 leading-relaxed font-serif">
+                                      {article.excerpt}
+                                    </p>
+                                    <div className="flex justify-between items-center text-[8.5px] text-zinc-400 font-mono tracking-wider">
+                                      <span>{article.author}</span>
+                                      <span>{article.readTime}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Default 'illustrated' (with 21:9 image)
                       return (
                         <div className="space-y-12 pt-6 animate-fade-in select-none">
                           {/* Elegant Thin Top Header */}
@@ -995,7 +1498,7 @@ export default function CategoryPageExperience({
                                     <p className="text-[10px] text-zinc-500 mt-1 font-mono">{leadArticle.readTime}</p>
                                   </div>
                                   <div className="sm:col-span-8">
-                                    <p className="text-sm text-zinc-650 leading-relaxed font-serif first-letter:text-3xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:mt-1">
+                                    <p className="text-sm text-zinc-655 leading-relaxed font-serif first-letter:text-3xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:mt-1">
                                       {leadArticle.content?.[0] || leadArticle.excerpt}
                                     </p>
                                   </div>
@@ -1036,9 +1539,7 @@ export default function CategoryPageExperience({
                           </div>
 
                           {/* Divider Line */}
-                          <div className="h-px bg-zinc-200" />
-
-                          {/* Bottom Row: In Brief Horizontal Stream */}
+                                        {/* Bottom Row: In Brief Horizontal Stream */}
                           {bottomArticles.length > 0 && (
                             <div className="space-y-6">
                               <div className="flex items-center gap-4">
@@ -1048,22 +1549,22 @@ export default function CategoryPageExperience({
                                 <div className="flex-1 h-px bg-zinc-150" />
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
-                                {bottomArticles.slice(0, 3).map((article, idx) => (
+                              <div className="flex gap-6 overflow-x-auto pb-6 pt-2 scrollbar-thin select-none">
+                                {bottomArticles.map((article, idx) => (
                                   <div
                                     key={article.id}
                                     onClick={() => setSelectedArticleId(article.id)}
-                                    className={`group cursor-pointer pt-4 md:pt-0 ${idx > 0 ? 'md:pl-6' : ''} flex flex-col justify-between`}
+                                    className="min-w-[280px] sm:min-w-[320px] max-w-[320px] flex-shrink-0 group cursor-pointer flex flex-col justify-between border border-zinc-150 p-4 rounded bg-white hover:bg-zinc-50/50 hover:border-zinc-350 hover:shadow-xs transition duration-300"
                                   >
                                     <div className="space-y-3">
                                       <div className="flex items-center justify-between text-[9px] text-zinc-400 font-mono tracking-wider">
                                         <span>REPORT {idx + 1}</span>
                                         <span>{article.readTime}</span>
                                       </div>
-                                      <h4 className="font-editorial-title text-base font-bold text-zinc-950 leading-snug group-hover:text-zinc-650 transition">
+                                      <h4 className="font-editorial-title text-base font-bold text-zinc-955 leading-snug group-hover:text-zinc-650 transition">
                                         {article.title}
                                       </h4>
-                                      <p className="text-xs text-zinc-500 line-clamp-3 leading-relaxed font-sans">
+                                      <p className="text-xs text-zinc-500 line-clamp-4 leading-relaxed font-sans">
                                         {article.excerpt}
                                       </p>
                                     </div>

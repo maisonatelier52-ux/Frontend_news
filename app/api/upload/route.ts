@@ -27,7 +27,12 @@ export async function POST(request: Request) {
     const overwrite = formData.get('overwrite') === 'true'
 
     // Check if file already exists
-    const fileExists = fs.existsSync(filePath)
+    let fileExists = false
+    try {
+      fileExists = fs.existsSync(filePath)
+    } catch (e) {
+      fileExists = false
+    }
 
     if (fileExists && !overwrite) {
       return NextResponse.json({ 
@@ -41,9 +46,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ exists: false })
     }
 
-    // Save the file to public/images
+    // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(filePath, buffer)
+
+    try {
+      // Ensure target directory exists
+      if (!fs.existsSync(publicTargetDir)) {
+        fs.mkdirSync(publicTargetDir, { recursive: true })
+      }
+
+      // Save the file to public/images
+      fs.writeFileSync(filePath, buffer)
+    } catch (writeError: any) {
+      console.warn('Writing to local filesystem failed, falling back to base64 data URL:', writeError.message);
+      
+      // Convert buffer to base64 Data URL fallback
+      const base64Data = buffer.toString('base64');
+      const mimeType = file.type || 'image/png';
+      const fallbackUrl = `data:${mimeType};base64,${base64Data}`;
+      
+      return NextResponse.json({ 
+        exists: false, 
+        url: fallbackUrl, 
+        message: 'Image uploaded successfully (base64 fallback due to read-only filesystem).' 
+      })
+    }
 
     return NextResponse.json({ 
       exists: false, 
