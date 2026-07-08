@@ -68,6 +68,9 @@ export default function CategoryPageExperience({
   // Newsletter signup state
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterError, setNewsletterError] = useState("");
+  const [newsletterMessage, setNewsletterMessage] = useState("");
 
   const [ads, setAds] = useState<any[]>([]);
   const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
@@ -177,12 +180,31 @@ export default function CategoryPageExperience({
   };
 
   // Newsletter Submit
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newsletterEmail.trim()) return;
-    setNewsletterSubmitted(true);
-    setNewsletterEmail("");
-    setTimeout(() => setNewsletterSubmitted(false), 5000);
+    if (!newsletterEmail.trim() || newsletterLoading) return;
+    setNewsletterLoading(true);
+    setNewsletterError("");
+    setNewsletterMessage("");
+    const [res] = await Promise.all([
+      fetch("/api/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail.trim() }),
+      }),
+      new Promise((r) => setTimeout(r, 2000)),
+    ]);
+    const data = await (res as Response).json();
+    setNewsletterLoading(false);
+    if ((res as Response).ok || data.success) {
+      setNewsletterMessage(data.message || "Subscribed successfully! Welcome.");
+      setNewsletterEmail("");
+      setNewsletterSubmitted(true);
+      setTimeout(() => { setNewsletterSubmitted(false); setNewsletterMessage(""); }, 6000);
+    } else {
+      setNewsletterError(data.error || "Failed to subscribe. Please try again.");
+      setTimeout(() => setNewsletterError(""), 5000);
+    }
   };
 
   // Navigation router push handler
@@ -1856,20 +1878,32 @@ return (
               placeholder="Enter your email address"
               value={newsletterEmail}
               onChange={(e) => setNewsletterEmail(e.target.value)}
-              className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500"
+              disabled={newsletterLoading}
+              className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500 disabled:opacity-60"
               required
             />
             <button
               type="submit"
-              className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0"
+              disabled={newsletterLoading}
+              className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0 disabled:opacity-60 flex items-center justify-center gap-2 min-w-[90px]"
             >
-              Sign Up
+              {newsletterLoading ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                  <span>Saving...</span>
+                </>
+              ) : "Sign Up"}
             </button>
           </form>
 
-          {newsletterSubmitted && (
-            <p className="text-xs font-semibold text-emerald-650 animate-pulse">
-              ✓ Subscribed successfully! Welcome to the Dom.
+          {newsletterSubmitted && newsletterMessage && (
+            <p className="text-xs font-semibold text-emerald-600">
+              ✓ {newsletterMessage}
+            </p>
+          )}
+          {newsletterError && (
+            <p className="text-xs font-semibold text-red-500">
+              ✕ {newsletterError}
             </p>
           )}
         </div>

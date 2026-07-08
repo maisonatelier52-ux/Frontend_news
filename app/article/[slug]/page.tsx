@@ -33,6 +33,16 @@ export default function ArticleDetailPage() {
   const [showAuthorPanel, setShowAuthorPanel] = useState(false);
   const [authorArticles, setAuthorArticles] = useState<any[]>([]);
 
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterEmail2, setNewsletterEmail2] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterLoading2, setNewsletterLoading2] = useState(false);
+  const [newsletterMsg, setNewsletterMsg] = useState("");
+  const [newsletterMsg2, setNewsletterMsg2] = useState("");
+  const [newsletterErr, setNewsletterErr] = useState("");
+  const [newsletterErr2, setNewsletterErr2] = useState("");
+
   // Dynamic Detail Page Layout settings
   const [detailLayout, setDetailLayout] = useState<any>({
     designStyle: "classic-sidebar",
@@ -1112,19 +1122,40 @@ export default function ArticleDetailPage() {
                   <p className={`text-[11px] leading-relaxed ${designStyle === "minimal-focus" ? "text-zinc-605" : "text-zinc-400"}`}>
                     Join our newsletter list to receive investigative reports directly in your inbox.
                   </p>
-                  <form onSubmit={(e) => e.preventDefault()} className="space-y-2.5">
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!newsletterEmail.trim() || newsletterLoading) return;
+                      setNewsletterLoading(true); setNewsletterMsg(""); setNewsletterErr("");
+                      const [res] = await Promise.all([
+                        fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail.trim() }) }),
+                        new Promise((r) => setTimeout(r, 2000)),
+                      ]);
+                      const data = await (res as Response).json();
+                      setNewsletterLoading(false);
+                      if ((res as Response).ok || data.success) { setNewsletterMsg(data.message || "Subscribed successfully!"); setNewsletterEmail(""); setTimeout(() => setNewsletterMsg(""), 6000); }
+                      else { setNewsletterErr(data.error || "Failed to subscribe."); setTimeout(() => setNewsletterErr(""), 5000); }
+                    }}
+                    className="space-y-2.5"
+                  >
                     <input
                       type="email"
                       placeholder="name@example.com"
-                      className={`text-xs rounded p-2.5 w-full ${designStyle === "minimal-focus" ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-zinc-650 focus:outline-none" : "bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"}`}
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      disabled={newsletterLoading}
+                      className={`text-xs rounded p-2.5 w-full disabled:opacity-60 ${designStyle === "minimal-focus" ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-zinc-650 focus:outline-none" : "bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"}`}
                       required
                     />
                     <button
                       type="submit"
-                      className={`w-full text-xs font-bold py-2 rounded transition cursor-pointer ${designStyle === "minimal-focus" ? "bg-zinc-900 hover:bg-zinc-800 text-white" : "bg-white hover:bg-zinc-105 text-black"}`}
+                      disabled={newsletterLoading}
+                      className={`w-full text-xs font-bold py-2 rounded transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 ${designStyle === "minimal-focus" ? "bg-zinc-900 hover:bg-zinc-800 text-white" : "bg-white hover:bg-zinc-105 text-black"}`}
                     >
-                      Subscribe
+                      {newsletterLoading ? (<><span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
                     </button>
+                    {newsletterMsg && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg}</p>}
+                    {newsletterErr && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr}</p>}
                   </form>
                 </div>
                 {detailPageBelowSubscriptionAd && (
@@ -1190,19 +1221,40 @@ export default function ArticleDetailPage() {
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
                   Join our newsletter list to receive investigative reports directly in your inbox.
                 </p>
-                <form onSubmit={(e) => e.preventDefault()} className="space-y-2.5">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newsletterEmail2.trim() || newsletterLoading2) return;
+                    setNewsletterLoading2(true); setNewsletterMsg2(""); setNewsletterErr2("");
+                    const [res] = await Promise.all([
+                      fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail2.trim() }) }),
+                      new Promise((r) => setTimeout(r, 2000)),
+                    ]);
+                    const data = await (res as Response).json();
+                    setNewsletterLoading2(false);
+                    if ((res as Response).ok || data.success) { setNewsletterMsg2(data.message || "Subscribed successfully!"); setNewsletterEmail2(""); setTimeout(() => setNewsletterMsg2(""), 6000); }
+                    else { setNewsletterErr2(data.error || "Failed to subscribe."); setTimeout(() => setNewsletterErr2(""), 5000); }
+                  }}
+                  className="space-y-2.5"
+                >
                   <input
                     type="email"
                     placeholder="name@example.com"
-                    className="bg-zinc-800 border border-zinc-700 text-xs rounded p-2.5 w-full text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                    value={newsletterEmail2}
+                    onChange={(e) => setNewsletterEmail2(e.target.value)}
+                    disabled={newsletterLoading2}
+                    className="bg-zinc-800 border border-zinc-700 text-xs rounded p-2.5 w-full text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-60"
                     required
                   />
                   <button
                     type="submit"
-                    className="w-full bg-white text-black text-xs font-bold py-2 rounded hover:bg-zinc-100 transition cursor-pointer"
+                    disabled={newsletterLoading2}
+                    className="w-full bg-white text-black text-xs font-bold py-2 rounded hover:bg-zinc-100 transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    Subscribe
+                    {newsletterLoading2 ? (<><span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
                   </button>
+                  {newsletterMsg2 && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg2}</p>}
+                  {newsletterErr2 && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr2}</p>}
                 </form>
               </div>
 
