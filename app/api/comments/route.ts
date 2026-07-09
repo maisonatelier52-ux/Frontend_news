@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Your comment has been submitted and is awaiting moderation.',
+      message: 'Thank you for sharing your valuable perspective. To maintain a thoughtful and respectful community, your comment has been submitted for review and will appear once approved.',
       comment: newComment
     }, { status: 201 });
   } catch (error: any) {

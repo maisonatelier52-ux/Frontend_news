@@ -1,136 +1,243 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import StatusBadge from '../../components/StatusBadge'
+import { useState, useEffect } from 'react';
+import StatusBadge from '../../components/StatusBadge';
 
-const initialComments = [
-  { id: 1, article: 'US Senate Passes Major Infrastructure Bill', author: 'John Smith', email: 'john@example.com', comment: 'Great coverage! This bill will really help our state. The infrastructure has been neglected for decades.', date: 'Jun 29, 2026 · 10:45 AM', status: 'pending' },
-  { id: 2, article: 'Tech Giants Face New Antitrust Scrutiny', author: 'Maria Garcia', email: 'maria@example.com', comment: 'About time! These companies have too much power. The EU should be doing this too.', date: 'Jun 29, 2026 · 9:30 AM', status: 'approved' },
-  { id: 3, article: 'Global Markets Rally on Fed Rate Decision', author: 'Robert Lee', email: 'r.lee@example.com', comment: 'Buy the dip! This is the best investment advice I can give. Visit my website for more tips!', date: 'Jun 29, 2026 · 8:15 AM', status: 'spam' },
-  { id: 4, article: 'Climate Summit: Nations Agree on New Targets', author: 'Emma Watson', email: 'emma@example.com', comment: 'These targets are not ambitious enough. We need real action, not just pledges on paper.', date: 'Jun 28, 2026 · 4:20 PM', status: 'pending' },
-  { id: 5, article: 'Sports Roundup: World Cup Qualifiers', author: 'Carlos Mendez', email: 'carlos@example.com', comment: 'Amazing match! The team played brilliantly in the second half. Can\'t wait for the finals.', date: 'Jun 28, 2026 · 2:10 PM', status: 'approved' },
-  { id: 6, article: 'Supreme Court Rules on Privacy Case', author: 'Jane Doe', email: 'jane@example.com', comment: 'This ruling sets a dangerous precedent for personal data rights. Very concerning decision.', date: 'Jun 27, 2026 · 11:30 AM', status: 'pending' },
-  { id: 7, article: 'AI Startup Raises $500M in Series C', author: 'Spambot3000', email: 'spam@fake.com', comment: 'Click here to earn money fast!!! FREE BITCOIN!!! Visit www.spam.com', date: 'Jun 27, 2026 · 9:00 AM', status: 'spam' },
-]
+interface CommentItem {
+  _id: string;
+  articleId: string;
+  articleTitle: string;
+  name: string;
+  email: string;
+  text: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+const TAB_LABELS: Record<string, string> = {
+  all: 'All',
+  pending: 'Pending',
+  approved: 'Accepted',
+  rejected: 'Rejected',
+};
 
 export default function CommentsPage() {
-  const [comments, setComments] = useState(initialComments)
-  const [filter, setFilter] = useState('all')
-  const [search, setSearch] = useState('')
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState<Record<string, boolean>>({});
+
+  const loadComments = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/comments');
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadComments();
+  }, []);
+
+  const handleStatusChange = async (id: string, status: 'approved' | 'rejected') => {
+    setBusy((prev) => ({ ...prev, [id]: true }));
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (res.ok) {
+        setComments((prev) =>
+          prev.map((c) => (c._id === id ? { ...c, status } : c))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    } finally {
+      setBusy((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this comment permanently?')) return;
+    setBusy((prev) => ({ ...prev, [`del_${id}`]: true }));
+    try {
+      const res = await fetch(`/api/comments?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c._id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete comment:', err);
+    } finally {
+      setBusy((prev) => ({ ...prev, [`del_${id}`]: false }));
+    }
+  };
 
   const filtered = comments.filter((c) => {
-    const matchFilter = filter === 'all' || c.status === filter
-    const matchSearch = c.comment.toLowerCase().includes(search.toLowerCase()) || c.author.toLowerCase().includes(search.toLowerCase()) || c.article.toLowerCase().includes(search.toLowerCase())
-    return matchFilter && matchSearch
-  })
-
-  function setStatus(id: number, status: string) {
-    setComments((prev) => prev.map((c) => c.id === id ? { ...c, status } : c))
-  }
-
-  function deleteComment(id: number) {
-    setComments((prev) => prev.filter((c) => c.id !== id))
-  }
+    const matchFilter = filter === 'all' || c.status === filter;
+    const matchSearch =
+      c.text.toLowerCase().includes(search.toLowerCase()) ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.articleTitle.toLowerCase().includes(search.toLowerCase());
+    return matchFilter && matchSearch;
+  });
 
   const counts = {
     all: comments.length,
     pending: comments.filter((c) => c.status === 'pending').length,
     approved: comments.filter((c) => c.status === 'approved').length,
-    spam: comments.filter((c) => c.status === 'spam').length,
+    rejected: comments.filter((c) => c.status === 'rejected').length,
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <div className="w-9 h-9 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+        <p className="text-xs text-zinc-500 font-semibold tracking-wide font-mono">Loading comments...</p>
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111', margin: 0 }}>Comments Moderation</h1>
-        <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{counts.pending} comments awaiting review</p>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Title */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 leading-none">Comments Moderation</h1>
+        <p className="text-sm text-zinc-500 mt-2 font-medium">
+          {counts.pending} comments awaiting review
+        </p>
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-        {(['all', 'pending', 'approved', 'spam'] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              padding: '7px 14px', fontSize: 13, border: '1px solid', borderRadius: 6, cursor: 'pointer',
-              background: filter === f ? '#111' : '#fff',
-              color: filter === f ? '#fff' : '#374151',
-              borderColor: filter === f ? '#111' : '#e4e4e7',
-              fontWeight: filter === f ? 600 : 400,
-              textTransform: 'capitalize',
-            }}
-          >
-            {f} <span style={{ fontSize: 11, opacity: 0.7 }}>({counts[f]})</span>
-          </button>
-        ))}
+      {/* Filter tabs and search */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex gap-2 w-full sm:w-auto">
+          {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 text-xs font-semibold border rounded transition duration-200 cursor-pointer ${
+                filter === f
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-650 border-zinc-200 hover:bg-zinc-50'
+              }`}
+            >
+              {TAB_LABELS[f]} <span className="opacity-60 font-mono">({counts[f]})</span>
+            </button>
+          ))}
+        </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e4e4e7', borderRadius: 6, padding: '6px 12px' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div className="relative w-full sm:w-64">
           <input
-            id="comments-search"
             type="text"
             placeholder="Search comments..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ border: 'none', background: 'transparent', fontSize: 13, outline: 'none', width: 180 }}
+            className="w-full border border-zinc-200 rounded px-3 py-1.5 pl-8 text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-500 bg-white"
           />
+          <svg
+            className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-zinc-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
         </div>
       </div>
 
-      {/* Comments list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Comments List */}
+      <div className="space-y-4">
         {filtered.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 8, padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+          <div className="bg-white border border-zinc-200 rounded-lg p-12 text-center text-zinc-400 italic text-xs">
             No comments found.
           </div>
         ) : (
           filtered.map((comment) => (
             <div
-              key={comment.id}
-              style={{
-                background: '#fff',
-                border: `1px solid ${comment.status === 'spam' ? '#fecaca' : comment.status === 'pending' ? '#fde68a' : '#e4e4e7'}`,
-                borderLeft: `3px solid ${comment.status === 'spam' ? '#dc2626' : comment.status === 'pending' ? '#d97706' : '#16a34a'}`,
-                borderRadius: 8,
-                padding: 18,
-              }}
+              key={comment._id}
+              className={`bg-white border border-l-4 rounded-lg p-5 transition hover:shadow-2xs ${
+                comment.status === 'rejected'
+                  ? 'border-zinc-200 border-l-red-500'
+                  : comment.status === 'pending'
+                  ? 'border-zinc-200 border-l-amber-500'
+                  : 'border-zinc-200 border-l-emerald-500'
+              }`}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f4f4f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#374151', flexShrink: 0 }}>
-                    {comment.author.charAt(0)}
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex gap-3 items-center">
+                  <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-700">
+                    {comment.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{comment.author}</div>
-                    <div style={{ fontSize: 11, color: '#9ca3af' }}>{comment.email} · {comment.date}</div>
+                    <h3 className="text-xs font-bold text-zinc-800">{comment.name}</h3>
+                    <p className="text-[10px] text-zinc-400 font-medium">
+                      {comment.email} ·{' '}
+                      {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
                   </div>
                 </div>
-                <StatusBadge status={comment.status as 'approved' | 'pending' | 'spam'} />
+                <StatusBadge status={comment.status} />
               </div>
 
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>
-                On: <span style={{ fontStyle: 'italic', color: '#374151' }}>{comment.article}</span>
+              <div className="text-[10px] text-zinc-500 font-medium mb-2 font-mono">
+                On Article:{' '}
+                <span className="font-sans italic text-zinc-700 font-semibold">
+                  {comment.articleTitle}
+                </span>
               </div>
 
-              <p style={{ fontSize: 14, color: '#111', margin: '0 0 14px', lineHeight: 1.6 }}>{comment.comment}</p>
+              <p className="text-xs text-zinc-800 leading-relaxed mb-4 bg-zinc-50/50 p-3 rounded border border-zinc-100 font-sans">
+                {comment.text}
+              </p>
 
-              <div style={{ display: 'flex', gap: 8 }}>
+              {/* Actions */}
+              <div className="flex items-center gap-2">
                 {comment.status !== 'approved' && (
-                  <button onClick={() => setStatus(comment.id, 'approved')}
-                    style={{ padding: '5px 12px', fontSize: 12, background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', borderRadius: 5, cursor: 'pointer', fontWeight: 500 }}>
-                    ✓ Approve
+                  <button
+                    onClick={() => handleStatusChange(comment._id, 'approved')}
+                    disabled={!!busy[comment._id]}
+                    className="px-3 py-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100/70 transition rounded cursor-pointer disabled:opacity-50"
+                  >
+                    {busy[comment._id] ? 'Accepting...' : 'Accept'}
                   </button>
                 )}
-                {comment.status !== 'spam' && (
-                  <button onClick={() => setStatus(comment.id, 'spam')}
-                    style={{ padding: '5px 12px', fontSize: 12, background: '#fff', color: '#d97706', border: '1px solid #fde68a', borderRadius: 5, cursor: 'pointer' }}>
-                    Mark as Spam
+
+                {comment.status !== 'rejected' && (
+                  <button
+                    onClick={() => handleStatusChange(comment._id, 'rejected')}
+                    disabled={!!busy[comment._id]}
+                    className="px-3 py-1 text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-250 hover:bg-amber-100/70 transition rounded cursor-pointer disabled:opacity-50"
+                  >
+                    {busy[comment._id] ? 'Rejecting...' : 'Reject'}
                   </button>
                 )}
-                <button onClick={() => deleteComment(comment.id)}
-                  style={{ padding: '5px 12px', fontSize: 12, background: '#fff', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 5, cursor: 'pointer' }}>
-                  Delete
+
+                <button
+                  onClick={() => handleDeleteComment(comment._id)}
+                  disabled={!!busy[`del_${comment._id}`]}
+                  className="px-3 py-1 text-[11px] font-semibold bg-red-50 text-red-650 border border-red-200 hover:bg-red-100/75 transition rounded cursor-pointer ml-auto disabled:opacity-50"
+                >
+                  {busy[`del_${comment._id}`] ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>
@@ -138,5 +245,5 @@ export default function CommentsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

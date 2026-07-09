@@ -231,6 +231,41 @@ async function seedDatabase() {
       await CategoryLayoutModel.create(defaultCategoryLayout);
       console.log('Seeded default category layout successfully!');
     }
+
+    // 6. Seed Comments if empty
+    const { CommentModel } = await import('@/models/Comment');
+    const commentCount = await CommentModel.countDocuments();
+    if (commentCount === 0) {
+      const articles = await NewsModel.find();
+      const initialComments = [];
+
+      const politicsArticle = articles.find((a) => a.category === 'Politics');
+      if (politicsArticle) {
+        initialComments.push(
+          { articleId: politicsArticle._id.toString(), articleTitle: politicsArticle.title, name: 'Arthur Pendelton, D.C.', email: 'arthur@example.com', text: 'This bipartisan agreement is long overdue. Upgrading rural grids is critical for agricultural tech integrations.', status: 'approved' },
+          { articleId: politicsArticle._id.toString(), articleTitle: politicsArticle.title, name: 'Sophia Martinez, Chicago', email: 'sophia@example.com', text: 'Excellent news, but I hope a significant chunk goes toward upgrading locks and dams in the Midwest.', status: 'approved' }
+        );
+      }
+
+      const techArticle = articles.find((a) => a.category === 'Technology');
+      if (techArticle) {
+        initialComments.push(
+          { articleId: techArticle._id.toString(), articleTitle: techArticle.title, name: 'Gary Reynolds, NY', email: 'gary@example.com', text: 'The Fed is playing it safe, which is wise. Inflation is cooling, but retail costs are still quite high.', status: 'approved' }
+        );
+      }
+
+      const businessArticle = articles.find((a) => a.category === 'Business');
+      if (businessArticle) {
+        initialComments.push(
+          { articleId: businessArticle._id.toString(), articleTitle: businessArticle.title, name: 'Dev_Architect', email: 'dev@example.com', text: 'Enterprise custom models are a game changer. We shifted to a local 7B model and saw a massive drop in latency and cost.', status: 'approved' }
+        );
+      }
+
+      if (initialComments.length > 0) {
+        await CommentModel.insertMany(initialComments);
+        console.log('Seeded comments successfully!');
+      }
+    }
   } catch (err) {
     console.error('Database seeding failed:', err);
   }

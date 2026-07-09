@@ -1,4 +1,4 @@
-type StatusType = 'published' | 'draft' | 'scheduled' | 'approved' | 'pending' | 'spam' | 'active' | 'inactive' | 'admin' | 'editor' | 'reporter' | 'viewer'
+type StatusType = 'published' | 'draft' | 'scheduled' | 'approved' | 'pending' | 'spam' | 'rejected' | 'active' | 'inactive' | 'admin' | 'editor' | 'reporter' | 'viewer'
 
 const statusClasses: Record<StatusType, string> = {
   published: 'bg-[#dcfce7] text-[#15803d]',
@@ -7,6 +7,7 @@ const statusClasses: Record<StatusType, string> = {
   approved: 'bg-[#dcfce7] text-[#15803d]',
   pending: 'bg-[#fef9c3] text-[#a16207]',
   spam: 'bg-[#fee2e2] text-[#dc2626]',
+  rejected: 'bg-[#fee2e2] text-[#dc2626]',
   active: 'bg-[#dcfce7] text-[#15803d]',
   inactive: 'bg-[#f4f4f5] text-[#52525b]',
   admin: 'bg-[#ede9fe] text-[#6d28d9]',
@@ -19,9 +20,10 @@ const statusLabels: Record<StatusType, string> = {
   published: 'Published',
   draft: 'Draft',
   scheduled: 'Scheduled',
-  approved: 'Approved',
+  approved: 'Accepted',
   pending: 'Pending',
   spam: 'Spam',
+  rejected: 'Rejected',
   active: 'Active',
   inactive: 'Inactive',
   admin: 'Admin',

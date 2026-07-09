@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { SubscriptionModel } from '@/models/Subscription';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_news_admin_jwt_key_2026_change_me_in_production';
 
 export async function GET() {
   try {
@@ -52,7 +55,28 @@ export async function POST(request: Request) {
     // Check if already subscribed
     const existing = await SubscriptionModel.findOne({ email: trimmedEmail });
     if (existing) {
-      return NextResponse.json({ success: true, message: 'You are already subscribed to our newsletter list!' });
+      // Even if already subscribed in DB, generate JWT and set the cookie in case their session was cleared
+      const token = jwt.sign(
+        { email: trimmedEmail, isSubscribed: true },
+        JWT_SECRET,
+        { expiresIn: '365d' }
+      );
+      
+      const response = NextResponse.json({
+        success: true,
+        message: 'You are already subscribed to our newsletter list!',
+        subscription: existing
+      });
+
+      response.cookies.set('subscriber_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 365, // 365 days
+        path: '/',
+      });
+
+      return response;
     }
 
     // Capture IP and Geolocation
@@ -109,11 +133,27 @@ export async function POST(request: Request) {
       region,
     });
 
-    return NextResponse.json({
+    const token = jwt.sign(
+      { email: trimmedEmail, isSubscribed: true },
+      JWT_SECRET,
+      { expiresIn: '365d' }
+    );
+
+    const response = NextResponse.json({
       success: true,
       message: 'Subscribed successfully! Welcome to The Domain Name.',
       subscription: newSub
     });
+
+    response.cookies.set('subscriber_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 365, // 365 days
+      path: '/',
+    });
+
+    return response;
   } catch (error: any) {
     console.error('Create subscription error:', error);
     return NextResponse.json({ error: 'Failed to process subscription' }, { status: 500 });

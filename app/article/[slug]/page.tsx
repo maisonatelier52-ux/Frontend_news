@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Article, NEWS_ARTICLES } from "@/app/data/news";
 import Header from "@/app/components/Header";
+import { useSubscription } from "@/app/hooks/useSubscription";
 
 interface Comment {
   name: string;
@@ -17,12 +18,17 @@ export default function ArticleDetailPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const slug = params?.slug;
+  const { isSubscribed, email: subscriberEmail, setSubscribed } = useSubscription();
 
   const [article, setArticle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [fontSize, setFontSize] = useState<FontSize>("base");
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
-  const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [dbComments, setDbComments] = useState<any[]>([]);
+  const [commentSuccessMsg, setCommentSuccessMsg] = useState("");
+  const [commentErrorMsg, setCommentErrorMsg] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [commentInput, setCommentInput] = useState("");
   const [showShareNotification, setShowShareNotification] = useState(false);
@@ -116,30 +122,7 @@ export default function ArticleDetailPage() {
         setBookmarkedIds(JSON.parse(savedBookmarks));
       }
 
-      const savedComments = localStorage.getItem("domain_comments") || localStorage.getItem("domain _comments");
-      if (savedComments) {
-        setComments(JSON.parse(savedComments));
-      } else {
-        const initialComments: Record<string, Comment[]> = {
-          "1": [
-            { name: "Arthur Pendelton, D.C.", date: "June 26, 2026", text: "This bipartisan agreement is long overdue. Upgrading rural grids is critical for agricultural tech integrations." },
-            { name: "Sophia Martinez, Chicago", date: "June 26, 2026", text: "Excellent news, but I hope a significant chunk goes toward upgrading locks and dams in the Midwest." }
-          ],
-          "2": [
-            { name: "Gary Reynolds, NY", date: "June 26, 2026", text: "The Fed is playing it safe, which is wise. Inflation is cooling, but retail costs are still quite high." }
-          ],
-          "3": [
-            { name: "Dev_Architect", date: "June 25, 2026", text: "Enterprise custom models are a game changer. We shifted to a local 7B model and saw a massive drop in latency and cost." }
-          ],
-          "4": [
-            { name: "Astro_Girl", date: "June 26, 2026", text: "Every time JWST releases findings like this, it makes me realize how much we have left to discover. Absolutely mind-blowing." }
-          ],
-          "5": [
-            { name: "Marcus Brody, Boston", date: "June 25, 2026", text: "This is a great idea, but city planning regulations and suburban NIMBYism make it incredibly difficult to implement in the US." }
-          ],
-        };
-        setComments(initialComments);
-      }
+      // Database comments are loaded dynamically via fetchDbComments hook below
     } catch (e) {
       console.error("Failed to load local storage state:", e);
     }
@@ -212,6 +195,24 @@ export default function ArticleDetailPage() {
     fetchArticle();
   }, [slug]);
 
+  // Fetch database comments for the current article
+  const fetchDbComments = async () => {
+    if (!article || !article.id) return;
+    try {
+      const res = await fetch(`/api/comments?articleId=${article.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDbComments(data || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch comments from DB:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDbComments();
+  }, [article]);
+
   // Load trending articles for sidebar
   useEffect(() => {
     async function loadTrending() {
@@ -219,7 +220,7 @@ export default function ArticleDetailPage() {
         const res = await fetch("/api/news?activeOnly=true");
         if (res.ok) {
           const data = await res.json();
-          const mapped = data.slice(0, 5).map((art: any) => ({
+          const mapped = data.slice(0, 8).map((art: any) => ({
             id: art._id,
             slug: art.slug,
             title: art.title,
@@ -227,10 +228,10 @@ export default function ArticleDetailPage() {
           }));
           setTrendingArticles(mapped);
         } else {
-          setTrendingArticles(NEWS_ARTICLES.slice(0, 5));
+          setTrendingArticles(NEWS_ARTICLES.slice(0, 8));
         }
       } catch {
-        setTrendingArticles(NEWS_ARTICLES.slice(0, 5));
+        setTrendingArticles(NEWS_ARTICLES.slice(0, 8));
       }
     }
     loadTrending();
@@ -335,32 +336,49 @@ export default function ArticleDetailPage() {
     }
   };
 
-  const handleSubmitComment = (e: React.FormEvent) => {
+  const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isSubscribed) {
+      setCommentErrorMsg("Only subscribed users can comment. Please subscribe first.");
+      return;
+    }
     if (!nameInput.trim() || !commentInput.trim()) return;
 
-    const dateStr = new Date().toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-    const newComment = { name: nameInput.trim(), date: dateStr, text: commentInput.trim() };
-    const updated = {
-      ...comments,
-      [article.id]: [newComment, ...(comments[article.id] || [])],
-    };
-    setComments(updated);
-    setNameInput("");
-    setCommentInput("");
+    setCommentSubmitting(true);
+    setCommentSuccessMsg("");
+    setCommentErrorMsg("");
+
     try {
-      localStorage.setItem("domain_comments", JSON.stringify(updated));
-      localStorage.setItem("domain _comments", JSON.stringify(updated));
-    } catch (e) {
-      console.error("Failed to save comments to localStorage", e);
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleId: article.id,
+          articleTitle: article.title,
+          name: nameInput.trim(),
+          email: subscriberEmail,
+          text: commentInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setCommentSuccessMsg(data.message || "Thank you for sharing your valuable perspective. To maintain a thoughtful and respectful community, your comment has been submitted for review and will appear once approved.");
+        setNameInput("");
+        setCommentInput("");
+        setTimeout(() => setCommentSuccessMsg(""), 6000);
+      } else {
+        setCommentErrorMsg(data.error || "Failed to submit comment.");
+      }
+    } catch (err) {
+      console.error("Submit comment error:", err);
+      setCommentErrorMsg("Failed to submit comment. Please check your connection and try again.");
+    } finally {
+      setCommentSubmitting(false);
     }
   };
 
-  const articleComments = comments[article.id] || [];
+  const articleComments = dbComments;
 
   // Custom Editorial Block Renderer
   const renderBlock = (block: any, index: number) => {
@@ -767,31 +785,24 @@ export default function ArticleDetailPage() {
 
             {/* Sticky Share Bar Option */}
             {detailLayout.showShareBar && detailLayout.shareBarPosition === "sticky-left" && (
-              <div className="hidden xl:block fixed left-10 top-40 bg-white border border-zinc-200 rounded-full p-2 space-y-4 shadow-sm z-30">
-                <button
-                  onClick={handleShare}
-                  className={`p-2 rounded-full text-zinc-550 ${accentHoverTextClass} transition cursor-pointer`}
-                  title="Copy Link"
-                >
-                  <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 10.742l4.636-2.318m0 0a3 3 0 10-4.243-4.243m4.243 4.243L13.32 12.35" />
-                  </svg>
+              <div className="hidden xl:flex flex-col fixed left-10 top-40 bg-white border border-zinc-200 rounded-2xl p-2 gap-1 shadow-md z-30">
+                {/* Copy Link */}
+                <button onClick={handleShare} className={`p-2.5 rounded-xl text-zinc-500 ${accentHoverTextClass} hover:bg-zinc-50 transition cursor-pointer`} title="Copy Link">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 </button>
-                <div className="h-4 border-l border-zinc-200 mx-auto" />
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full text-zinc-550 hover:text-green-600 transition cursor-pointer"
-                  title="Share on WhatsApp"
-                >
-                  <span className="font-bold text-[10px]">WA</span>
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full text-zinc-550 hover:text-orange-600 transition cursor-pointer"
-                  title="Share on Reddit"
-                >
-                  <span className="font-bold text-[10px]">RD</span>
-                </button>
+                <div className="h-px bg-zinc-100 mx-2" />
+                {/* WhatsApp */}
+                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent((article?.title || '') + '\n' + (typeof window !== 'undefined' ? window.location.href : ''))}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-zinc-500 hover:text-green-600 hover:bg-green-50 transition" title="Share on WhatsApp">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </a>
+                {/* Twitter / X */}
+                <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(article?.title || '')}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-zinc-500 hover:text-black hover:bg-zinc-50 transition" title="Share on X">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.636L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                {/* Facebook */}
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-xl text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Share on Facebook">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
               </div>
             )}
 
@@ -812,66 +823,46 @@ export default function ArticleDetailPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {/* WhatsApp */}
                     <a
-                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(article.title + ' ' + (typeof window !== 'undefined' ? window.location.href : ''))}`}
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent((article.title) + '\n' + (typeof window !== 'undefined' ? window.location.href : ''))}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 hover:${accentColorClass} hover:${accentBorderClass} transition`}
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-green-600 hover:border-green-400 hover:bg-green-50 transition"
                       title="Share on WhatsApp"
                     >
-                      <span className="font-bold text-[10px]">WA</span>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                     </a>
-                    
+
                     {/* Reddit */}
                     <a
                       href={`https://reddit.com/submit?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&title=${encodeURIComponent(article.title)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-600 hover:border-orange-600 transition"
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-orange-600 hover:border-orange-400 hover:bg-orange-50 transition"
                       title="Share on Reddit"
                     >
-                      <span className="font-bold text-[10px]">RD</span>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
                     </a>
 
-                    {/* Substack */}
+                    {/* LinkedIn */}
                     <a
-                      href={`https://substack.com/signup?referrer=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                      href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&title=${encodeURIComponent(article.title)}&summary=${encodeURIComponent(article.excerpt || '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-700 hover:border-orange-700 transition"
-                      title="Share on Substack"
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-blue-700 hover:border-blue-400 hover:bg-blue-50 transition"
+                      title="Share on LinkedIn"
                     >
-                      <span className="font-bold text-[10px]">SB</span>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                     </a>
-
-                    {/* Medium */}
-                    <a
-                      href={`https://medium.com/sharing?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-zinc-950 hover:border-zinc-950 transition"
-                      title="Share on Medium"
-                    >
-                      <span className="font-bold text-[10px]">MD</span>
-                    </a>
-
-                    {/* Instagram */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-pink-600 hover:border-pink-600 transition cursor-pointer"
-                      title="Share on Instagram (Copies Link)"
-                    >
-                      <span className="font-bold text-[10px]">IG</span>
-                    </button>
 
                     {/* Facebook */}
                     <a
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-600 hover:border-blue-600 transition"
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition"
                       title="Share on Facebook"
                     >
-                      <span className="font-bold text-[10px]">FB</span>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                     </a>
 
                     {/* Twitter / X */}
@@ -879,22 +870,30 @@ export default function ArticleDetailPage() {
                       href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(article.title)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-black hover:border-black transition"
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-black hover:border-zinc-800 hover:bg-zinc-50 transition"
                       title="Share on X"
                     >
-                      <span className="font-bold text-[10px]">X</span>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.636L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+
+                    {/* Telegram */}
+                    <a
+                      href={`https://t.me/share/url?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(article.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 rounded-full border border-zinc-200 text-zinc-500 hover:text-sky-500 hover:border-sky-400 hover:bg-sky-50 transition"
+                      title="Share on Telegram"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
                     </a>
 
                     {/* Copy Link Button */}
                     <button
                       onClick={handleShare}
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 ${accentHoverTextClass} ${accentHoverBorderClass} transition cursor-pointer relative`}
+                      className={`p-2.5 rounded-full border border-zinc-200 text-zinc-500 ${accentHoverTextClass} ${accentHoverBorderClass} transition cursor-pointer relative`}
                       title="Copy Article Link"
                     >
-                      <svg className="w-4 h-4 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M8 9a3 3 0 00-3 3v4a3 3 0 003 3h3a3 3 0 003-3v-4a3 3 0 00-3-3H8z" />
-                        <path d="M16 15a3 3 0 003-3V8a3 3 0 00-3-3h-3a3 3 0 00-3 3v4a3 3 0 003 3h3z" />
-                      </svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                       {showShareNotification && (
                         <span className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md z-20">
                           Link copied!
@@ -983,12 +982,12 @@ export default function ArticleDetailPage() {
                       <span>Twitter</span>
                     </a>
                   )}
-                  <span className="text-zinc-300 hidden sm:inline select-none">•</span>
                   <button
                     onClick={() => setShowAuthorPanel(true)}
-                    className={`text-zinc-650 hover:${accentColorClass} font-bold transition duration-200 cursor-pointer text-[10px] sm:text-xs`}
+                    className="ml-auto shrink-0 flex items-center gap-1.5 bg-zinc-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-md hover:bg-zinc-700 transition cursor-pointer"
                   >
-                    View Profile
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    View Full Profile →
                   </button>
                 </div>
               </div>
@@ -1027,53 +1026,140 @@ export default function ArticleDetailPage() {
 
             {/* Comments and Discussion Area */}
             {detailLayout.showComments && (
-              <section className="space-y-6 pt-4">
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-200 pb-2">
-                  Discussion ({articleComments.length})
-                </h3>
+              <section className="space-y-6 pt-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-black text-zinc-900 tracking-tight">
+                    DISCUSSION <span className="text-zinc-400 font-normal">({dbComments.length})</span>
+                  </h3>
+                  <div className="text-xs text-zinc-400 font-medium">
+                    Sort by: <span className="text-zinc-700 font-semibold">Newest ↓</span>
+                  </div>
+                </div>
 
-                {/* List of comments */}
-                <div className="space-y-4">
-                  {articleComments.length === 0 ? (
-                    <p className="text-xs text-zinc-400 italic font-mono">No comments have been posted yet. Be the first to join the conversation.</p>
+                {/* Comment Cards */}
+                <div className="space-y-3">
+                  {dbComments.length === 0 ? (
+                    <div className="bg-zinc-50 rounded-xl p-6 text-center">
+                      <div className="text-2xl mb-2">💬</div>
+                      <p className="text-sm text-zinc-500 font-medium">No comments yet.</p>
+                      <p className="text-xs text-zinc-400 mt-1">Be the first to join the conversation.</p>
+                    </div>
                   ) : (
-                    articleComments.map((comment, index) => (
-                      <div key={index} className="bg-zinc-50/50 border border-zinc-200 p-4 rounded-xs transition hover:shadow-2xs">
-                        <div className="flex justify-between items-center text-[10.5px] text-zinc-500 mb-1.5 font-mono">
-                          <span className="font-bold text-zinc-800">{comment.name}</span>
-                          <span>{comment.date}</span>
+                    dbComments.map((comment) => (
+                      <div key={comment._id} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3">
+                            {/* Avatar */}
+                            <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm shrink-0 select-none">
+                              {comment.name?.charAt(0)?.toUpperCase() || "?"}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-bold text-zinc-900">{comment.name}</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">Member</span>
+                              </div>
+                              <p className="text-sm text-zinc-700 leading-relaxed mt-1.5">{comment.text}</p>
+                              <button className="mt-2 flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-700 font-semibold transition cursor-pointer">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                                Reply
+                              </button>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-zinc-400 whitespace-nowrap shrink-0 pt-0.5">
+                            {new Date(comment.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} •{" "}
+                            {new Date(comment.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                          </span>
                         </div>
-                        <p className="text-xs text-zinc-700 leading-relaxed font-sans">{comment.text}</p>
                       </div>
                     ))
                   )}
                 </div>
 
                 {/* Submit Comment Form */}
-                <form onSubmit={handleSubmitComment} className="border border-zinc-200 p-5 bg-zinc-50/40 rounded-xs space-y-4">
-                  <h4 className="text-xs font-bold text-zinc-850 uppercase tracking-widest">Share your perspective</h4>
-                  <div className="grid grid-cols-1 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Your Name / Signature"
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      className="bg-white border border-zinc-200 rounded px-3.5 py-2.5 text-xs text-zinc-800 w-full focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
-                      required
-                    />
+                <form onSubmit={handleSubmitComment} className="bg-zinc-50 rounded-2xl p-5 space-y-4">
+                  {/* Form header */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-900">Share Your Perspective</h4>
+                      <p className="text-xs text-zinc-400">Join the conversation and let us know your thoughts.</p>
+                    </div>
+                  </div>
+
+                  {/* Subscription warning */}
+                  {!isSubscribed && (
+                    <div className="border border-amber-200 bg-amber-50 p-3 rounded-lg text-xs text-amber-800 flex items-center gap-2">
+                      <span className="text-sm">⚠️</span>
+                      <span><strong>Only subscribed readers can comment.</strong> Please subscribe to join the discussion.</span>
+                    </div>
+                  )}
+
+                  {/* Name + Email row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-350" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      <input
+                        type="text"
+                        placeholder="Your Name"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        disabled={!isSubscribed || commentSubmitting}
+                        className="bg-white rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-zinc-800 w-full focus:outline-none focus:ring-2 focus:ring-zinc-300 transition disabled:opacity-50 border-0 shadow-sm"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-350" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      <input
+                        type="email"
+                        placeholder="Email (optional)"
+                        disabled={!isSubscribed || commentSubmitting}
+                        className="bg-white rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-zinc-800 w-full focus:outline-none focus:ring-2 focus:ring-zinc-300 transition disabled:opacity-50 border-0 shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Textarea with char counter */}
+                  <div className="relative">
+                    <svg className="absolute left-3 top-3 w-4 h-4 text-zinc-350" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     <textarea
-                      placeholder="Add your comments here..."
+                      placeholder="Write your comment..."
                       value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
-                      className="bg-white border border-zinc-200 rounded px-3.5 py-3 text-xs text-zinc-800 w-full h-24 resize-none focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
+                      onChange={(e) => setCommentInput(e.target.value.slice(0, 1000))}
+                      disabled={!isSubscribed || commentSubmitting}
+                      className="bg-white rounded-lg pl-9 pr-3.5 py-3 text-sm text-zinc-800 w-full h-28 resize-none focus:outline-none focus:ring-2 focus:ring-zinc-300 transition disabled:opacity-50 border-0 shadow-sm"
                       required
                     />
+                    <span className="absolute bottom-2.5 right-3 text-[10px] text-zinc-350 font-mono">{commentInput.length}/1000</span>
+                  </div>
+
+                  {commentSuccessMsg && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs font-medium text-emerald-700">
+                      ✓ {commentSuccessMsg}
+                    </div>
+                  )}
+                  {commentErrorMsg && (
+                    <p className="text-xs font-semibold text-red-600">✕ {commentErrorMsg}</p>
+                  )}
+
+                  {/* Footer row */}
+                  <div className="flex items-center gap-4">
                     <button
                       type="submit"
-                      className="bg-zinc-900 text-white text-xs font-bold py-2.5 px-5 rounded cursor-pointer hover:bg-zinc-800 transition btn-3d-indigo self-start"
+                      disabled={!isSubscribed || commentSubmitting}
+                      className="bg-zinc-900 text-white text-xs font-extrabold uppercase tracking-wider py-2.5 px-5 rounded-lg cursor-pointer hover:bg-zinc-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Submit Comment
+                      {commentSubmitting ? "Posting..." : "Post Comment"}
                     </button>
+                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                      Your comment will be reviewed before appearing.
+                    </div>
                   </div>
                 </form>
               </section>
@@ -1114,50 +1200,80 @@ export default function ArticleDetailPage() {
                 </div>
 
                 {/* Newsletter Box */}
-                <div className={`p-6 rounded-sm space-y-4 shadow-xs text-left max-w-xl mx-auto w-full ${designStyle === "minimal-focus" ? "bg-stone-50 border-2 border-double border-zinc-800 text-zinc-900" : "bg-zinc-900 text-white"}`}>
-                  <div className="space-y-1">
-                    <h4 className={`text-[9px] font-bold uppercase tracking-widest ${designStyle === "minimal-focus" ? "text-zinc-500" : "text-zinc-400"}`}>The Dispatch</h4>
-                    <p className="text-base font-serif font-bold leading-tight">Stay informed with weekly analysis</p>
-                  </div>
-                  <p className={`text-[11px] leading-relaxed ${designStyle === "minimal-focus" ? "text-zinc-605" : "text-zinc-400"}`}>
-                    Join our newsletter list to receive investigative reports directly in your inbox.
-                  </p>
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!newsletterEmail.trim() || newsletterLoading) return;
-                      setNewsletterLoading(true); setNewsletterMsg(""); setNewsletterErr("");
-                      const [res] = await Promise.all([
-                        fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail.trim() }) }),
-                        new Promise((r) => setTimeout(r, 2000)),
-                      ]);
-                      const data = await (res as Response).json();
-                      setNewsletterLoading(false);
-                      if ((res as Response).ok || data.success) { setNewsletterMsg(data.message || "Subscribed successfully!"); setNewsletterEmail(""); setTimeout(() => setNewsletterMsg(""), 6000); }
-                      else { setNewsletterErr(data.error || "Failed to subscribe."); setTimeout(() => setNewsletterErr(""), 5000); }
+                {(!isSubscribed || isFadingOut) && (
+                  <div
+                    style={{
+                      transition: 'all 1200ms cubic-bezier(0.25, 1, 0.5, 1)',
+                      opacity: isFadingOut ? 0 : 1,
+                      transform: isFadingOut ? 'translateY(-35px) scale(0.97)' : 'translateY(0) scale(1)',
+                      maxHeight: isFadingOut ? '0px' : '450px',
+                      paddingTop: isFadingOut ? '0px' : undefined,
+                      paddingBottom: isFadingOut ? '0px' : undefined,
+                      marginTop: isFadingOut ? '0px' : undefined,
+                      marginBottom: isFadingOut ? '0px' : undefined,
+                      overflow: 'hidden',
+                      filter: isFadingOut ? 'blur(4px)' : 'none',
                     }}
-                    className="space-y-2.5"
+                    className={`p-6 rounded-sm space-y-4 shadow-xs text-left max-w-xl mx-auto w-full ${designStyle === "minimal-focus" ? "bg-stone-50 border-2 border-double border-zinc-800 text-zinc-900" : "bg-zinc-900 text-white"}`}
                   >
-                    <input
-                      type="email"
-                      placeholder="name@example.com"
-                      value={newsletterEmail}
-                      onChange={(e) => setNewsletterEmail(e.target.value)}
-                      disabled={newsletterLoading}
-                      className={`text-xs rounded p-2.5 w-full disabled:opacity-60 ${designStyle === "minimal-focus" ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-zinc-650 focus:outline-none" : "bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"}`}
-                      required
-                    />
-                    <button
-                      type="submit"
-                      disabled={newsletterLoading}
-                      className={`w-full text-xs font-bold py-2 rounded transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 ${designStyle === "minimal-focus" ? "bg-zinc-900 hover:bg-zinc-800 text-white" : "bg-white hover:bg-zinc-105 text-black"}`}
+                    <div className="space-y-1">
+                      <h4 className={`text-[9px] font-bold uppercase tracking-widest ${designStyle === "minimal-focus" ? "text-zinc-500" : "text-zinc-400"}`}>The Dispatch</h4>
+                      <p className="text-base font-serif font-bold leading-tight">Stay informed with weekly analysis</p>
+                    </div>
+                    <p className={`text-[11px] leading-relaxed ${designStyle === "minimal-focus" ? "text-zinc-605" : "text-zinc-400"}`}>
+                      Join our newsletter list to receive investigative reports directly in your inbox.
+                    </p>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!newsletterEmail.trim() || newsletterLoading) return;
+                        setNewsletterLoading(true); setNewsletterMsg(""); setNewsletterErr("");
+                        const [res] = await Promise.all([
+                          fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail.trim() }) }),
+                          new Promise((r) => setTimeout(r, 2000)),
+                        ]);
+                        const data = await (res as Response).json();
+                        setNewsletterLoading(false);
+                        if ((res as Response).ok || data.success) {
+                          const emailVal = newsletterEmail.trim();
+                          setNewsletterMsg(data.message || "Subscribed successfully!");
+                          setNewsletterEmail("");
+                          setTimeout(() => {
+                            setIsFadingOut(true);
+                          }, 2500);
+                          setTimeout(() => {
+                            setNewsletterMsg("");
+                            setSubscribed(true, emailVal);
+                            setIsFadingOut(false);
+                          }, 3700);
+                        } else {
+                          setNewsletterErr(data.error || "Failed to subscribe.");
+                          setTimeout(() => setNewsletterErr(""), 5000);
+                        }
+                      }}
+                      className="space-y-2.5"
                     >
-                      {newsletterLoading ? (<><span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
-                    </button>
-                    {newsletterMsg && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg}</p>}
-                    {newsletterErr && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr}</p>}
-                  </form>
-                </div>
+                      <input
+                        type="email"
+                        placeholder="name@example.com"
+                        value={newsletterEmail}
+                        onChange={(e) => setNewsletterEmail(e.target.value)}
+                        disabled={newsletterLoading}
+                        className={`text-xs rounded p-2.5 w-full disabled:opacity-60 ${designStyle === "minimal-focus" ? "bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:border-zinc-650 focus:outline-none" : "bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"}`}
+                        required
+                      />
+                      <button
+                        type="submit"
+                        disabled={newsletterLoading}
+                        className={`w-full text-xs font-bold py-2 rounded transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 ${designStyle === "minimal-focus" ? "bg-zinc-900 hover:bg-zinc-800 text-white" : "bg-white hover:bg-zinc-105 text-black"}`}
+                      >
+                        {newsletterLoading ? (<><span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
+                      </button>
+                      {newsletterMsg && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg}</p>}
+                      {newsletterErr && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr}</p>}
+                    </form>
+                  </div>
+                )}
                 {detailPageBelowSubscriptionAd && (
                   <div className="w-full mt-6 flex flex-col items-center select-none">
                     <span className="text-[9px] text-zinc-400 font-mono tracking-widest uppercase mb-1">Advertisement</span>
@@ -1189,7 +1305,7 @@ export default function ArticleDetailPage() {
                 <div className="space-y-5">
                   {trendingArticles
                     .filter((a) => a.id !== article.id)
-                    .slice(0, 4)
+                    .slice(0, 6)
                     .map((trend, index) => (
                       <div
                         key={trend.id}
@@ -1213,50 +1329,80 @@ export default function ArticleDetailPage() {
               </div>
 
               {/* Newsletter Dispatch box */}
-              <div className="bg-zinc-900 text-white p-6 rounded-sm space-y-4 shadow-xs">
-                <div className="space-y-1">
-                  <h4 className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">The Dispatch</h4>
-                  <p className="text-base font-serif font-bold leading-tight">Stay informed with weekly analysis</p>
-                </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Join our newsletter list to receive investigative reports directly in your inbox.
-                </p>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!newsletterEmail2.trim() || newsletterLoading2) return;
-                    setNewsletterLoading2(true); setNewsletterMsg2(""); setNewsletterErr2("");
-                    const [res] = await Promise.all([
-                      fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail2.trim() }) }),
-                      new Promise((r) => setTimeout(r, 2000)),
-                    ]);
-                    const data = await (res as Response).json();
-                    setNewsletterLoading2(false);
-                    if ((res as Response).ok || data.success) { setNewsletterMsg2(data.message || "Subscribed successfully!"); setNewsletterEmail2(""); setTimeout(() => setNewsletterMsg2(""), 6000); }
-                    else { setNewsletterErr2(data.error || "Failed to subscribe."); setTimeout(() => setNewsletterErr2(""), 5000); }
+              {(!isSubscribed || isFadingOut) && (
+                <div
+                  style={{
+                    transition: 'all 1200ms cubic-bezier(0.25, 1, 0.5, 1)',
+                    opacity: isFadingOut ? 0 : 1,
+                    transform: isFadingOut ? 'translateY(-35px) scale(0.97)' : 'translateY(0) scale(1)',
+                    maxHeight: isFadingOut ? '0px' : '450px',
+                    paddingTop: isFadingOut ? '0px' : undefined,
+                    paddingBottom: isFadingOut ? '0px' : undefined,
+                    marginTop: isFadingOut ? '0px' : undefined,
+                    marginBottom: isFadingOut ? '0px' : undefined,
+                    overflow: 'hidden',
+                    filter: isFadingOut ? 'blur(4px)' : 'none',
                   }}
-                  className="space-y-2.5"
+                  className="bg-zinc-900 text-white p-6 rounded-sm space-y-4 shadow-xs"
                 >
-                  <input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={newsletterEmail2}
-                    onChange={(e) => setNewsletterEmail2(e.target.value)}
-                    disabled={newsletterLoading2}
-                    className="bg-zinc-800 border border-zinc-700 text-xs rounded p-2.5 w-full text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-60"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    disabled={newsletterLoading2}
-                    className="w-full bg-white text-black text-xs font-bold py-2 rounded hover:bg-zinc-100 transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                  <div className="space-y-1">
+                    <h4 className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">The Dispatch</h4>
+                    <p className="text-base font-serif font-bold leading-tight">Stay informed with weekly analysis</p>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    Join our newsletter list to receive investigative reports directly in your inbox.
+                  </p>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!newsletterEmail2.trim() || newsletterLoading2) return;
+                      setNewsletterLoading2(true); setNewsletterMsg2(""); setNewsletterErr2("");
+                      const [res] = await Promise.all([
+                        fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: newsletterEmail2.trim() }) }),
+                        new Promise((r) => setTimeout(r, 2000)),
+                      ]);
+                      const data = await (res as Response).json();
+                      setNewsletterLoading2(false);
+                      if ((res as Response).ok || data.success) {
+                        const emailVal = newsletterEmail2.trim();
+                        setNewsletterMsg2(data.message || "Subscribed successfully!");
+                        setNewsletterEmail2("");
+                        setTimeout(() => {
+                          setIsFadingOut(true);
+                        }, 2500);
+                        setTimeout(() => {
+                          setNewsletterMsg2("");
+                          setSubscribed(true, emailVal);
+                          setIsFadingOut(false);
+                        }, 3700);
+                      } else {
+                        setNewsletterErr2(data.error || "Failed to subscribe.");
+                        setTimeout(() => setNewsletterErr2(""), 5000);
+                      }
+                    }}
+                    className="space-y-2.5"
                   >
-                    {newsletterLoading2 ? (<><span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
-                  </button>
-                  {newsletterMsg2 && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg2}</p>}
-                  {newsletterErr2 && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr2}</p>}
-                </form>
-              </div>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={newsletterEmail2}
+                      onChange={(e) => setNewsletterEmail2(e.target.value)}
+                      disabled={newsletterLoading2}
+                      className="bg-zinc-800 border border-zinc-700 text-xs rounded p-2.5 w-full text-white placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-60"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={newsletterLoading2}
+                      className="w-full bg-white text-black text-xs font-bold py-2 rounded hover:bg-zinc-100 transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {newsletterLoading2 ? (<><span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
+                    </button>
+                    {newsletterMsg2 && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg2}</p>}
+                    {newsletterErr2 && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr2}</p>}
+                  </form>
+                </div>
+              )}
 
               {/* Detail Page Below Subscription Ad */}
               {detailPageBelowSubscriptionAd && (
