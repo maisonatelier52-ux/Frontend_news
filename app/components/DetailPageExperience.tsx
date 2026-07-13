@@ -19,6 +19,9 @@ interface DetailPageExperienceProps {
     shareBarPosition: string; // 'bottom' | 'sticky-left'
     authorCardStyle: string; // 'signature' | 'classic' | 'minimal'
     showComments: boolean;
+    trendingStoriesTitle?: string;
+    discussionTitle?: string;
+    sharePerspectiveTitle?: string;
   };
   article: any;
   trendingArticles: any[];
@@ -46,6 +49,9 @@ export default function DetailPageExperience({
   isPreview = false,
 }: DetailPageExperienceProps) {
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
+  const resolvedTrendingTitle = layout.trendingStoriesTitle?.trim() || "Trending Stories";
+  const resolvedDiscussionTitle = layout.discussionTitle?.trim() || "Discussion";
+  const resolvedShareTitle = layout.sharePerspectiveTitle?.trim() || "Share your perspective";
   const [showShareNotification, setShowShareNotification] = useState(false);
   const [showAuthorPanel, setShowAuthorPanel] = useState(false);
   const [comments, setComments] = useState<Comment[]>([
@@ -757,7 +763,7 @@ export default function DetailPageExperience({
             {layout.showComments && (
               <section className="space-y-6 pt-4">
                 <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-200 pb-2 text-left">
-                  Discussion ({comments.length})
+                  {resolvedDiscussionTitle} ({comments.length})
                 </h3>
 
                 {/* List of comments */}
@@ -775,7 +781,7 @@ export default function DetailPageExperience({
 
                 {/* Submit Comment Form */}
                 <form onSubmit={handleCommentSubmit} className="border border-zinc-200 p-5 bg-zinc-50/40 rounded-xs space-y-4">
-                  <h4 className="text-xs font-bold text-zinc-850 uppercase tracking-widest text-left">Share your perspective</h4>
+                  <h4 className="text-xs font-bold text-zinc-850 uppercase tracking-widest text-left">{resolvedShareTitle}</h4>
                   <div className="grid grid-cols-1 gap-3">
                     <input
                       type="text"
@@ -809,7 +815,7 @@ export default function DetailPageExperience({
                 {/* Trending Stories */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2 text-left">
-                    Trending Stories
+                    {resolvedTrendingTitle}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {trendingArticles.map((trend, index) => (
@@ -883,7 +889,7 @@ export default function DetailPageExperience({
               {/* Trending Stories */}
               <div className="space-y-6">
                 <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2 text-left">
-                  Trending Stories
+                  {resolvedTrendingTitle}
                 </h4>
                 <div className="space-y-5 text-left">
                   {trendingArticles.map((trend, index) => (

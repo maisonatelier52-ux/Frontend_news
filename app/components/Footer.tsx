@@ -3,14 +3,31 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+interface FooterLink {
+  id: number;
+  label: string;
+  url: string;
+  isVisible?: boolean;
+}
+
+interface FooterColumn {
+  id: number;
+  heading: string;
+  isVisible?: boolean;
+  links: FooterLink[];
+}
+
 interface FooterConfig {
   logoText?: string;
+  description?: string;
   address?: string;
   copyright?: string;
   bgColor?: string;
-  textColor?: string;
+  textColorPrimary?: string;
+  textColorSecondary?: string;
   paddingY?: string;
   borderTopColor?: string;
+  columns?: FooterColumn[];
 }
 
 export default function Footer() {
@@ -34,18 +51,67 @@ export default function Footer() {
   }, []);
 
   const logoText = config?.logoText || 'The Domain Name';
-  const address = config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.';
+  const description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.';
   const copyright = config?.copyright || '© 2026 The Domain Name. All rights reserved.';
   
-  // Use dark-themed defaults if not configured (matching sign up button bg)
+  // Custom styling settings
   const bgColor = config?.bgColor || '#09090b';
-  const textColor = config?.textColor || '#d4d4d8';
+  const textColorPrimary = config?.textColorPrimary || '#ffffff';
+  const textColorSecondary = config?.textColorSecondary || '#a1a1aa';
   const borderTopColor = config?.borderTopColor || '#27272a';
   const paddingY = config?.paddingY || '40px';
 
+  const columns = config?.columns || [
+    {
+      id: 1,
+      heading: 'Categories',
+      isVisible: true,
+      links: [
+        { id: 1, label: 'U.S. News & Politics', url: '/Politics', isVisible: true },
+        { id: 2, label: 'Technology & Science', url: '/Technology', isVisible: true },
+        { id: 3, label: 'Marketing & Strategy', url: '/Business', isVisible: true }
+      ]
+    },
+    {
+      id: 2,
+      heading: '',
+      isVisible: true,
+      links: [
+        { id: 1, label: 'Finance & Markets', url: '/Business', isVisible: true },
+        { id: 2, label: 'World Affairs', url: '/World', isVisible: true },
+        { id: 3, label: 'Arts & Entertainment', url: '/Entertainment', isVisible: true }
+      ]
+    },
+    {
+      id: 3,
+      heading: 'Other Sections',
+      isVisible: true,
+      links: [
+        { id: 1, label: 'About Us', url: '/about', isVisible: true },
+        { id: 2, label: 'Contact Us', url: '/contact', isVisible: true },
+        { id: 3, label: 'Our Team', url: '/our-team', isVisible: true },
+        { id: 4, label: 'Privacy Policy', url: '/privacy', isVisible: true },
+        { id: 5, label: 'Terms & Conditions', url: '/terms', isVisible: true },
+        { id: 6, label: 'Correction Policy', url: '/correction-policy', isVisible: true }
+      ]
+    },
+    {
+      id: 4,
+      heading: '',
+      isVisible: true,
+      links: [
+        { id: 1, label: 'Source Methodology', url: '/source-methodology', isVisible: true },
+        { id: 2, label: 'Advertising & Sponsored Policy', url: '/advertising-policy', isVisible: true },
+        { id: 3, label: 'Ownership & Funding', url: '/ownership-funding', isVisible: true },
+        { id: 4, label: 'Right of Reply Policy', url: '/right-of-reply-policy', isVisible: true },
+        { id: 5, label: 'Legal Policy', url: '/legal-policy', isVisible: true }
+      ]
+    }
+  ];
+
   return (
     <footer 
-      style={{ backgroundColor: bgColor, color: textColor, paddingBottom: paddingY }}
+      style={{ backgroundColor: bgColor, color: textColorPrimary, paddingBottom: paddingY }}
       className="px-6 sm:px-8 w-full select-none text-[13px] font-sans"
     >
       <div 
@@ -55,106 +121,63 @@ export default function Footer() {
         
         {/* Brand Information Block */}
         <div className="lg:col-span-3 space-y-3.5">
-          <h4 className="font-serif text-[17px] font-bold text-white tracking-tight">
+          <h4 style={{ color: textColorPrimary }} className="font-serif text-[17px] font-bold tracking-tight">
             {logoText}
           </h4>
-          <p className="text-[12px] leading-relaxed text-zinc-400 font-normal max-w-[240px]">
-            {address}
+          <p style={{ color: textColorSecondary }} className="text-[12px] leading-relaxed font-normal max-w-[240px]">
+            {description}
           </p>
         </div>
 
-        {/* Categories Col 1 */}
-        <div className="lg:col-span-2">
-          <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 mb-4 font-sans">
-            Categories
-          </h5>
-          <div className="space-y-3 flex flex-col text-[13px] font-medium text-zinc-300">
-            <Link href="/Politics" className="hover:text-white transition-colors duration-150">
-              U.S. News & Politics
-            </Link>
-            <Link href="/Technology" className="hover:text-white transition-colors duration-150">
-              Technology & Science
-            </Link>
-            <Link href="/Business" className="hover:text-white transition-colors duration-150">
-              Marketing & Strategy
-            </Link>
-          </div>
-        </div>
-
-        {/* Categories Col 2 */}
-        <div className="lg:col-span-2">
-          <h5 className="text-[10px] uppercase text-transparent mb-4 font-sans select-none hidden lg:block">
-            _
-          </h5>
-          <div className="space-y-3 flex flex-col text-[13px] font-medium text-zinc-300">
-            <Link href="/Business" className="hover:text-white transition-colors duration-150">
-              Finance & Markets
-            </Link>
-            <Link href="/World" className="hover:text-white transition-colors duration-150">
-              World Affairs
-            </Link>
-            <Link href="/Entertainment" className="hover:text-white transition-colors duration-150">
-              Arts & Entertainment
-            </Link>
-          </div>
-        </div>
-
-        {/* Other Sections Col 1 */}
-        <div className="lg:col-span-2">
-          <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-500 mb-4 font-sans">
-            Other Sections
-          </h5>
-          <div className="space-y-3 flex flex-col text-[13px] font-medium text-zinc-300">
-            <Link href="/about" className="hover:text-white transition-colors duration-150">
-              About Us
-            </Link>
-            <Link href="/contact" className="hover:text-white transition-colors duration-150">
-              Contact Us
-            </Link>
-            <Link href="/our-team" className="hover:text-white transition-colors duration-150">
-              Our Team
-            </Link>
-            <Link href="/privacy" className="hover:text-white transition-colors duration-150">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors duration-150">
-              Terms & Conditions
-            </Link>
-            <Link href="/correction-policy" className="hover:text-white transition-colors duration-150">
-              Correction Policy
-            </Link>
-          </div>
-        </div>
-
-        {/* Other Sections Col 2 */}
-        <div className="lg:col-span-3">
-          <h5 className="text-[10px] uppercase text-transparent mb-4 font-sans select-none hidden lg:block">
-            _
-          </h5>
-          <div className="space-y-3 flex flex-col text-[13px] font-medium text-zinc-300">
-            <Link href="/source-methodology" className="hover:text-white transition-colors duration-150">
-              Source Methodology
-            </Link>
-            <Link href="/advertising-policy" className="hover:text-white transition-colors duration-150">
-              Advertising & Sponsored Policy
-            </Link>
-            <Link href="/ownership-funding" className="hover:text-white transition-colors duration-150">
-              Ownership & Funding
-            </Link>
-            <Link href="/right-of-reply-policy" className="hover:text-white transition-colors duration-150">
-              Right of Reply Policy
-            </Link>
-            <Link href="/legal-policy" className="hover:text-white transition-colors duration-150">
-              Legal Policy
-            </Link>
-          </div>
-        </div>
+        {/* Dynamic Columns */}
+        {columns.map((col, idx) => {
+          if (col.isVisible === false) return null;
+          const spanClass = idx === 3 ? "lg:col-span-3" : "lg:col-span-2";
+          const headingText = col.heading || "";
+          
+          return (
+            <div key={col.id} className={spanClass}>
+              {headingText ? (
+                <h5 
+                  style={{ color: textColorSecondary }}
+                  className="text-[10px] font-extrabold uppercase tracking-widest mb-4 font-sans"
+                >
+                  {headingText}
+                </h5>
+              ) : (
+                <h5 className="text-[10px] uppercase text-transparent mb-4 font-sans select-none hidden lg:block">
+                  &nbsp;
+                </h5>
+              )}
+              <div 
+                className="space-y-3 flex flex-col text-[13px] font-medium"
+              >
+                {col.links.map((link) => {
+                  if (link.isVisible === false) return null;
+                  return (
+                    <Link 
+                      key={link.id} 
+                      href={link.url || '#'} 
+                      style={{ color: textColorPrimary }}
+                      className="hover:opacity-80 transition-opacity duration-150"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
 
       </div>
 
       {/* Bottom Legal & Copyright Bar */}
-      <div className="max-w-7xl mx-auto border-t border-zinc-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-zinc-500">
-        <div>
+      <div 
+        style={{ borderTop: `1px solid ${borderTopColor}` }}
+        className="max-w-7xl mx-auto pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px]"
+      >
+        <div style={{ color: textColorSecondary }}>
           {copyright}
         </div>
       </div>

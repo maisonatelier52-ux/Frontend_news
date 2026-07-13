@@ -16,6 +16,8 @@ interface ArticleReaderProps {
   onToggleBookmark: (id: string) => void;
   comments: Comment[];
   onAddComment: (id: string, name: string, text: string) => void;
+  discussionTitle?: string;
+  sharePerspectiveTitle?: string;
 }
 
 type FontSize = "sm" | "base" | "lg" | "xl";
@@ -27,6 +29,8 @@ export default function ArticleReader({
   onToggleBookmark,
   comments,
   onAddComment,
+  discussionTitle,
+  sharePerspectiveTitle,
 }: ArticleReaderProps) {
   const [fontSize, setFontSize] = useState<FontSize>("base");
   const [nameInput, setNameInput] = useState("");
@@ -194,7 +198,7 @@ export default function ArticleReader({
           {/* Comments Section */}
           <section className="space-y-6 pt-4">
             <h3 className="text-base font-editorial-title font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-200 pb-1.5">
-              Discussion ({comments.length})
+              {discussionTitle || "Discussion"} ({comments.length})
             </h3>
 
             {/* List of comments */}
@@ -216,7 +220,7 @@ export default function ArticleReader({
 
             {/* Submit Comment Form */}
             <form onSubmit={handleSubmitComment} className="border border-zinc-200 p-4 bg-zinc-50/40 rounded-sm space-y-3">
-              <h4 className="text-xs font-bold text-zinc-800 uppercase tracking-widest">Share your perspective</h4>
+              <h4 className="text-xs font-bold text-zinc-800 uppercase tracking-widest">{sharePerspectiveTitle || "Share your perspective"}</h4>
               <div className="grid grid-cols-1 gap-3">
                 <input
                   type="text"

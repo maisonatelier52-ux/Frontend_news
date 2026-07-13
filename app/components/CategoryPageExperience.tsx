@@ -45,6 +45,10 @@ interface CategoryPageExperienceProps {
     isVisibleSidebar: boolean;
     spotlightStyle?: string;
     broadsheetStyle?: string;
+    // Customizable text labels
+    latestInLabel?: string;
+    spotlightDigestLabel?: string;
+    moreInLabel?: string;
   };
   articles: Article[];
   trendingArticles: Article[];
@@ -283,7 +287,13 @@ export default function CategoryPageExperience({
 
   // Sidebar: extra category articles or trending fallback (up to 7)
   const sidebarArticles = (hasExtraArticles ? extraArticles : trendingArticles).slice(0, 7);
-  const sidebarTitle = hasExtraArticles ? `More in ${decodedCategory}` : "Trending Coverage";
+  const sidebarTitle = hasExtraArticles
+    ? (layout.moreInLabel?.trim() || `More in ${decodedCategory}`)
+    : "Trending Coverage";
+
+  // Resolve custom labels with auto-generated fallbacks
+  const resolvedLatestInLabel = layout.latestInLabel?.trim() || `Latest in ${decodedCategory}`;
+  const resolvedSpotlightDigestLabel = layout.spotlightDigestLabel?.trim() || `${decodedCategory.toUpperCase()} SPOTLIGHT DIGEST`;
 
 
 
@@ -1854,6 +1864,8 @@ return (
                         isVisibleSidebar={layout.isVisibleSidebar}
                         isVisibleSpotlight={layout.isVisibleSpotlight}
                         onArticleClick={(id) => setSelectedArticleId(id)}
+                        latestInLabel={resolvedLatestInLabel}
+                        spotlightDigestLabel={resolvedSpotlightDigestLabel}
                       />
                     )}
                   </>

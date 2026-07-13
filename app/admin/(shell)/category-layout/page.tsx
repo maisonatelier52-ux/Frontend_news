@@ -13,6 +13,10 @@ interface CategoryLayout {
   isVisibleSidebar: boolean;
   spotlightStyle?: string;
   broadsheetStyle?: string;
+  // Customizable text labels
+  latestInLabel?: string;
+  spotlightDigestLabel?: string;
+  moreInLabel?: string;
 }
 
 const FACTORY_DEFAULT_LAYOUT: CategoryLayout = {
@@ -22,7 +26,10 @@ const FACTORY_DEFAULT_LAYOUT: CategoryLayout = {
   isVisibleSpotlight: true,
   isVisibleSidebar: true,
   spotlightStyle: "standard",
-  broadsheetStyle: "illustrated"
+  broadsheetStyle: "illustrated",
+  latestInLabel: "",
+  spotlightDigestLabel: "",
+  moreInLabel: ""
 };
 
 const COLOR_THEMES = [
@@ -363,7 +370,10 @@ export default function CategoryLayoutPage() {
     isVisibleSpotlight: true,
     isVisibleSidebar: true,
     spotlightStyle: "standard",
-    broadsheetStyle: "illustrated"
+    broadsheetStyle: "illustrated",
+    latestInLabel: "",
+    spotlightDigestLabel: "",
+    moreInLabel: ""
   });
   const [originalLayout, setOriginalLayout] = useState<CategoryLayout>({
     categoryId: "global",
@@ -372,7 +382,10 @@ export default function CategoryLayoutPage() {
     isVisibleSpotlight: true,
     isVisibleSidebar: true,
     spotlightStyle: "standard",
-    broadsheetStyle: "illustrated"
+    broadsheetStyle: "illustrated",
+    latestInLabel: "",
+    spotlightDigestLabel: "",
+    moreInLabel: ""
   });
 
   // Undo / History stacks
@@ -496,7 +509,10 @@ export default function CategoryLayoutPage() {
           isVisibleSpotlight: data.isVisibleSpotlight !== undefined ? data.isVisibleSpotlight : true,
           isVisibleSidebar: data.isVisibleSidebar !== undefined ? data.isVisibleSidebar : true,
           spotlightStyle: data.spotlightStyle || 'standard',
-          broadsheetStyle: data.broadsheetStyle || 'illustrated'
+          broadsheetStyle: data.broadsheetStyle || 'illustrated',
+          latestInLabel: data.latestInLabel || '',
+          spotlightDigestLabel: data.spotlightDigestLabel || '',
+          moreInLabel: data.moreInLabel || ''
         };
         setLayout(reset);
         setOriginalLayout(reset);
@@ -940,6 +956,62 @@ export default function CategoryLayoutPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* ── Page Text Labels ─────────────────────────────────── */}
+            <div className="border-t pt-4 space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-0.5">Page Text Labels</label>
+                <p className="text-[9.5px] text-slate-400 font-medium">Customise the subtitles and section labels shown on every category page. Leave blank to use the default auto-generated text.</p>
+              </div>
+
+              {/* Latest In Label */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
+                  "Latest In" Label
+                </label>
+                <input
+                  type="text"
+                  value={layout.latestInLabel || ''}
+                  placeholder={'e.g. "Latest in US"  (default: Latest in {Category})'}
+                  onChange={e => updateField('latestInLabel', e.target.value)}
+                  className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+                />
+                <span className="text-[9px] text-slate-400">Red label above the hero article</span>
+              </div>
+
+              {/* Spotlight Digest Label */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
+                  Spotlight Digest Label
+                </label>
+                <input
+                  type="text"
+                  value={layout.spotlightDigestLabel || ''}
+                  placeholder={'e.g. "US Spotlight Digest"  (default: {Category} SPOTLIGHT DIGEST)'}
+                  onChange={e => updateField('spotlightDigestLabel', e.target.value)}
+                  className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+                />
+                <span className="text-[9px] text-slate-400">Section heading for the spotlight card row</span>
+              </div>
+
+              {/* More In Label */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block"></span>
+                  Sidebar "More In" Label
+                </label>
+                <input
+                  type="text"
+                  value={layout.moreInLabel || ''}
+                  placeholder={'e.g. "More in US"  (default: More in {Category})'}
+                  onChange={e => updateField('moreInLabel', e.target.value)}
+                  className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+                />
+                <span className="text-[9px] text-slate-400">Sidebar heading when extra articles are available</span>
+              </div>
             </div>
 
           </div>

@@ -14,6 +14,9 @@ interface DetailLayout {
   shareBarPosition: string; // 'bottom' | 'sticky-left'
   authorCardStyle: string; // 'signature' | 'classic' | 'minimal'
   showComments: boolean;
+  trendingStoriesTitle?: string;
+  discussionTitle?: string;
+  sharePerspectiveTitle?: string;
 }
 
 const FACTORY_DEFAULT_LAYOUT: DetailLayout = {
@@ -24,7 +27,10 @@ const FACTORY_DEFAULT_LAYOUT: DetailLayout = {
   showShareBar: true,
   shareBarPosition: "bottom",
   authorCardStyle: "signature",
-  showComments: true
+  showComments: true,
+  trendingStoriesTitle: "",
+  discussionTitle: "",
+  sharePerspectiveTitle: ""
 };
 
 const COLOR_THEMES = [
@@ -767,10 +773,61 @@ export default function DetailLayoutPage() {
             </div>
           </div>
 
+          {/* Detail Page Text Labels */}
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Detail Page Text Labels</label>
+            <p className="text-[9.5px] text-slate-400 font-medium">Customise headings and titles on the article page. Leave blank to use default values.</p>
+
+            {/* Trending Stories Subtitle */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#6366f1] inline-block"></span>
+                Trending Stories Subtitle
+              </label>
+              <input
+                type="text"
+                value={layout.trendingStoriesTitle || ''}
+                placeholder="e.g. Trending Stories"
+                onChange={(e) => updateField('trendingStoriesTitle', e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+              />
+            </div>
+
+            {/* Comment Subtitle Discussion */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
+                Comment Subtitle Discussion
+              </label>
+              <input
+                type="text"
+                value={layout.discussionTitle || ''}
+                placeholder="e.g. DISCUSSION"
+                onChange={(e) => updateField('discussionTitle', e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+              />
+            </div>
+
+            {/* Share Your Perspective */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                "Share Your Perspective" Text
+              </label>
+              <input
+                type="text"
+                value={layout.sharePerspectiveTitle || ''}
+                placeholder="e.g. Share Your Perspective"
+                onChange={(e) => updateField('sharePerspectiveTitle', e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg text-xs w-full bg-white text-slate-700 outline-none focus:border-[#6366f1] transition placeholder:text-slate-350"
+              />
+            </div>
+          </div>
+
         </div>
 
-        {/* Right Side: Preview Simulator */}
-        <div className="lg:col-span-8 space-y-4">
+        {/* Right Side: Preview Simulator — sticky like category layout */}
+        <div className="lg:col-span-8 lg:sticky lg:top-[115px] self-start space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-3.5 shadow-3xs">
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2 select-none">Viewport:</span>

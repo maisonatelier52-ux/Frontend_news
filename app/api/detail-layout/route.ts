@@ -40,7 +40,10 @@ export async function PATCH() {
       showShareBar: true,
       shareBarPosition: 'bottom',
       authorCardStyle: 'signature',
-      showComments: true
+      showComments: true,
+      trendingStoriesTitle: "",
+      discussionTitle: "",
+      sharePerspectiveTitle: ""
     };
     const layout = await DetailLayoutModel.findOneAndUpdate(
       {},
@@ -64,7 +67,10 @@ export async function PUT(req: Request) {
       showShareBar, 
       shareBarPosition, 
       authorCardStyle, 
-      showComments 
+      showComments,
+      trendingStoriesTitle,
+      discussionTitle,
+      sharePerspectiveTitle
     } = await req.json();
 
     let layout = await DetailLayoutModel.findOne();
@@ -79,6 +85,9 @@ export async function PUT(req: Request) {
     layout.shareBarPosition = shareBarPosition || 'bottom';
     layout.authorCardStyle = authorCardStyle || 'signature';
     layout.showComments = showComments !== undefined ? showComments : true;
+    layout.trendingStoriesTitle = trendingStoriesTitle || '';
+    layout.discussionTitle = discussionTitle || '';
+    layout.sharePerspectiveTitle = sharePerspectiveTitle || '';
 
     await layout.save();
     return NextResponse.json(layout);

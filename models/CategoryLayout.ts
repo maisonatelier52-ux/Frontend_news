@@ -7,7 +7,11 @@ const CategoryLayoutSchema = new Schema({
   isVisibleSpotlight: { type: Boolean, default: true },
   isVisibleSidebar: { type: Boolean, default: true },
   spotlightStyle: { type: String, default: 'standard' },
-  broadsheetStyle: { type: String, default: 'illustrated' }
+  broadsheetStyle: { type: String, default: 'illustrated' },
+  // Customizable text labels
+  latestInLabel: { type: String, default: '' },
+  spotlightDigestLabel: { type: String, default: '' },
+  moreInLabel: { type: String, default: '' },
 }, {
   timestamps: true,
 });

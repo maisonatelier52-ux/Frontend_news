@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Article, NEWS_ARTICLES } from "@/app/data/news";
 import Header from "@/app/components/Header";
 import { useSubscription } from "@/app/hooks/useSubscription";
+import Footer from "@/app/components/Footer";
 
 interface Comment {
   name: string;
@@ -1030,7 +1031,7 @@ export default function ArticleDetailPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-zinc-900 tracking-tight">
-                    DISCUSSION <span className="text-zinc-400 font-normal">({dbComments.length})</span>
+                    {detailLayout.discussionTitle?.trim() || "DISCUSSION"} <span className="text-zinc-400 font-normal">({dbComments.length})</span>
                   </h3>
                   <div className="text-xs text-zinc-400 font-medium">
                     Sort by: <span className="text-zinc-700 font-semibold">Newest ↓</span>
@@ -1086,7 +1087,7 @@ export default function ArticleDetailPage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-zinc-900">Share Your Perspective</h4>
+                      <h4 className="text-sm font-bold text-zinc-900">{detailLayout.sharePerspectiveTitle?.trim() || "Share Your Perspective"}</h4>
                       <p className="text-xs text-zinc-400">Join the conversation and let us know your thoughts.</p>
                     </div>
                   </div>
@@ -1156,10 +1157,6 @@ export default function ArticleDetailPage() {
                     >
                       {commentSubmitting ? "Posting..." : "Post Comment"}
                     </button>
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                      Your comment will be reviewed before appearing.
-                    </div>
                   </div>
                 </form>
               </section>
@@ -1171,7 +1168,7 @@ export default function ArticleDetailPage() {
                 {/* Trending Stories */}
                 <div className="space-y-4">
                   <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2 text-left">
-                    Trending Stories
+                    {detailLayout.trendingStoriesTitle?.trim() || "Trending Stories"}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {trendingArticles
@@ -1300,7 +1297,7 @@ export default function ArticleDetailPage() {
               {/* Trending Stories */}
               <div className="space-y-6">
                 <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2">
-                  Trending Stories
+                  {detailLayout.trendingStoriesTitle?.trim() || "Trending Stories"}
                 </h4>
                 <div className="space-y-5">
                   {trendingArticles
@@ -1480,90 +1477,7 @@ export default function ArticleDetailPage() {
       )}
 
       {/* Editorial Footer */}
-      <footer className="bg-white border-t border-zinc-300 py-10 px-4 sm:px-6 select-none mt-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-
-          {/* Col 1: About */}
-          <div className="space-y-3">
-            <h4 className="font-editorial-title text-lg font-extrabold text-zinc-900 tracking-tight">
-              The Domain Name
-            </h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
-              An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.
-            </p>
-          </div>
-
-          {/* Col 2: Navigation Links */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Categories
-            </h5>
-            <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-650 font-medium">
-              <li>
-                <button onClick={() => { router.push("/US"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  U.S. News & Politics
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { router.push("/Finance"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Finance & Markets
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { router.push("/Technology"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Technology & Science
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { router.push("/World"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  World Affairs
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { router.push("/Marketing"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Marketing & Strategy
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { router.push("/Entertainment"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Arts & Entertainment
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: Other Sections */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Other Sections
-            </h5>
-            <ul className="space-y-2 text-xs text-zinc-650 font-medium">
-              <li>
-                <button onClick={() => { router.push("/PR News"); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Press Releases & News
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 4: Operational contact placeholder */}
-
-        </div>
-
-        {/* Lower Legal Bar */}
-        <div className="max-w-7xl mx-auto border-t border-zinc-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] text-zinc-400 font-mono">
-          <div>
-            © {new Date().getFullYear()} The Domain Name. All rights reserved.
-          </div>
-          <div className="flex gap-4">
-            <span className="cursor-pointer hover:underline">Privacy Policy</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Terms of Service</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Dynamic Slide-out Author Profile Panel */}
       {showAuthorPanel && authorDetails && (

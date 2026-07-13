@@ -302,6 +302,17 @@ function SimulatorViewport({
 }
 
 
+const SUB_SECTIONS_CONFIG = [
+  { key: 'usPolitics', label: 'U.S. News & Politics', defaultTitle: 'U.S. News & Politics', defaultCat: 'US' },
+  { key: 'finance', label: 'Finance & Markets', defaultTitle: 'Finance & Markets', defaultCat: 'Finance' },
+  { key: 'tech', label: 'Technology & AI', defaultTitle: 'Technology & AI', defaultCat: 'Technology' },
+  { key: 'trending', label: 'Trending Columns', defaultTitle: 'Trending Columns', defaultCat: 'Trending' },
+  { key: 'world', label: 'World Affairs', defaultTitle: 'World Affairs', defaultCat: 'World' },
+  { key: 'arts', label: 'Arts & Entertainment', defaultTitle: 'Arts & Entertainment', defaultCat: 'Entertainment' },
+  { key: 'marketing', label: 'Marketing & Strategy', defaultTitle: 'Marketing & Strategy', defaultCat: 'Marketing' },
+  { key: 'prnews', label: 'Press Releases & News', defaultTitle: 'Press Releases & News', defaultCat: 'PR News' }
+]
+
 const FACTORY_ORIGINAL_LAYOUT: LayoutSection[] = [
   { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#dc2626', textColor: '#ffffff', customText: '' } },
   { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#f8fafc', textColor: '#64748b' } },
@@ -4011,6 +4022,63 @@ export default function HomeLayoutConfigPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Homepage Sub-Sections (Titles & Categories) */}
+                      <div className="border-t pt-3 mt-3 flex flex-col gap-3">
+                        <label className="text-[11.5px] font-extrabold text-[#6366f1] uppercase tracking-wide">Homepage Sub-Sections (Titles & Categories)</label>
+                        <p className="text-[9.5px] text-slate-400 font-medium -mt-1">Change titles and pass specific category filters for home layout sections.</p>
+                        
+                        <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-1 border border-slate-100 p-2.5 rounded-xl bg-slate-50/50">
+                          {SUB_SECTIONS_CONFIG.map((item) => {
+                            const currentTitle = draftSection.settings?.[`${item.key}Title`] !== undefined
+                              ? draftSection.settings[`${item.key}Title`]
+                              : item.defaultTitle;
+                            
+                            const currentCategory = draftSection.settings?.[`${item.key}Category`] !== undefined
+                              ? draftSection.settings[`${item.key}Category`]
+                              : item.defaultCat;
+
+                            return (
+                              <div key={item.key} className="p-3 bg-white rounded-xl border border-slate-100 shadow-3xs flex flex-col gap-2">
+                                <span className="text-[10px] font-extrabold text-slate-700 tracking-wide uppercase border-b pb-1 mb-1 border-slate-50">{item.label} Section</span>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-[9px] font-bold text-slate-450 block mb-0.5">Section Title</label>
+                                    <input
+                                      type="text"
+                                      value={currentTitle}
+                                      placeholder={item.defaultTitle}
+                                      onChange={(e) => updateDraftSetting(`${item.key}Title`, e.target.value)}
+                                      className="p-1.5 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[9px] font-bold text-slate-450 block mb-0.5">Filter Category</label>
+                                    <select
+                                      value={currentCategory}
+                                      onChange={(e) => updateDraftSetting(`${item.key}Category`, e.target.value)}
+                                      className="p-1.5 border rounded-lg text-xs w-full bg-white text-slate-700 outline-none font-bold"
+                                    >
+                                      <option value="All">All Categories</option>
+                                      {categoriesList.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                      ))}
+                                      {/* Fallback to default if not in list */}
+                                      {!categoriesList.includes(item.defaultCat) && item.defaultCat !== 'Trending' && (
+                                        <option value={item.defaultCat}>{item.defaultCat}</option>
+                                      )}
+                                      {item.defaultCat === 'Trending' && !categoriesList.includes('Trending') && (
+                                        <option value="Trending">Trending</option>
+                                      )}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 )}

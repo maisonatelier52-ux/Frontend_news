@@ -56,7 +56,11 @@ export async function PATCH() {
 export async function PUT(req: Request) {
   try {
     await connectToDatabase();
-    const { designStyle, colorTheme, isVisibleSpotlight, isVisibleSidebar, spotlightStyle, broadsheetStyle } = await req.json();
+    const {
+      designStyle, colorTheme, isVisibleSpotlight, isVisibleSidebar,
+      spotlightStyle, broadsheetStyle,
+      latestInLabel, spotlightDigestLabel, moreInLabel
+    } = await req.json();
 
     let layout = await CategoryLayoutModel.findOne();
     if (!layout) {
@@ -69,6 +73,9 @@ export async function PUT(req: Request) {
     layout.isVisibleSidebar = isVisibleSidebar !== undefined ? isVisibleSidebar : true;
     layout.spotlightStyle = spotlightStyle || 'standard';
     layout.broadsheetStyle = broadsheetStyle || 'illustrated';
+    layout.latestInLabel = latestInLabel || '';
+    layout.spotlightDigestLabel = spotlightDigestLabel || '';
+    layout.moreInLabel = moreInLabel || '';
 
     await layout.save();
     return NextResponse.json(layout);

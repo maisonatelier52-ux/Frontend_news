@@ -87,25 +87,54 @@ export default function NewsGrid({
 
   // --- Front Page Curated Layout ---
   // Slice articles by categories for sections (showing 3 per section)
+  const heroSection = sections?.find((s: any) => s.id === 'first-hero');
+  const heroStyle = heroSection?.designStyle || 'hero-split';
+
+  // Customized categories
+  const usPoliticsCat = heroSection?.settings?.usPoliticsCategory || "US";
+  const financeCat = heroSection?.settings?.financeCategory || "Finance";
+  const techCat = heroSection?.settings?.techCategory || "Technology";
+  const trendingCat = heroSection?.settings?.trendingCategory || "Trending";
+  const worldCat = heroSection?.settings?.worldCategory || "World";
+  const artsCat = heroSection?.settings?.artsCategory || "Entertainment";
+  const marketingCat = heroSection?.settings?.marketingCategory || "Marketing";
+  const prnewsCat = heroSection?.settings?.prnewsCategory || "PR News";
+
+  // Customized titles
+  const usTitle = heroSection?.settings?.usPoliticsTitle || "U.S. News & Politics";
+  const financeTitle = heroSection?.settings?.financeTitle || "Finance & Markets";
+  const techTitle = heroSection?.settings?.techTitle || "Technology & AI";
+  const trendingTitle = heroSection?.settings?.trendingTitle || "Trending Columns";
+  const worldTitle = heroSection?.settings?.worldTitle || "World Affairs";
+  const artsTitle = heroSection?.settings?.artsTitle || "Arts & Entertainment";
+  const marketingTitle = heroSection?.settings?.marketingTitle || "Marketing & Strategy";
+  const prnewsTitle = heroSection?.settings?.prnewsTitle || "Press Releases & News";
+
+  // Slice articles by categories for sections (showing 3 per section)
   const getSectionArticles = (cat: string, count = 3) => {
+    if (cat === 'All') {
+      return articles.filter(a => !a.isLead).slice(0, count);
+    }
     return articles.filter(a => a.category === cat && !a.isLead).slice(0, count);
   };
 
-  const usArticles = getSectionArticles("US", 8);
-  const worldArticles = getSectionArticles("World", 3);
-  const financeArticles = getSectionArticles("Finance", 8);
-  const techArticles = getSectionArticles("Technology", 3);
-  const entertainmentArticles = getSectionArticles("Entertainment", 3);
-  const marketingArticles = getSectionArticles("Marketing", 3);
-  const prnewsArticles = getSectionArticles("PR News", 3);
+  const usArticles = getSectionArticles(usPoliticsCat, 8);
+  const worldArticles = getSectionArticles(worldCat, 3);
+  const financeArticles = getSectionArticles(financeCat, 8);
+  const techArticles = getSectionArticles(techCat, 3);
+  const entertainmentArticles = getSectionArticles(artsCat, 3);
+  const marketingArticles = getSectionArticles(marketingCat, 3);
+  const prnewsArticles = getSectionArticles(prnewsCat, 3);
 
   // opinionArticles: select a few US or World news articles that are not the lead and not in the first 3
   const opinionArticles = articles
-    .filter(a => (a.category === "US" || a.category === "World") && !a.isLead)
+    .filter(a => (a.category === usPoliticsCat || a.category === worldCat) && !a.isLead)
     .slice(3, 6);
 
   // Trending Panel: top 5 trending articles
-  const trendingArticles = articles.filter(a => a.isTrending).slice(0, 5);
+  const trendingArticles = (trendingCat && trendingCat !== 'Trending')
+    ? articles.filter(a => a.category === trendingCat && !a.isLead).slice(0, 5)
+    : articles.filter(a => a.isTrending).slice(0, 5);
 
   // Latest reports: list the rest of the articles that are not yet highlighted in above boxes
   const highlightedIds = new Set([
@@ -122,9 +151,6 @@ export default function NewsGrid({
   ].filter(Boolean) as string[]);
 
   const remainingArticles = articles.filter(a => !highlightedIds.has(a.id));
-
-  const heroSection = sections?.find((s: any) => s.id === 'first-hero');
-  const heroStyle = heroSection?.designStyle || 'hero-split';
 
   const getSectionStyle = (sectionId: string, currentStyle: string) => {
     switch (heroStyle) {
@@ -975,12 +1001,12 @@ export default function NewsGrid({
           {isUsVisible && (
             <div className="w-full pb-4">
               {isCustomPoliticsStyle ? (
-                renderDynamicSection("U.S. News & Politics", usStyle, usArticles)
+                renderDynamicSection(usTitle, usStyle, usArticles)
               ) : (
                 /* Fallback to standard 3-column view if only Finance is custom */
                 <div className="space-y-4">
                   <div className="border-print-thick pt-1.5 flex justify-between items-center mb-6">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">U.S. News & Politics</h2>
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{usTitle}</h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {usArticles.slice(0, 3).map((article) => (
@@ -1015,12 +1041,12 @@ export default function NewsGrid({
           {isFinanceVisible && usStyle !== 'politics-minimal' && (
             <div className="w-full border-b border-zinc-200 pb-8">
               {isCustomFinanceStyle ? (
-                renderDynamicSection("Finance & Markets", financeStyle, financeArticles)
+                renderDynamicSection(financeTitle, financeStyle, financeArticles)
               ) : (
                 /* Fallback to standard 3-column view if only Politics is custom */
                 <div className="space-y-4">
                   <div className="border-print-thick pt-1.5 flex justify-between items-center mb-6">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Finance & Markets</h2>
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{financeTitle}</h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {financeArticles.slice(0, 3).map((article) => (
@@ -1058,7 +1084,7 @@ export default function NewsGrid({
           {isUsVisible && (
             <div className="lg:col-span-6 space-y-4">
               <div className="border-print-thick pt-1.5 flex justify-between items-center">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">U.S. News & Politics</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{usTitle}</h2>
               </div>
               <div className="space-y-4">
                 {usArticles.slice(0, 3).map((article, idx) => (
@@ -1091,7 +1117,7 @@ export default function NewsGrid({
           {isFinanceVisible && (
             <div className={`${isUsVisible ? 'lg:col-span-6 lg:border-l lg:border-zinc-200 lg:pl-8' : 'lg:col-span-12'} space-y-4`}>
               <div className="border-print-thick pt-1.5 flex justify-between items-center">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Finance & Markets</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{financeTitle}</h2>
               </div>
               <div className="space-y-4">
                 {financeArticles.slice(0, 3).map((article, idx) => (
@@ -1162,16 +1188,16 @@ export default function NewsGrid({
         {/* Left Side: Tech and Science (Takes 8/12) */}
         <div className="lg:col-span-8 space-y-8">
           {/* Technology */}
-          {isTechVisible && renderDynamicSection("Technology & AI", techStyle, techArticles)}
+          {isTechVisible && renderDynamicSection(techTitle, techStyle, techArticles)}
 
           {/* World Affairs */}
-          {isWorldVisible && renderDynamicSection("World Affairs", worldStyle, worldArticles)}
+          {isWorldVisible && renderDynamicSection(worldTitle, worldStyle, worldArticles)}
         </div>
 
         {/* Right Side: Trending Stories Panel (Takes 4/12) */}
         <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 space-y-4">
           <div className="border-print-thick pt-1.5">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Trending Columns</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{trendingTitle}</h2>
           </div>
           <div className="space-y-4 divide-y divide-zinc-100">
             {trendingArticles.map((article, idx) => (
@@ -1207,9 +1233,9 @@ export default function NewsGrid({
           return (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-zinc-200 pb-8">
               {[
-                { title: "Arts & Entertainment", art: entertainmentArticles[0] },
-                { title: "Marketing & Strategy", art: marketingArticles[0] },
-                { title: "Press Releases & News", art: prnewsArticles[0] }
+                { title: artsTitle, art: entertainmentArticles[0] },
+                { title: marketingTitle, art: marketingArticles[0] },
+                { title: prnewsTitle, art: prnewsArticles[0] }
               ].map((col, idx) => {
                 if (!col.art) return null;
                 return (
@@ -1239,9 +1265,9 @@ export default function NewsGrid({
         // 2. SMOOTH SLIDER TRACK: horizontal carousel for cover-story
         if (heroStyle === 'cover-story') {
           const allFlatArticles = [
-            ...entertainmentArticles.slice(0, 2).map(a => ({ ...a, category: "Arts & Entertainment" })),
-            ...marketingArticles.slice(0, 2).map(a => ({ ...a, category: "Marketing & Strategy" })),
-            ...prnewsArticles.slice(0, 2).map(a => ({ ...a, category: "Press Releases & News" }))
+            ...entertainmentArticles.slice(0, 2).map(a => ({ ...a, category: artsTitle })),
+            ...marketingArticles.slice(0, 2).map(a => ({ ...a, category: marketingTitle })),
+            ...prnewsArticles.slice(0, 2).map(a => ({ ...a, category: prnewsTitle }))
           ];
           return (
             <div className="border-b border-zinc-200 pb-8 space-y-4">
@@ -1280,9 +1306,9 @@ export default function NewsGrid({
           return (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-zinc-200 pb-8 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
               {[
-                { title: "Arts & Entertainment", list: entertainmentArticles },
-                { title: "Marketing & Strategy", list: marketingArticles },
-                { title: "Press Releases & News", list: prnewsArticles }
+                { title: artsTitle, list: entertainmentArticles },
+                { title: marketingTitle, list: marketingArticles },
+                { title: prnewsTitle, list: prnewsArticles }
               ].map((col, idx) => (
                 <div key={idx} className={`space-y-5 ${idx > 0 ? 'md:pl-6' : ''} pt-4 md:pt-0`}>
                   <div className="border-b border-zinc-955 pb-1.5">
@@ -1316,7 +1342,7 @@ export default function NewsGrid({
             {/* Entertainment */}
             <div className="space-y-4">
               <div className="border-print-thick pt-1.5">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Arts & Entertainment</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{artsTitle}</h2>
               </div>
               <div className="space-y-4">
                 {entertainmentArticles.map((article) => (
@@ -1346,7 +1372,7 @@ export default function NewsGrid({
             {/* Marketing */}
             <div className="space-y-4 md:border-l md:border-zinc-200 md:pl-6">
               <div className="border-print-thick pt-1.5">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Marketing & Strategy</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{marketingTitle}</h2>
               </div>
               <div className="space-y-4">
                 {marketingArticles.map((article) => (
@@ -1376,7 +1402,7 @@ export default function NewsGrid({
             {/* PR News */}
             <div className="space-y-4 md:border-l md:border-zinc-200 md:pl-6">
               <div className="border-print-thick pt-1.5">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Press Releases & News</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{prnewsTitle}</h2>
               </div>
               <div className="space-y-4">
                 {prnewsArticles.map((article) => (

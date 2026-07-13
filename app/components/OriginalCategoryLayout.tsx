@@ -45,6 +45,10 @@ interface OriginalCategoryLayoutProps {
   isVisibleSpotlight: boolean;
   /** Called when user clicks any article */
   onArticleClick: (id: string) => void;
+  /** Custom label for 'Latest in {Category}' (optional) */
+  latestInLabel?: string;
+  /** Custom label for '{Category} SPOTLIGHT DIGEST' (optional) */
+  spotlightDigestLabel?: string;
 }
 
 export default function OriginalCategoryLayout({
@@ -57,6 +61,8 @@ export default function OriginalCategoryLayout({
   isVisibleSidebar,
   isVisibleSpotlight,
   onArticleClick,
+  latestInLabel,
+  spotlightDigestLabel,
 }: OriginalCategoryLayoutProps) {
   return (
     <>
@@ -80,7 +86,7 @@ export default function OriginalCategoryLayout({
           <div className="lg:col-span-5 flex flex-col justify-between py-1">
             <div>
               <span className="text-[10px] text-red-700 font-extrabold uppercase tracking-widest mb-2.5 block">
-                Latest in {decodedCategory}
+                {latestInLabel?.trim() || `Latest in ${decodedCategory}`}
               </span>
               <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-900 leading-tight tracking-tight group-hover:text-zinc-700 transition">
                 {heroArticle.title}
@@ -110,7 +116,7 @@ export default function OriginalCategoryLayout({
         <div className="mb-10 border-t border-b border-zinc-200/70 py-8">
           <div className="mb-5">
             <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-1 font-sans text-red-700">
-              &bull; {decodedCategory.toUpperCase()} SPOTLIGHT DIGEST
+              &bull; {spotlightDigestLabel?.trim() || `${decodedCategory.toUpperCase()} SPOTLIGHT DIGEST`}
             </h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

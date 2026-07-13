@@ -8,7 +8,10 @@ const DetailLayoutSchema = new Schema({
   showShareBar: { type: Boolean, default: true },
   shareBarPosition: { type: String, default: 'bottom' }, // 'bottom' | 'sticky-left'
   authorCardStyle: { type: String, default: 'signature' }, // 'signature' | 'classic' | 'minimal'
-  showComments: { type: Boolean, default: true }
+  showComments: { type: Boolean, default: true },
+  trendingStoriesTitle: { type: String, default: "" },
+  discussionTitle: { type: String, default: "" },
+  sharePerspectiveTitle: { type: String, default: "" }
 }, {
   timestamps: true,
 });
