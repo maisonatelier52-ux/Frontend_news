@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import CategoryPageExperience from "../../../components/CategoryPageExperience";
+import AdminLoader from "../../components/AdminLoader";
 import type { Article } from "../../../data/news";
 
 interface CategoryLayout {
@@ -707,11 +708,7 @@ export default function CategoryLayoutPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="text-zinc-500 font-mono text-xs uppercase tracking-widest animate-pulse">Loading settings & preview...</div>
-      </div>
-    );
+    return <AdminLoader />;
   }
 
   return (

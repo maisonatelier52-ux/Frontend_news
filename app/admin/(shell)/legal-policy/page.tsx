@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import AdminLoader from '../../components/AdminLoader';
 
 interface PolicySection {
   heading: string;
@@ -162,12 +163,7 @@ export default function LegalPolicyManagerPage() {
   const inputStyle: React.CSSProperties = { border: '1px solid #e2e8f0', borderRadius: 6, padding: '7px 11px', fontSize: 12, color: '#111', outline: 'none', background: '#fff', boxSizing: 'border-box' }
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] gap-2">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div>
-        <span className="text-xs font-semibold text-slate-500 font-sans">Syncing Legal Policy configuration...</span>
-      </div>
-    );
+    return <AdminLoader />;
   }
 
   return (

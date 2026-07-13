@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import StatCard from '../../components/StatCard'
+import AdminLoader from '../../components/AdminLoader'
 import StatusBadge from '../../components/StatusBadge'
 
 interface StatItem {
@@ -38,12 +39,7 @@ export default function DashboardPage() {
   }, [])
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <div className="w-10 h-10 border-4 border-slate-200 border-t-[#1e1b4b] rounded-full animate-spin"></div>
-        <span className="text-sm font-semibold text-slate-500">Loading Live CMS Metrics...</span>
-      </div>
-    )
+    return <AdminLoader />;
   }
 
   if (error || !data) {

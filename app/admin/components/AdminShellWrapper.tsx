@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from './AdminSidebar'
 import AdminTopBar from './AdminTopBar'
+import AdminLoader from './AdminLoader'
 
 export default function AdminShellWrapper({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import DetailPageExperience from "../../../components/DetailPageExperience";
+import AdminLoader from "../../components/AdminLoader";
 import type { Article } from "../../../data/news";
 
 interface DetailLayout {
@@ -515,14 +516,7 @@ export default function DetailLayoutPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-140px)] bg-slate-50/50">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent mx-auto" />
-          <p className="text-xs text-slate-500 font-medium">Loading layout settings & preview...</p>
-        </div>
-      </div>
-    );
+    return <AdminLoader />;
   }
 
   const isChanged = JSON.stringify(layout) !== JSON.stringify(originalLayout);
