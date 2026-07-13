@@ -1,54 +1,87 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-const initialColumns = [
-  {
-    id: 1, heading: 'Company',
-    links: [
-      { id: 1, label: 'About Us', url: '/about' },
-      { id: 2, label: 'Careers', url: '/careers' },
-      { id: 3, label: 'Contact', url: '/contact' },
-      { id: 4, label: 'Advertise', url: '/advertise' },
-    ],
-  },
-  {
-    id: 2, heading: 'News',
-    links: [
-      { id: 1, label: 'Politics', url: '/category/politics' },
-      { id: 2, label: 'Technology', url: '/category/technology' },
-      { id: 3, label: 'Business', url: '/category/business' },
-      { id: 4, label: 'World', url: '/category/world' },
-    ],
-  },
-  {
-    id: 3, heading: 'Policies',
-    links: [
-      { id: 1, label: 'Privacy Policy', url: '/privacy' },
-      { id: 2, label: 'Terms of Service', url: '/terms' },
-      { id: 3, label: 'Cookie Policy', url: '/cookies' },
-      { id: 4, label: 'DMCA', url: '/dmca' },
-    ],
-  },
-]
+interface FooterLink {
+  id: number
+  label: string
+  url: string
+}
 
-const initialSocials = [
-  { id: 1, platform: 'Twitter/X', icon: '𝕏', url: 'https://twitter.com/newssite' },
-  { id: 2, platform: 'Facebook', icon: 'f', url: 'https://facebook.com/newssite' },
-  { id: 3, platform: 'Instagram', icon: '📸', url: 'https://instagram.com/newssite' },
-  { id: 4, platform: 'YouTube', icon: '▶', url: 'https://youtube.com/@newssite' },
-  { id: 5, platform: 'LinkedIn', icon: 'in', url: 'https://linkedin.com/company/newssite' },
-]
+interface FooterColumn {
+  id: number
+  heading: string
+  links: FooterLink[]
+  isVisible?: boolean
+}
+
+interface SocialLink {
+  id: number
+  platform: string
+  icon: string
+  url: string
+}
 
 export default function FooterPage() {
-  const [columns, setColumns] = useState(initialColumns)
-  const [socials, setSocials] = useState(initialSocials)
+  const [columns, setColumns] = useState<FooterColumn[]>([])
+  const [socials, setSocials] = useState<SocialLink[]>([])
   const [copyright, setCopyright] = useState('© 2026 The Domain Name. All rights reserved.')
+  const [address, setAddress] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [logoText, setLogoText] = useState('')
+  const [newsletter, setNewsletter] = useState(true)
+  
+  // Custom styling settings
+  const [bgColor, setBgColor] = useState('#111111')
+  const [textColor, setTextColor] = useState('#d4d4d8')
+  const [paddingY, setPaddingY] = useState('40px')
+  const [borderTopColor, setBorderTopColor] = useState('#27272a')
+
+  const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
   const [newLink, setNewLink] = useState<Record<number, { label: string; url: string }>>({})
 
+  // Load from Database settings config
+  async function fetchSettings() {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/settings')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.footer) {
+          const f = data.footer
+          setColumns(f.columns || [])
+          setSocials(f.socials || [])
+          setCopyright(f.copyright || '© 2026 The Domain Name. All rights reserved.')
+          setAddress(f.address || '')
+          setPhone(f.phone || '')
+          setEmail(f.email || '')
+          setLogoText(f.logoText || 'THE DOMAIN NAME')
+          setNewsletter(f.newsletter !== false)
+          setBgColor(f.bgColor || '#111111')
+          setTextColor(f.textColor || '#d4d4d8')
+          setPaddingY(f.paddingY || '40px')
+          setBorderTopColor(f.borderTopColor || '#27272a')
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load footer settings', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
   function updateColumnHeading(colId: number, value: string) {
     setColumns((prev) => prev.map((c) => c.id === colId ? { ...c, heading: value } : c))
+  }
+
+  function toggleColumnVisibility(colId: number) {
+    setColumns((prev) => prev.map((c) => c.id === colId ? { ...c, isVisible: !(c.isVisible !== false) } : c))
   }
 
   function addLink(colId: number) {
@@ -64,131 +97,235 @@ export default function FooterPage() {
     setColumns((prev) => prev.map((c) => c.id === colId ? { ...c, links: c.links.filter((l) => l.id !== linkId) } : c))
   }
 
-  function updateSocial(id: number, field: 'url', value: string) {
-    setSocials((prev) => prev.map((s) => s.id === id ? { ...s, [field]: value } : s))
+  function updateLinkValue(colId: number, linkId: number, field: 'label' | 'url', value: string) {
+    setColumns((prev) => prev.map((c) => c.id === colId 
+      ? { ...c, links: c.links.map(l => l.id === linkId ? { ...l, [field]: value } : l) } 
+      : c
+    ))
   }
 
-  function handleSave() {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  function updateSocial(id: number, value: string) {
+    setSocials((prev) => prev.map((s) => s.id === id ? { ...s, url: value } : s))
   }
 
-  const inputStyle: React.CSSProperties = { border: '1px solid #e4e4e7', borderRadius: 5, padding: '6px 10px', fontSize: 12, color: '#111', outline: 'none', background: '#fff' }
+  async function handleSave() {
+    try {
+      const payload = {
+        footer: {
+          layout: 'dynamic',
+          columns,
+          socials,
+          copyright,
+          address,
+          phone,
+          email,
+          logoText,
+          newsletter,
+          bgColor,
+          textColor,
+          paddingY,
+          borderTopColor
+        }
+      };
+
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+
+        // Audit Log
+        await fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'activity',
+            action: 'FOOTER_UPDATE',
+            details: { headingKeys: columns.map(c => c.heading) },
+            user: 'Admin'
+          })
+        });
+      }
+    } catch (err) {
+      alert('Failed to save footer layout settings');
+    }
+  }
+
+  const inputStyle: React.CSSProperties = { border: '1px solid #e2e8f0', borderRadius: 6, padding: '7px 11px', fontSize: 12, color: '#111', outline: 'none', background: '#fff', boxSizing: 'border-box' }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-2">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div>
+        <span className="text-xs font-semibold text-slate-500 font-sans">Syncing Footer configuration...</span>
+      </div>
+    )
+  }
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+    <div className="max-w-[1150px] animate-[admin-fade-in_0.4s_ease_both] pb-12">
+      <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#111', margin: 0 }}>Footer Manager</h1>
-          <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Manage footer columns, links, social media, and copyright</p>
+          <h1 className="text-[22px] font-sans font-extrabold text-[#111] m-0">Footer Manager</h1>
+          <p className="text-[12.5px] text-slate-500 mt-1 font-medium">Manage column structure, navigation items, newsletter visibility, social hooks and visual styling tokens.</p>
         </div>
         <button onClick={handleSave}
-          style={{ background: '#111', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          className="px-4 py-2 bg-[#111] hover:bg-[#222] text-white text-xs font-semibold rounded-lg cursor-pointer transition shadow-[0_2px_4px_rgba(0,0,0,0.06)] flex items-center gap-1.5"
+        >
           {saved ? '✓ Saved!' : 'Save Changes'}
         </button>
       </div>
 
-      {/* Footer Columns */}
-      <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 8, padding: 22, marginBottom: 16 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#111', marginBottom: 16 }}>Footer Columns</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-          {columns.map((col) => (
-            <div key={col.id} style={{ border: '1px solid #e4e4e7', borderRadius: 7, overflow: 'hidden' }}>
-              {/* Column header */}
-              <div style={{ background: '#f9f9f9', padding: '10px 14px', borderBottom: '1px solid #e4e4e7' }}>
-                <input
-                  value={col.heading}
-                  onChange={(e) => updateColumnHeading(col.id, e.target.value)}
-                  style={{ ...inputStyle, width: '100%', fontWeight: 600, fontSize: 13, boxSizing: 'border-box' }}
-                />
-              </div>
-
-              {/* Links */}
-              <div style={{ padding: 12 }}>
-                {col.links.map((link) => (
-                  <div key={link.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
-                    <input defaultValue={link.label} style={{ ...inputStyle, flex: 1 }} placeholder="Label" />
-                    <input defaultValue={link.url} style={{ ...inputStyle, flex: 1 }} placeholder="URL" />
-                    <button onClick={() => removeLink(col.id, link.id)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: 16, lineHeight: 1 }} aria-label="Remove link">×</button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Columns Settings - Span 2 */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Footer Columns */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-4">Footer Link Columns</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {columns.map((col) => (
+                <div key={col.id} className="border border-slate-150 rounded-lg overflow-hidden flex flex-col justify-between">
+                  {/* Column header */}
+                  <div className="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center gap-2">
+                    <input
+                      value={col.heading}
+                      onChange={(e) => updateColumnHeading(col.id, e.target.value)}
+                      style={{ ...inputStyle, width: '100%', fontWeight: 700, fontSize: 13 }}
+                    />
+                    <button 
+                      onClick={() => toggleColumnVisibility(col.id)}
+                      className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer ${
+                        col.isVisible !== false ? 'bg-indigo-50 text-indigo-750' : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      {col.isVisible !== false ? 'Show' : 'Hide'}
+                    </button>
                   </div>
-                ))}
 
-                {/* Add link */}
-                <div style={{ display: 'flex', gap: 5, marginTop: 8, paddingTop: 8, borderTop: '1px dashed #e4e4e7' }}>
-                  <input
-                    placeholder="Label"
-                    value={newLink[col.id]?.label || ''}
-                    onChange={(e) => setNewLink((prev) => ({ ...prev, [col.id]: { ...prev[col.id], label: e.target.value } }))}
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <input
-                    placeholder="URL"
-                    value={newLink[col.id]?.url || ''}
-                    onChange={(e) => setNewLink((prev) => ({ ...prev, [col.id]: { ...prev[col.id], url: e.target.value } }))}
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <button onClick={() => addLink(col.id)} style={{ padding: '5px 10px', background: '#111', color: '#fff', border: 'none', borderRadius: 5, fontSize: 12, cursor: 'pointer' }}>+</button>
+                  {/* Links */}
+                  <div className="p-3 space-y-2 flex-1">
+                    {col.links.map((link) => (
+                      <div key={link.id} className="flex items-center gap-2">
+                        <input value={link.label} onChange={(e) => updateLinkValue(col.id, link.id, 'label', e.target.value)} style={{ ...inputStyle, flex: 1 }} placeholder="Label" />
+                        <input value={link.url} onChange={(e) => updateLinkValue(col.id, link.id, 'url', e.target.value)} style={{ ...inputStyle, flex: 1.2 }} placeholder="URL" />
+                        <button onClick={() => removeLink(col.id, link.id)} className="text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer text-sm font-bold leading-none p-1">✕</button>
+                      </div>
+                    ))}
+
+                    {/* Add link */}
+                    <div className="flex gap-2 pt-2.5 mt-2.5 border-t border-dashed border-slate-150">
+                      <input
+                        placeholder="Label"
+                        value={newLink[col.id]?.label || ''}
+                        onChange={(e) => setNewLink((prev) => ({ ...prev, [col.id]: { ...prev[col.id], label: e.target.value } }))}
+                        style={{ ...inputStyle, flex: 1 }}
+                      />
+                      <input
+                        placeholder="URL"
+                        value={newLink[col.id]?.url || ''}
+                        onChange={(e) => setNewLink((prev) => ({ ...prev, [col.id]: { ...prev[col.id], url: e.target.value } }))}
+                        style={{ ...inputStyle, flex: 1.2 }}
+                      />
+                      <button onClick={() => addLink(col.id)} className="px-2.5 py-1 bg-black text-white hover:bg-slate-800 text-xs font-semibold rounded cursor-pointer">+</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Social Media */}
-      <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 8, padding: 22, marginBottom: 16 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#111', marginBottom: 16 }}>Social Media Links</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {socials.map((s) => (
-            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 32, height: 32, background: '#f4f4f5', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#374151', flexShrink: 0 }}>
-                {s.icon}
-              </div>
-              <div style={{ width: 100, fontSize: 13, color: '#374151', fontWeight: 500 }}>{s.platform}</div>
-              <input
-                value={s.url}
-                onChange={(e) => updateSocial(s.id, 'url', e.target.value)}
-                style={{ ...inputStyle, flex: 1, fontSize: 13 }}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Copyright */}
-      <div style={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: 8, padding: 22, marginBottom: 20 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: '#111', marginBottom: 12 }}>Copyright Text</div>
-        <input
-          value={copyright}
-          onChange={(e) => setCopyright(e.target.value)}
-          style={{ ...inputStyle, width: '100%', fontSize: 13, padding: '9px 12px', boxSizing: 'border-box' }}
-        />
-      </div>
-
-      {/* Live Preview */}
-      <div style={{ border: '1px solid #e4e4e7', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '10px 18px', background: '#f9f9f9', borderBottom: '1px solid #e4e4e7', fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Footer Preview
-        </div>
-        <div style={{ background: '#111111', padding: '30px 28px 20px', color: '#e5e5e5' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 24 }}>
-            {columns.map((col) => (
-              <div key={col.id}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{col.heading}</div>
-                {col.links.map((link) => (
-                  <div key={link.id} style={{ fontSize: 12, color: '#9ca3af', marginBottom: 5 }}>{link.label}</div>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop: '1px solid #333', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: '#6b7280' }}>{copyright}</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {socials.map((s) => (
-                <div key={s.id} style={{ width: 24, height: 24, background: '#333', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#aaa' }}>{s.icon}</div>
               ))}
             </div>
           </div>
+
+          {/* Social Media Links */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-4">Social Media Profile URLs</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {socials.map((s) => (
+                <div key={s.id} className="flex items-center gap-3.5 border border-slate-150 p-2.5 rounded-lg bg-slate-50">
+                  <div className="w-8 h-8 bg-white border border-slate-200 rounded-full flex items-center justify-center font-bold text-slate-800 text-xs shrink-0 select-none">
+                    {s.icon}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">{s.platform}</span>
+                    <input
+                      value={s.url}
+                      onChange={(e) => updateSocial(s.id, e.target.value)}
+                      style={{ ...inputStyle, width: '100%', padding: '4px 8px' }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Columns Settings - Span 1 */}
+        <div className="space-y-6">
+          
+          {/* Logo & Contact details */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] space-y-4">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Logo & Contact Details</span>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600">Footer Logo Title</label>
+              <input value={logoText} onChange={(e) => setLogoText(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600">Office Address</label>
+              <input value={address} onChange={(e) => setAddress(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600">Office Phone</label>
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600">Editorial Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-600">Copyright Text</label>
+              <input value={copyright} onChange={(e) => setCopyright(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+            </div>
+            <div className="flex justify-between items-center bg-slate-50 border border-slate-150 p-2.5 rounded">
+              <span className="text-xs font-semibold text-slate-700">Show Newsletter Box</span>
+              <input type="checkbox" checked={newsletter} onChange={(e) => setNewsletter(e.target.checked)} className="w-4 h-4 cursor-pointer text-black" />
+            </div>
+          </div>
+
+          {/* Layout & Appearance styling */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] space-y-4">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">Appearance Styling</span>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-600">Background Color</label>
+                <div className="flex gap-1">
+                  <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="w-6 h-6 border-none p-0 cursor-pointer rounded bg-transparent" />
+                  <input type="text" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="w-full border border-slate-200 rounded px-1.5 text-[10px] uppercase font-mono" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-600">Text & Links Color</label>
+                <div className="flex gap-1">
+                  <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-6 h-6 border-none p-0 cursor-pointer rounded bg-transparent" />
+                  <input type="text" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-full border border-slate-200 rounded px-1.5 text-[10px] uppercase font-mono" />
+                </div>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] font-bold text-slate-600 block">Vertical Spacing (Padding): <span className="font-mono">{paddingY}</span></label>
+                <select value={paddingY} onChange={(e) => setPaddingY(e.target.value)} className="w-full border border-slate-200 rounded px-1.5 py-1 text-[11px]">
+                  <option value="20px">20px (Compact)</option>
+                  <option value="40px">40px (Default)</option>
+                  <option value="60px">60px (Generous)</option>
+                  <option value="80px">80px (Extra Spacious)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

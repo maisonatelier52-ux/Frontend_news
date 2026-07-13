@@ -52,7 +52,7 @@ export default function AdminTopBar({ collapsed, setCollapsed, user }: AdminTopB
         )}
         <nav className="flex items-center gap-1.25">
           {crumbs.map((crumb, i) => (
-            <span key={crumb.href} className="flex items-center gap-1.25">
+            <span key={`${crumb.href}-${i}`} className="flex items-center gap-1.25">
               {i > 0 && (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
                   <polyline points="9 18 15 12 9 6"/>

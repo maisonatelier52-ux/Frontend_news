@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Header from "./Header";
+import Footer from "./Footer";
 
 interface Comment {
   name: string;
@@ -1007,76 +1008,7 @@ export default function DetailPageExperience({
       )}
 
       {/* Editorial Footer */}
-      <footer className="bg-white border-t border-zinc-300 py-10 px-4 sm:px-6 select-none mt-16 text-left">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Col 1: About */}
-          <div className="space-y-3">
-            <h4 className="font-editorial-title text-lg font-extrabold text-zinc-900 tracking-tight">
-              The Domain Name
-            </h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
-              An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.
-            </p>
-          </div>
-
-          {/* Col 2: Navigation Links */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Categories
-            </h5>
-            <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-650 font-medium">
-              <li>
-                <button className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  U.S. News & Politics
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Finance & Markets
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Technology & Science
-                </button>
-              </li>
-              <li>
-                <button className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  World Affairs
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: Other Sections */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Other Sections
-            </h5>
-            <ul className="space-y-2 text-xs text-zinc-650 font-medium">
-              <li>
-                <button className="hover:text-zinc-950 transition cursor-pointer text-left">
-                  Press Releases & News
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Lower Legal Bar */}
-        <div className="max-w-7xl mx-auto border-t border-zinc-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] text-zinc-400 font-mono">
-          <div>
-            © {new Date().getFullYear()} The Domain Name. All rights reserved.
-          </div>
-          <div className="flex gap-4">
-            <span className="cursor-pointer hover:underline">Privacy Policy</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Terms of Service</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Slide-out Author Panel */}
       {showAuthorPanel && authorDetails && (

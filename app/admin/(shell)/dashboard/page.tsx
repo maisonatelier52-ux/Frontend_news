@@ -1,243 +1,269 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import StatCard from '../../components/StatCard'
 import StatusBadge from '../../components/StatusBadge'
 
-const recentArticles = [
-  { id: 1, title: 'US Senate Passes Major Infrastructure Bill', category: 'Politics', author: 'Sarah Johnson', status: 'published', date: 'Jun 29, 2026' },
-  { id: 2, title: 'Tech Giants Face New Antitrust Scrutiny in Europe', category: 'Technology', author: 'Michael Chen', status: 'published', date: 'Jun 29, 2026' },
-  { id: 3, title: 'Global Markets Rally on Fed Rate Decision', category: 'Business', author: 'Emily Davis', status: 'draft', date: 'Jun 28, 2026' },
-  { id: 4, title: 'Climate Summit: Nations Agree on New Targets', category: 'World', author: 'James Wilson', status: 'scheduled', date: 'Jun 30, 2026' },
-  { id: 5, title: 'Sports Roundup: World Cup Qualifiers Results', category: 'Sports', author: 'Lisa Park', status: 'published', date: 'Jun 28, 2026' },
-]
-
-const barData = [42, 67, 55, 89, 73, 96, 81]
-const barDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const maxBar = Math.max(...barData)
+interface StatItem {
+  label: string
+  value: string | number
+  change: string
+  positive: boolean
+  icon: any
+}
 
 export default function DashboardPage() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/analytics/stats')
+        if (res.ok) {
+          const stats = await res.json()
+          setData(stats)
+        } else {
+          setError('Failed to fetch live statistics')
+        }
+      } catch (err) {
+        setError('Network error loading dashboard statistics')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStats();
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <div className="w-10 h-10 border-4 border-slate-200 border-t-[#1e1b4b] rounded-full animate-spin"></div>
+        <span className="text-sm font-semibold text-slate-500">Loading Live CMS Metrics...</span>
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700 text-sm">
+        ⚠️ {error || 'Something went wrong while loading analytics. Please reload.'}
+      </div>
+    )
+  }
+
+  const { traffic, countries, daily, content, audit, system } = data;
+
+  const barData = daily.hourlyViews || [];
+  const maxBar = Math.max(...barData, 1);
+
+  // Styling helpers
+  const progressPercent = (val: number, total: number) => {
+    return total > 0 ? `${(val / total) * 100}%` : '0%';
+  };
+
   return (
-    <div className="max-w-[1200px] animate-[admin-fade-in_0.4s_ease_both]">
+    <div className="max-w-[1250px] animate-[admin-fade-in_0.4s_ease_both] pb-12">
       
-      {/* Title Header with Glowing Smudge Gradient Backdrop (Equal height/alignment concept, Dark Mesh Style) */}
+      {/* Title Header with Glowing Smudge Gradient Backdrop */}
       <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#172554] shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden border border-white/10 text-white">
-        {/* Soft smudge blurred overlays */}
         <div className="absolute top-[-40px] right-[-40px] w-48 h-48 bg-blue-500 rounded-full mix-blend-screen filter blur-2xl opacity-15 pointer-events-none" />
         <div className="absolute bottom-[-40px] left-[40%] w-48 h-48 bg-purple-500 rounded-full mix-blend-screen filter blur-2xl opacity-15 pointer-events-none" />
 
-        <h1 className="text-[28px] font-serif font-extrabold text-white tracking-tight m-0 relative z-10">
-          Dashboard
-        </h1>
-        <p className="text-[13.5px] text-slate-300 mt-1.5 leading-relaxed relative z-10 font-medium">
-          Welcome back. Here's a summary of the editorial portal activities today.
-        </p>
+        <div className="flex justify-between items-center relative z-10">
+          <div>
+            <h1 className="text-[28px] font-serif font-extrabold text-white tracking-tight m-0">
+              Editorial Console
+            </h1>
+            <p className="text-[13.5px] text-slate-300 mt-1.5 leading-relaxed font-medium">
+              Live statistics from user sessions. Connected to news databases and CDN edge.
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="inline-flex items-center gap-1.5 bg-green-500/20 text-green-300 text-[11px] font-mono px-3 py-1 rounded-full border border-green-500/30">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping" />
+              LIVE DATA UPDATED
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Stat Cards Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      {/* Traffic Analytics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <StatCard
-          label="Total Articles"
-          value="1,284"
-          change="12 articles"
+          label="Total Page Views"
+          value={traffic.pageViews.toLocaleString()}
+          change={`Unique: ${traffic.uniqueVisitors.toLocaleString()}`}
           positive
           icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
         />
         <StatCard
-          label="Published Today"
-          value="18"
-          change="3 articles"
-          positive
+          label="Today's Views"
+          value={traffic.today.toLocaleString()}
+          change={`Yesterday: ${traffic.yesterday.toLocaleString()}`}
+          positive={traffic.today >= traffic.yesterday}
           icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>}
         />
         <StatCard
-          label="Active Ad Slots"
-          value="9"
-          change="2 slots"
-          positive={false}
-          icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>}
+          label="This Week"
+          value={traffic.thisWeek.toLocaleString()}
+          change="Last 7 days"
+          positive
+          icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>}
         />
         <StatCard
-          label="Pending Comments"
-          value="47"
-          change="5 comments"
-          positive={false}
-          icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>}
+          label="This Month"
+          value={traffic.thisMonth.toLocaleString()}
+          change={`Yearly: ${traffic.yearly.toLocaleString()}`}
+          positive
+          icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
         />
       </div>
 
       {/* Main Grid Content */}
-      <div className="grid grid-cols-[1fr_320px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         
-        {/* Left Column */}
-        <div className="flex flex-col gap-4">
+        {/* Left Column - 8 cols */}
+        <div className="lg:col-span-8 flex flex-col gap-6">
           
-          {/* Traffic Chart */}
-          <div className="bg-white border-none rounded-lg p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
+          {/* Daily Hourly Traffic Graph */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0">
-                  Page Views — This Week
+                  Hourly Traffic Distribution
                 </h3>
-                <p className="text-[12.5px] text-[#64748b] mt-0.5">
-                  203,415 total views across channels
+                <p className="text-[12.5px] text-[#64748b] mt-0.5 font-sans">
+                  Most active time: <span className="font-bold text-[#1e1b4b]">{daily.mostActiveHour}</span> (Eastern Time)
                 </p>
               </div>
-              <span className="text-[12.5px] text-[#16a34a] font-bold">
-                ↑ 18.4%
+              <span className="text-[12px] bg-slate-100 text-[#475569] font-bold px-2.5 py-1 rounded">
+                Most Active Day: {daily.mostActiveDay}
               </span>
             </div>
-            <div className="flex items-end gap-3.5 h-[130px] pt-4">
-              {barData.map((val, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+            
+            {/* Custom Bar Chart representing hours */}
+            <div className="flex items-end gap-1.5 h-[160px] pt-4 overflow-x-auto no-scrollbar">
+              {barData.map((val: number, i: number) => (
+                <div key={i} className="flex-1 min-w-[12px] flex flex-col items-center gap-2 group">
                   <div
-                    className={`w-full rounded-t-[3px] transition-all duration-300 ${
-                      i === 6 
-                        ? 'bg-[#1e1b4b] shadow-[0_2px_8px_rgba(30,27,75,0.2)]' 
+                    className={`w-full rounded-t-[2px] transition-all duration-300 ${
+                      i === activeHourIndex() 
+                        ? 'bg-[#1e1b4b] shadow-[0_2px_8px_rgba(30,27,75,0.25)]' 
                         : 'bg-[#e2e8f0] group-hover:bg-[#cbd5e1]'
                     }`}
-                    style={{ height: `${(val / maxBar) * 90}px` }}
+                    style={{ height: `${(val / maxBar) * 110}px` }}
+                    title={`${val} views at ${i === 0 ? '12 AM' : i === 12 ? '12 PM' : i > 12 ? `${i - 12} PM` : `${i} AM`}`}
                   />
-                  <span className="text-[10px] text-[#64748b] font-medium tracking-wide">
-                    {barDays[i]}
+                  <span className="text-[8px] text-[#94a3b8] font-mono">
+                    {i}h
                   </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Recent Articles */}
-          <div className="bg-white rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
-            <div className="p-4 px-5 border-b border-[#f1f5f9] flex justify-between items-center bg-[#faf8f5]/40">
-              <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0">
-                Recent Articles
-              </h3>
-              <Link 
-                href="/admin/news" 
-                className="text-[12.5px] text-[#1e1b4b] hover:underline font-semibold"
-              >
-                View all →
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-[#f1f5f9] bg-[#faf8f5]/20">
-                    {['Title', 'Category', 'Author', 'Status', 'Date'].map((h) => (
-                      <th 
-                        key={h} 
-                        className="p-3 px-5 text-left text-[10px] font-bold text-[#64748b] tracking-wider uppercase"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentArticles.map((art, i) => (
-                    <tr 
-                      key={art.id} 
-                      className={`hover:bg-[#faf8f5]/30 transition-colors duration-150 ${
-                        i < recentArticles.length - 1 ? 'border-b border-[#f8fafc]' : ''
-                      }`}
-                    >
-                      <td className="p-3.5 px-5 text-[13.5px] text-[#1e1b4b] font-semibold max-w-[260px] truncate">
-                        {art.title}
-                      </td>
-                      <td className="p-3.5 px-5 text-[12.5px] text-[#64748b]">
-                        {art.category}
-                      </td>
-                      <td className="p-3.5 px-5 text-[12.5px] text-[#64748b]">
-                        {art.author}
-                      </td>
-                      <td className="p-3.5 px-5">
-                        <StatusBadge status={art.status as 'published' | 'draft' | 'scheduled'} />
-                      </td>
-                      <td className="p-3.5 px-5 text-[12px] text-[#94a3b8]">
-                        {art.date}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Interactive World Map & Country comparison */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0 mb-4">
+              Geographic Traffic Analysis
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              {/* Sleek Low-Poly Dots Interactive SVG World Map */}
+              <div className="relative border border-slate-100 rounded-lg p-3 bg-slate-50 flex items-center justify-center overflow-hidden h-[280px]">
+                <svg className="w-full h-full opacity-80" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                  {/* Stylized dotted background for continents outline */}
+                  <rect width="1000" height="500" fill="#f8fafc" rx="6" />
+                  
+                  {/* Grid layout dots for map */}
+                  <circle cx="150" cy="180" r="12" fill="#cbd5e1" opacity="0.6" /> {/* North America */}
+                  <circle cx="280" cy="150" r="16" fill="#cbd5e1" opacity="0.6" />
+                  <circle cx="220" cy="200" r="34" fill="#6366f1" className="animate-pulse" /> {/* US Highlight */}
+                  <circle cx="340" cy="360" r="14" fill="#cbd5e1" opacity="0.6" /> {/* South America */}
+                  <circle cx="500" cy="160" r="15" fill="#a5b4fc" /> {/* Western Europe */}
+                  <circle cx="520" cy="130" r="22" fill="#4f46e5" /> {/* UK & DE */}
+                  <circle cx="540" cy="280" r="18" fill="#cbd5e1" opacity="0.6" /> {/* Africa */}
+                  <circle cx="720" cy="220" r="28" fill="#818cf8" /> {/* India */}
+                  <circle cx="830" cy="160" r="18" fill="#4f46e5" /> {/* Japan & KR */}
+                  <circle cx="860" cy="380" r="12" fill="#cbd5e1" opacity="0.6" /> {/* Australia */}
+                  
+                  <text x="220" y="250" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">US</text>
+                  <text x="495" y="105" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">EU</text>
+                  <text x="705" y="260" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">IN</text>
+                  <text x="815" y="195" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">JP/KR</text>
+                </svg>
+                <div className="absolute bottom-2 left-2 bg-white/95 border border-slate-200 shadow-sm p-2 rounded text-[10px] space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold"><span className="w-2 h-2 bg-[#4f46e5] rounded-full" /> High Traffic</div>
+                  <div className="flex items-center gap-1.5 font-bold"><span className="w-2 h-2 bg-[#cbd5e1] rounded-full" /> Low Traffic</div>
+                </div>
+              </div>
+
+              {/* Country stats checklist */}
+              <div className="flex flex-col justify-between py-1 min-h-[280px]">
+                <div>
+                  <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider block mb-3">Top Visitor Countries</span>
+                  {countries.topCountries.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center text-slate-400 py-12">
+                      <span className="text-3xl mb-2.5">🌍</span>
+                      <span className="text-[12.5px] font-bold text-slate-700">No Visitor Traffic Yet</span>
+                      <span className="text-[11px] mt-1 max-w-[220px] text-slate-500 leading-normal">
+                        Real-time country tracking will appear here once visitors browse the site.
+                      </span>
+                    </div>
+                  ) : (
+                    countries.topCountries.slice(0, 5).map((c: any, idx: number) => (
+                      <div key={c.code} className="space-y-1 mb-3.5 last:mb-0">
+                        <div className="flex justify-between items-center text-[12px] font-sans font-medium">
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 text-center rounded bg-slate-100 text-[10px] font-bold text-slate-500">{idx + 1}</span>
+                            <span className="font-bold text-slate-800">{c.country} ({c.code})</span>
+                          </span>
+                          <span className="text-slate-600 font-bold">{c.views.toLocaleString()} views ({c.percentage}%)</span>
+                        </div>
+                        <div className="h-[6px] bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-indigo-650 rounded-full" 
+                            style={{ width: `${c.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
 
-        {/* Right Column */}
-        <div className="flex flex-col gap-4">
+        {/* Right Column - 4 cols */}
+        <div className="lg:col-span-4 flex flex-col gap-6">
           
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
-            <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0 mb-4">
-              Quick Actions
-            </h3>
-            <div className="flex flex-col gap-2">
-              {[
-                { 
-                  label: 'Add New Article', 
-                  href: '/admin/news/new', 
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  ) 
-                },
-                { 
-                  label: 'Manage Ads', 
-                  href: '/admin/advertisements', 
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                  ) 
-                },
-                { 
-                  label: 'Review Comments', 
-                  href: '/admin/comments', 
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  ) 
-                },
-                { 
-                  label: 'Upload Media', 
-                  href: '/admin/media', 
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  ) 
-                },
-                { 
-                  label: 'Edit Footer', 
-                  href: '/admin/footer', 
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-                  ) 
-                },
-              ].map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex items-center gap-2.5 px-3 py-2 border border-[#e2e8f0] hover:border-[#1e1b4b] hover:text-[#1e1b4b] rounded-lg text-[13px] text-[#475569] hover:bg-[#faf8f5]/40 no-underline font-medium transition-all duration-150"
-                >
-                  <span className="shrink-0 opacity-75">{action.icon}</span>
-                  {action.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* System Status */}
-          <div className="bg-white rounded-lg p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
-            <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0 mb-4">
-              System Status
+          {/* Server status cards */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <h3 className="font-sans font-bold text-[14px] text-[#1e1b4b] uppercase tracking-widest m-0 mb-4">
+              Infrastructure Status
             </h3>
             <div className="flex flex-col gap-3.5">
               {[
-                { label: 'Site Status', status: 'Online', ok: true },
-                { label: 'Database', status: 'Connected', ok: true },
-                { label: 'CDN Edge', status: 'Active', ok: true },
-                { label: 'Cache Sync', status: 'Warming', ok: false },
+                { label: 'Portal Engine', status: 'Online', val: 'Vercel Edge', ok: true },
+                { label: 'Database Cluster', status: 'Connected', val: 'MongoDB Atlas', ok: true },
+                { label: 'Server Instance', status: system.serverHealth, ok: true },
+                { label: 'Storage Volume', status: system.storageUsage, ok: true },
+                { label: 'API Endpoint Health', status: system.apiStatus, ok: true },
+                { label: 'Search Indexer', status: system.searchIndexStatus, ok: true },
+                { label: 'Image Compressor', status: system.imageOptimizationStatus, ok: true },
+                { label: 'Sitemap Auto-Gen', status: system.sitemapStatus, ok: true },
+                { label: 'RSS feeds', status: system.rssFeedStatus, ok: true },
+                { label: 'Cache Last Cleared', status: system.lastCacheCleared, ok: false }
               ].map((item) => (
-                <div key={item.label} className="flex justify-between items-center">
-                  <span className="text-[13px] text-[#64748b] font-medium">{item.label}</span>
-                  <span className={`text-[11.5px] font-bold flex items-center gap-1.5 ${item.ok ? 'text-[#16a34a]' : 'text-[#d97706]'}`}>
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${item.ok ? 'bg-[#16a34a]' : 'bg-[#d97706]'}`} />
+                <div key={item.label} className="flex justify-between items-center text-[12.5px]">
+                  <span className="text-[#64748b] font-medium font-sans">{item.label}</span>
+                  <span className={`font-bold font-mono flex items-center gap-1.5 ${item.ok ? 'text-[#16a34a]' : 'text-slate-600'}`}>
+                    {item.ok && <span className="inline-block w-1.5 h-1.5 bg-[#16a34a] rounded-full" />}
                     {item.status}
                   </span>
                 </div>
@@ -245,26 +271,27 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Content Overview Progress */}
-          <div className="bg-white rounded-lg p-5 shadow-[0_8px_30px_rgba(0,0,0,0.015)]">
-            <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0 mb-4">
-              Content Overview
+          {/* CMS Overview Progress (Published vs draft) */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <h3 className="font-sans font-bold text-[14px] text-[#1e1b4b] uppercase tracking-widest m-0 mb-4">
+              Content Pipeline
             </h3>
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-4">
               {[
-                { label: 'Published', value: 1142, total: 1284, color: 'bg-[#16a34a]' },
-                { label: 'Drafts', value: 98, total: 1284, color: 'bg-[#64748b]' },
-                { label: 'Scheduled', value: 44, total: 1284, color: 'bg-[#d97706]' },
+                { label: 'Published News', value: audit.published, total: audit.totalArticles, color: 'bg-green-600' },
+                { label: 'Draft Articles', value: audit.drafts, total: audit.totalArticles, color: 'bg-slate-400' },
+                { label: 'Scheduled Releases', value: audit.scheduled, total: audit.totalArticles, color: 'bg-amber-500' },
+                { label: 'Pending Editorial Review', value: audit.pendingReview, total: audit.totalArticles, color: 'bg-indigo-600' }
               ].map((item) => (
                 <div key={item.label} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between items-center text-[12.5px]">
+                  <div className="flex justify-between items-center text-[12px] font-sans">
                     <span className="text-[#64748b] font-semibold">{item.label}</span>
-                    <span className="text-[#64748b] font-medium">{item.value}</span>
+                    <span className="text-[#1e1b4b] font-bold">{item.value} / {item.total}</span>
                   </div>
                   <div className="h-[5px] bg-[#f1f5f9] rounded-full overflow-hidden">
                     <div 
                       className={`h-full rounded-full ${item.color}`}
-                      style={{ width: `${(item.value / item.total) * 100}%` }}
+                      style={{ width: progressPercent(item.value, item.total) }}
                     />
                   </div>
                 </div>
@@ -273,7 +300,115 @@ export default function DashboardPage() {
           </div>
 
         </div>
+
       </div>
+
+      {/* Dynamic 3-Column Bottom Row for Content Performance & Quality Audit */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch mb-6">
+        
+        {/* Most Viewed Content */}
+        <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="p-4 border-b border-[#f1f5f9] bg-slate-50/50 flex justify-between items-center">
+              <h3 className="font-sans font-bold text-[13px] text-[#1e1b4b] uppercase tracking-wider m-0">
+                Most Viewed Content
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {content.mostViewedNews.slice(0, 5).map((art: any, i: number) => (
+                <div key={i} className="p-3.5 flex justify-between items-start gap-4">
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
+                      {art.title}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Beat: {art.category}
+                    </span>
+                  </div>
+                  <span className="shrink-0 bg-indigo-50 text-[#1e40af] text-[11px] font-bold px-2 py-0.5 rounded">
+                    {art.views.toLocaleString()} views
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Least Viewed (Low Velocity) */}
+        <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="p-4 border-b border-[#f1f5f9] bg-slate-50/50 flex justify-between items-center">
+              <h3 className="font-sans font-bold text-[13px] text-[#1e1b4b] uppercase tracking-wider m-0">
+                Least Viewed (Low Velocity)
+              </h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {content.leastViewedNews.slice(0, 5).map((art: any, i: number) => (
+                <div key={i} className="p-3.5 flex justify-between items-start gap-4">
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
+                      {art.title}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Beat: {art.category}
+                    </span>
+                  </div>
+                  <span className="shrink-0 bg-rose-50 text-[#dc2626] text-[11px] font-bold px-2 py-0.5 rounded">
+                    {art.views.toLocaleString()} views
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata & Quality Audit */}
+        <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col justify-between">
+          <div>
+            <h3 className="font-sans font-bold text-[14px] text-[#1e1b4b] uppercase tracking-widest m-0 mb-4">
+              Metadata & Quality Audit
+            </h3>
+            <div className="flex flex-col gap-3.5">
+              {[
+                { label: 'Broken Images', val: audit.brokenImages, limit: 0, desc: 'Requires replacement' },
+                { label: 'Missing Alt Text tags', val: audit.missingAltText, limit: 2, desc: 'Hinders screen-readers' },
+                { label: 'Missing Meta Titles', val: audit.missingMetaTitles, limit: 0, desc: 'Truncated in search engines' },
+                { label: 'Missing Meta Descriptions', val: audit.missingMetaDescriptions, limit: 0, desc: 'Fails search snippet audits' },
+                { label: 'Duplicate Titles', val: audit.duplicateTitles, limit: 0, desc: 'Creates keyword self-cannibalization' }
+              ].map((item) => {
+                const isIssue = item.val > item.limit;
+                return (
+                  <div key={item.label} className="flex justify-between items-start gap-4 text-[12px]">
+                    <div>
+                      <span className="text-slate-800 font-bold block">{item.label}</span>
+                      <span className="text-[10px] text-slate-400 font-sans block">{item.desc}</span>
+                    </div>
+                    <span className={`font-bold font-mono px-2 py-0.5 rounded ${isIssue ? 'bg-red-50 text-red-650' : 'bg-green-50 text-green-600'}`}>
+                      {isIssue ? `⚠ ${item.val}` : '✓ Clear'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 pt-4 mt-4 flex justify-between items-center text-[12px]">
+            <div>
+              <span className="text-slate-800 font-bold">SEO Score Overview</span>
+              <span className="text-[10px] text-[#16a34a] font-bold block mt-0.5">Internal Links Health: {audit.internalLinkHealth}</span>
+            </div>
+            <div className="w-10 h-10 rounded-full border-4 border-green-500/25 flex items-center justify-center text-[11px] font-bold text-green-600 shrink-0">
+              {audit.seoScore}%
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   )
+
+  function activeHourIndex() {
+    return data ? data.daily.hourlyViews.indexOf(Math.max(...data.daily.hourlyViews, 1)) : 0;
+  }
 }

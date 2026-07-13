@@ -37,6 +37,8 @@ export default function AuthorsPage() {
   const [authors, setAuthors] = useState<Author[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [viewingAuthor, setViewingAuthor] = useState<Author | null>(null)
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   
@@ -478,8 +480,17 @@ export default function AuthorsPage() {
                       {/* Name & Avatar */}
                       <td className="p-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#1e1b4b] text-white flex items-center justify-center font-extrabold text-[13.5px] shadow-sm shrink-0 uppercase select-none">
-                            {author.name.charAt(0)}
+                          <div className="w-9 h-9 rounded-full bg-[#1e1b4b] text-white flex items-center justify-center font-extrabold text-[13.5px] shadow-sm shrink-0 uppercase select-none overflow-hidden">
+                            {author.profileImage && !imgErrors[author._id] ? (
+                              <img
+                                src={author.profileImage}
+                                alt={author.name}
+                                className="w-full h-full object-cover"
+                                onError={() => setImgErrors(prev => ({ ...prev, [author._id]: true }))}
+                              />
+                            ) : (
+                              author.name.charAt(0)
+                            )}
                           </div>
                           <div>
                             <div className="text-[13.5px] font-bold text-[#0f172a]">{author.name}</div>
@@ -554,6 +565,12 @@ export default function AuthorsPage() {
                       {/* Action buttons */}
                       <td className="p-4 px-5">
                         <div className="flex gap-2">
+                          <button 
+                            onClick={() => setViewingAuthor(author)}
+                            className="p-1.5 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 text-[11.5px] text-[#4f46e5] rounded-lg cursor-pointer font-bold transition-all"
+                          >
+                            Details
+                          </button>
                           <button 
                             onClick={() => openEditModal(author)}
                             className="p-1.5 px-3.5 border border-slate-200 bg-white text-[11.5px] text-slate-700 rounded-lg cursor-pointer btn-3d-white font-bold"
@@ -967,6 +984,186 @@ export default function AuthorsPage() {
                   <polyline points="7 3 7 8 15 8"/>
                 </svg>
                 {editingAuthorId ? 'Update Author' : 'Save Author'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* View Author Details Modal */}
+      {viewingAuthor && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto font-sans">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-[600px] shadow-[0_20px_50px_rgba(15,23,42,0.12)] overflow-hidden animate-[admin-scale-in_0.2s_ease_both]">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-[18px] font-extrabold text-[#0f172a] tracking-tight">
+                Author Profile Details
+              </h2>
+              <button 
+                onClick={() => setViewingAuthor(null)} 
+                className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 text-[#0f172a] bg-[#f8fafc] max-h-[70vh] overflow-y-auto no-scrollbar">
+              <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start bg-white border border-slate-150 rounded-xl p-5 shadow-sm">
+                
+                {/* Avatar / Photo */}
+                <div className="w-20 h-20 rounded-full overflow-hidden border border-slate-200 bg-[#1e1b4b] flex-shrink-0 flex items-center justify-center shadow-inner">
+                  {viewingAuthor.profileImage && !imgErrors[viewingAuthor._id] ? (
+                    <img 
+                      src={viewingAuthor.profileImage} 
+                      alt={viewingAuthor.name} 
+                      className="w-full h-full object-cover"
+                      onError={() => setImgErrors(prev => ({ ...prev, [viewingAuthor._id]: true }))}
+                    />
+                  ) : (
+                    <span className="text-2xl font-extrabold text-white uppercase">
+                      {viewingAuthor.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Identity & Core Info */}
+                <div className="text-center sm:text-left space-y-1.5 flex-grow">
+                  <h3 className="text-lg font-extrabold text-slate-900 leading-tight">{viewingAuthor.name}</h3>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start items-center">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                      {viewingAuthor.role || 'Contributor'}
+                    </span>
+                    <span 
+                      className="text-[10px] text-white font-extrabold rounded px-2.5 py-0.5 shadow-sm"
+                      style={{ backgroundColor: categoryColors[viewingAuthor.category] || '#6366f1' }}
+                    >
+                      {viewingAuthor.category}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-semibold font-mono">
+                    /{viewingAuthor.slug}
+                  </p>
+                </div>
+              </div>
+
+              {/* Details List */}
+              <div className="bg-white border border-slate-150 rounded-xl p-5 shadow-sm space-y-4">
+                <h4 className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Personal & Professional Information
+                </h4>
+                
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">EMAIL ADDRESS</span>
+                    <a href={`mailto:${viewingAuthor.email}`} className="text-indigo-600 font-semibold hover:underline block">
+                      {viewingAuthor.email}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">GENDER</span>
+                    <span className="text-slate-800 font-semibold block">
+                      {viewingAuthor.gender}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">TOTAL ARTICLES WRITTEN</span>
+                    <span className="text-slate-800 font-extrabold block">
+                      {viewingAuthor.articlesCount}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio Block */}
+              <div className="bg-white border border-slate-150 rounded-xl p-5 shadow-sm space-y-2.5">
+                <h4 className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Biography / Bio
+                </h4>
+                <p className="text-[12.5px] text-slate-600 leading-relaxed italic">
+                  "{viewingAuthor.bio || 'No biography details provided.'}"
+                </p>
+              </div>
+
+              {/* Social Channels */}
+              <div className="bg-white border border-slate-150 rounded-xl p-5 shadow-sm space-y-3">
+                <h4 className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Social Accounts
+                </h4>
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  {viewingAuthor.socialLinks?.twitter && (
+                    <a 
+                      href={viewingAuthor.socialLinks.twitter} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                      Twitter
+                    </a>
+                  )}
+
+                  {viewingAuthor.socialLinks?.quora && (
+                    <a 
+                      href={viewingAuthor.socialLinks.quora} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all"
+                    >
+                      Quora
+                    </a>
+                  )}
+
+                  {viewingAuthor.socialLinks?.reddit && (
+                    <a 
+                      href={viewingAuthor.socialLinks.reddit} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all"
+                    >
+                      Reddit
+                    </a>
+                  )}
+
+                  {viewingAuthor.socialLinks?.medium && (
+                    <a 
+                      href={viewingAuthor.socialLinks.medium} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all"
+                    >
+                      Medium
+                    </a>
+                  )}
+
+                  {viewingAuthor.socialLinks?.substack && (
+                    <a 
+                      href={viewingAuthor.socialLinks.substack} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 text-xs font-bold transition-all"
+                    >
+                      Substack
+                    </a>
+                  )}
+
+                  {(!viewingAuthor.socialLinks || (!viewingAuthor.socialLinks.twitter && !viewingAuthor.socialLinks.quora && !viewingAuthor.socialLinks.reddit && !viewingAuthor.socialLinks.medium && !viewingAuthor.socialLinks.substack)) && (
+                    <span className="text-slate-400 text-xs italic">No social media links connected.</span>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button 
+                onClick={() => setViewingAuthor(null)}
+                className="p-2.5 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-[13px] cursor-pointer transition-all"
+              >
+                Close Profile
               </button>
             </div>
 

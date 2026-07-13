@@ -8,6 +8,7 @@ import LeadStory from "./LeadStory";
 import NewsGrid from "./NewsGrid";
 import ArticleReader from "./ArticleReader";
 import { useSubscription } from "../hooks/useSubscription";
+import Footer from "./Footer";
 
 interface Comment {
   name: string;
@@ -526,142 +527,61 @@ export default function HomePageExperience({
             overflow: 'hidden',
             filter: isFadingOut ? 'blur(4px)' : 'none',
           }}
-          className="bg-zinc-50 border-t border-zinc-250 py-10 px-4 select-none"
+          className="bg-zinc-50 py-10 px-4 select-none"
         >
-          <div className="max-w-2xl mx-auto text-center space-y-4">
-            <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
-              Subscribe to The Domain Name
-            </h3>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
-              Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.
-            </p>
-
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto mt-2">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                disabled={newsletterLoading}
-                className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500 disabled:opacity-60"
-                required
-              />
-              <button
-                type="submit"
-                disabled={newsletterLoading}
-                className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0 disabled:opacity-60 flex items-center justify-center gap-2 min-w-[90px]"
-              >
-                {newsletterLoading ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                    <span>Saving...</span>
-                  </>
-                ) : "Sign Up"}
-              </button>
-            </form>
-
-            {newsletterSubmitted && newsletterMessage && (
-              <p className="text-xs font-semibold text-emerald-600">
-                ✓ {newsletterMessage}
+          <div className="max-w-7xl mx-auto border-t border-zinc-200 pt-10">
+            <div className="max-w-2xl mx-auto text-center space-y-4">
+              <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
+                Subscribe to The Domain Name
+              </h3>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+                Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.
               </p>
-            )}
-            {newsletterError && (
-              <p className="text-xs font-semibold text-red-500">
-                ✕ {newsletterError}
-              </p>
-            )}
+
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto mt-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  disabled={newsletterLoading}
+                  className="bg-white border border-zinc-250 px-4 py-2 text-xs rounded-sm w-full focus:border-zinc-500 disabled:opacity-60"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterLoading}
+                  className="bg-zinc-950 text-white text-xs font-bold py-2.5 px-6 rounded-sm hover:bg-zinc-800 transition cursor-pointer flex-shrink-0 disabled:opacity-60 flex items-center justify-center gap-2 min-w-[90px]"
+                >
+                  {newsletterLoading ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                      <span>Saving...</span>
+                    </>
+                  ) : "Sign Up"}
+                </button>
+              </form>
+
+              {newsletterSubmitted && newsletterMessage && (
+                <p className="text-xs font-semibold text-emerald-600">
+                  ✓ {newsletterMessage}
+                </p>
+              )}
+              {newsletterError && (
+                <p className="text-xs font-semibold text-red-500">
+                  ✕ {newsletterError}
+                </p>
+              )}
+            </div>
           </div>
         </section>
       )}
 
       {/* 4. Main Editorial Footer */}
-      <footer className="bg-white border-t border-zinc-300 py-10 px-4 sm:px-6 select-none">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+      <Footer />
 
-          {/* Col 1: About */}
-          <div className="space-y-3">
-            <h4 className="font-editorial-title text-lg font-extrabold text-zinc-900 tracking-tight">
-              The Domain Name
-            </h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
-              An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.
-            </p>
-          </div>
-
-          {/* Col 2: Navigation Links */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Categories
-            </h5>
-            <ul className="grid grid-cols-2 gap-2 text-xs text-zinc-600 font-medium">
-              <li>
-                <button onClick={() => { handleCategoryChange("US"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  U.S. News & Politics
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { handleCategoryChange("Finance"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  Finance & Markets
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { handleCategoryChange("Technology"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  Technology & Science
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { handleCategoryChange("World"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  World Affairs
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { handleCategoryChange("Marketing"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  Marketing & Strategy
-                </button>
-              </li>
-              <li>
-                <button onClick={() => { handleCategoryChange("Entertainment"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  Arts & Entertainment
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: More Divisions */}
-          <div>
-            <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400 mb-3.5">
-              Other Sections
-            </h5>
-            <ul className="space-y-2 text-xs text-zinc-600 font-medium">
-              <li>
-                <button onClick={() => { handleCategoryChange("PR News"); setShowBookmarksOnly(false); window.scrollTo(0, 0); }} className="hover:text-zinc-950 transition cursor-pointer">
-                  Press Releases & News
-                </button>
-              </li>
-
-            </ul>
-          </div>
-
-          {/* Col 4: Operations & Contact */}
-
-
-        </div>
-
-        {/* Lower Legal Bar */}
-        <div className="max-w-7xl mx-auto border-t border-zinc-200 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[10px] text-zinc-400 font-mono">
-          <div>
-            © {new Date().getFullYear()} The Domain Name. All rights reserved.
-          </div>
-          <div className="flex gap-4">
-            <span className="cursor-pointer hover:underline">Privacy Policy</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Terms of Service</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:underline">Ethics Guidelines</span>
-          </div>
-        </div>
       {footerBannerAds.length > 0 && (
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 select-none border-t border-zinc-150 pt-6">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 select-none border-t border-zinc-150 pt-6 pb-6">
           <div className="relative bg-zinc-50/50 p-3 rounded border border-zinc-200 flex flex-col items-center justify-center animate-[admin-fade-in_0.3s_ease-out]">
             <button
               onClick={() => {
@@ -714,8 +634,6 @@ export default function HomePageExperience({
           </div>
         </div>
       )}
-
-      </footer>
 
       {/* Standalone detail page navigation is handled via routing */}
 
