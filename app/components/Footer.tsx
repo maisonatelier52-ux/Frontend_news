@@ -52,7 +52,19 @@ export default function Footer() {
 
   const logoText = config?.logoText || 'Magazine Gazette';
   const description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.';
-  const copyright = config?.copyright || '© 2026 Magazine Gazette. All rights reserved.';
+  
+  let copyright = config?.copyright || '© 2026 Magazine Gazette. All rights reserved.';
+  // Clean up any garbled copyright symbol/spacing from DB encoding issues
+  copyright = copyright.replace(/^[?\s]+/, '').trim();
+  if (copyright.startsWith('2026')) {
+    copyright = `© ${copyright}`;
+  } else if (!copyright.startsWith('©')) {
+    copyright = `© ${copyright}`;
+  }
+  // Ensure the brand name is present
+  if (!copyright.includes('Magazine Gazette')) {
+    copyright = `${copyright} Magazine Gazette. All rights reserved.`;
+  }
   
   // Custom styling settings
   const bgColor = config?.bgColor || '#09090b';
@@ -112,11 +124,11 @@ export default function Footer() {
   return (
     <footer 
       style={{ backgroundColor: bgColor, color: textColorPrimary, paddingBottom: paddingY }}
-      className="px-6 sm:px-8 w-full select-none text-[13px] font-sans"
+      className="w-full select-none text-[13px] font-sans"
     >
       <div 
         style={{ borderTop: `1px solid ${borderTopColor}`, paddingTop: paddingY }}
-        className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 mb-10"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 mb-10"
       >
         
         {/* Brand Information Block */}
@@ -175,7 +187,7 @@ export default function Footer() {
       {/* Bottom Legal & Copyright Bar */}
       <div 
         style={{ borderTop: `1px solid ${borderTopColor}` }}
-        className="max-w-7xl mx-auto pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px]"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px]"
       >
         <div style={{ color: textColorSecondary }}>
           {copyright}
