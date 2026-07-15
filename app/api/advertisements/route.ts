@@ -10,7 +10,7 @@ const initialAds = [
     imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=728&h=90&fit=crop', 
     status: 'active', 
     clicks: 2840, 
-    impressions: '124K', 
+    impressions: 124000, 
     startDate: '2026-06-01', 
     endDate: '2026-07-31' 
   },
@@ -21,7 +21,7 @@ const initialAds = [
     imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=250&fit=crop', 
     status: 'active', 
     clicks: 1200, 
-    impressions: '87K', 
+    impressions: 87000, 
     startDate: '2026-06-15', 
     endDate: '2026-07-15' 
   },
@@ -32,7 +32,7 @@ const initialAds = [
     imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&h=200&fit=crop', 
     status: 'active', 
     clicks: 640, 
-    impressions: '43K', 
+    impressions: 43000, 
     startDate: '2026-06-01', 
     endDate: '2026-08-01' 
   },
@@ -43,7 +43,7 @@ const initialAds = [
     imageUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=728&h=90&fit=crop', 
     status: 'inactive', 
     clicks: 0, 
-    impressions: '—', 
+    impressions: 0, 
     startDate: '—', 
     endDate: '—' 
   },
@@ -54,7 +54,7 @@ const initialAds = [
     imageUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=320&h=50&fit=crop', 
     status: 'active', 
     clicks: 3100, 
-    impressions: '210K', 
+    impressions: 210000, 
     startDate: '2026-05-20', 
     endDate: '2026-07-20' 
   },
@@ -63,14 +63,7 @@ const initialAds = [
 export async function GET() {
   try {
     await connectToDatabase();
-    let ads = await AdvertisementModel.find().sort({ createdAt: -1 });
-    
-    // Seed advertisements if empty
-    if (ads.length === 0) {
-      await AdvertisementModel.insertMany(initialAds);
-      ads = await AdvertisementModel.find().sort({ createdAt: -1 });
-    }
-    
+    const ads = await AdvertisementModel.find().sort({ createdAt: -1 });
     return NextResponse.json(ads);
   } catch (error: any) {
     console.error('Fetch advertisements error:', error);

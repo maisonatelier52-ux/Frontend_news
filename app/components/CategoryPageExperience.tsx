@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Header from "./Header";
 import ArticleReader from "./ArticleReader";
 import type { Article } from "../data/news";
@@ -67,11 +68,23 @@ export default function CategoryPageExperience({
   initialAds,
   isPreview = false
 }: CategoryPageExperienceProps) {
+  const router = useRouter();
   const { isSubscribed, setSubscribed } = useSubscription();
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+
+  // Redirect to standalone detail page when an article is selected in visitor mode
+  useEffect(() => {
+    if (!isPreview && selectedArticleId) {
+      const article = articles.find((a) => a.id === selectedArticleId) || trendingArticles.find((a) => a.id === selectedArticleId);
+      if (article) {
+        router.push(`/article/${article.slug}`);
+      }
+      setSelectedArticleId(null);
+    }
+  }, [selectedArticleId, articles, trendingArticles, router, isPreview]);
 
   // Bookmarks State
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);

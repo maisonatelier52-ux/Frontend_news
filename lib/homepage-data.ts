@@ -82,60 +82,6 @@ export async function fetchHomeArticles() {
 export async function fetchActiveAds() {
   await connectToDatabase();
   const ads = await AdvertisementModel.find().sort({ createdAt: -1 }).lean();
-  
-  if (ads.length === 0) {
-    // Seed advertisements if empty
-    const initialAds = [
-      { 
-        name: 'Tech Sponsor Banner', 
-        position: 'Header Banner', 
-        size: '728×90', 
-        imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=728&h=90&fit=crop', 
-        status: 'active', 
-        clicks: 2840, 
-        impressions: '124K', 
-        startDate: '2026-06-01', 
-        endDate: '2026-07-31' 
-      },
-      { 
-        name: 'Creative Studio Banner', 
-        position: 'Sidebar Top', 
-        size: '300×250', 
-        imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300&h=250&fit=crop', 
-        status: 'active', 
-        clicks: 1200, 
-        impressions: '87K', 
-        startDate: '2026-06-15', 
-        endDate: '2026-07-15' 
-      },
-      { 
-        name: 'Design Agency Native Ad', 
-        position: 'In-Article', 
-        size: '640×200', 
-        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=640&h=200&fit=crop', 
-        status: 'active', 
-        clicks: 640, 
-        impressions: '43K', 
-        startDate: '2026-06-01', 
-        endDate: '2026-08-01' 
-      },
-      { 
-        name: 'Mobile Network Ad', 
-        position: 'Sticky Bottom', 
-        size: '320×50', 
-        imageUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=320&h=50&fit=crop', 
-        status: 'active', 
-        clicks: 3100, 
-        impressions: '210K', 
-        startDate: '2026-05-20', 
-        endDate: '2026-07-20' 
-      },
-    ];
-    await AdvertisementModel.insertMany(initialAds);
-    const reloadedAds = await AdvertisementModel.find().sort({ createdAt: -1 }).lean();
-    return JSON.parse(JSON.stringify(reloadedAds.filter((ad: any) => ad.status === 'active')));
-  }
-
   const activeAds = ads.filter((ad: any) => ad.status === 'active');
   return JSON.parse(JSON.stringify(activeAds));
 }

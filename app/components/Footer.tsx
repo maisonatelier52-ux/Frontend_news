@@ -51,7 +51,12 @@ export default function Footer() {
   }, []);
 
   const logoText = config?.logoText || 'Magazine Gazette';
-  const description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.';
+  let description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts.';
+  // Clean up any location mention dynamically
+  description = description.replace(/[\s\.]*Headquartered in Washington,\s*D\.C\./i, '').trim();
+  if (description && !description.endsWith('.')) {
+    description = description + '.';
+  }
   
   let copyright = config?.copyright || '© 2026 Magazine Gazette. All rights reserved.';
   // Clean up any garbled copyright symbol/spacing from DB encoding issues

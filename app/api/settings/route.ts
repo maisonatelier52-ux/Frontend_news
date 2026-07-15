@@ -97,7 +97,7 @@ const DEFAULT_SETTINGS = {
       { id: 4, platform: 'YouTube', icon: '▶', url: 'https://youtube.com/@newssite' }
     ],
     copyright: '© 2026 Magazine Gazette. All rights reserved.',
-    address: 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.',
+    address: 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts.',
     phone: '',
     email: '',
     newsletter: false,
