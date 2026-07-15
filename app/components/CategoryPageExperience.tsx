@@ -1930,7 +1930,7 @@ return (
                 >
                   {newsletterLoading ? (
                     <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                      {/* <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> */}
                       <span>Saving...</span>
                     </>
                   ) : "Sign Up"}

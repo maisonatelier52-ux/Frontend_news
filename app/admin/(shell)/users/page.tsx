@@ -125,8 +125,8 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-2">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div>
-        <span className="text-xs font-semibold text-slate-500 font-sans">Syncing Accounts registry...</span>
+        {/* <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div> */}
+        {/* <span className="text-xs font-semibold text-slate-500 font-sans">Syncing Accounts registry...</span> */}
       </div>
     )
   }

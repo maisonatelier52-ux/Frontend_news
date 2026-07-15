@@ -91,7 +91,7 @@ export default function CorrectionPolicyPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-white">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin" />
+        {/* <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin" /> */}
       </div>
     );
   }

@@ -101,8 +101,8 @@ export default function CommentsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <div className="w-9 h-9 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
-        <p className="text-xs text-zinc-500 font-semibold tracking-wide font-mono">Loading comments...</p>
+        {/* <div className="w-9 h-9 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" /> */}
+        {/* <p className="text-xs text-zinc-500 font-semibold tracking-wide font-mono">Loading comments...</p> */}
       </div>
     );
   }

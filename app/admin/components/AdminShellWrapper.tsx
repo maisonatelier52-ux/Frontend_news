@@ -35,10 +35,10 @@ export default function AdminShellWrapper({ children }: { children: React.ReactN
       <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-4">
           {/* Custom Spinner */}
-          <div className="w-10 h-10 border-4 border-slate-700 border-t-[#6366f1] rounded-full animate-spin"></div>
-          <div className="text-[14px] font-bold tracking-tight text-slate-350">
+          {/* <div className="w-10 h-10 border-4 border-slate-700 border-t-[#6366f1] rounded-full animate-spin"></div> */}
+          {/* <div className="text-[14px] font-bold tracking-tight text-slate-350">
             Loading Editor Console...
-          </div>
+          </div> */}
         </div>
       </div>
     )

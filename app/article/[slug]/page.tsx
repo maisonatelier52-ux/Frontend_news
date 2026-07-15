@@ -1264,7 +1264,7 @@ export default function ArticleDetailPage() {
                         disabled={newsletterLoading}
                         className={`w-full text-xs font-bold py-2 rounded transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 ${designStyle === "minimal-focus" ? "bg-zinc-900 hover:bg-zinc-800 text-white" : "bg-white hover:bg-zinc-105 text-black"}`}
                       >
-                        {newsletterLoading ? (<><span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
+                        {newsletterLoading ? (<>{/* <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" /> */}<span>Saving...</span></>) : "Subscribe"}
                       </button>
                       {newsletterMsg && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg}</p>}
                       {newsletterErr && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr}</p>}
@@ -1393,7 +1393,7 @@ export default function ArticleDetailPage() {
                       disabled={newsletterLoading2}
                       className="w-full bg-white text-black text-xs font-bold py-2 rounded hover:bg-zinc-100 transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
                     >
-                      {newsletterLoading2 ? (<><span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /><span>Saving...</span></>) : "Subscribe"}
+                      {newsletterLoading2 ? (<>{/* <span className="w-3 h-3 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /> */}<span>Saving...</span></>) : "Subscribe"}
                     </button>
                     {newsletterMsg2 && <p className="text-xs font-semibold text-emerald-400">✓ {newsletterMsg2}</p>}
                     {newsletterErr2 && <p className="text-xs font-semibold text-red-400">✕ {newsletterErr2}</p>}

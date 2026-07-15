@@ -459,10 +459,10 @@ export default function CategoryPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-zinc-200 border-t-zinc-950 rounded-full animate-spin"></div>
-          <div className="text-xs text-zinc-500 font-serif tracking-widest uppercase">
+          {/* <div className="w-8 h-8 border-3 border-zinc-200 border-t-zinc-950 rounded-full animate-spin"></div> */}
+          {/* <div className="text-xs text-zinc-500 font-serif tracking-widest uppercase">
             Loading {decodedCategory}...
-          </div>
+          </div> */}
         </div>
       </div>
     );
@@ -2032,7 +2032,7 @@ export default function CategoryPage() {
               >
                 {newsletterLoading ? (
                   <>
-                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                    {/* <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" /> */}
                     <span>Saving...</span>
                   </>
                 ) : "Sign Up"}

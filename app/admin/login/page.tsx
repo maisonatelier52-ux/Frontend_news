@@ -276,7 +276,7 @@ export default function LoginPage() {
                   id="login-submit" type="submit" disabled={loading}
                   className="animate-[admin-fade-up_0.45s_cubic-bezier(0.16,1,0.3,1)_0.2s_both] bg-[#1e40af] hover:bg-[#1d4ed8] text-white border-none rounded-lg h-[42px] text-[13.5px] font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-80 mt-3 flex items-center justify-center gap-2 transition-all duration-150 ease-in-out hover:opacity-[0.88] hover:-translate-y-[1px] hover:shadow-[0_4px_14px_rgba(30,64,175,0.25)]"
                 >
-                  {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                  {/* {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>} */}
                   {loading ? 'Signing in...' : 'Sign In'}
                 </button>
 
@@ -327,7 +327,7 @@ export default function LoginPage() {
                   type="submit" disabled={loading}
                   className="bg-[#1e40af] hover:bg-[#1d4ed8] text-white border-none rounded-lg h-[42px] text-[13.5px] font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-80 mt-2 flex items-center justify-center gap-2 transition-all duration-150 ease-in-out hover:opacity-[0.88] hover:-translate-y-[1px] hover:shadow-[0_4px_14px_rgba(30,64,175,0.25)]"
                 >
-                  {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                  {/* {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>} */}
                   {loading ? 'Sending...' : 'Send Verification Code'}
                 </button>
 
@@ -390,7 +390,7 @@ export default function LoginPage() {
                   type="submit" disabled={loading}
                   className="bg-[#1e40af] hover:bg-[#1d4ed8] text-white border-none rounded-lg h-[42px] text-[13.5px] font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-80 flex items-center justify-center gap-2 transition-all duration-150 ease-in-out hover:opacity-[0.88] hover:-translate-y-[1px] hover:shadow-[0_4px_14px_rgba(30,64,175,0.25)]"
                 >
-                  {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                  {/* {loading && <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>} */}
                   {loading ? 'Verifying...' : 'Verify & Continue'}
                 </button>
 
