@@ -58,10 +58,10 @@ export default function AboutPage() {
 
   const title = config?.title || 'About Us';
   const subtitle = config?.subtitle || 'Independent, Truthful Journalism';
-  const leadParagraph = config?.leadParagraph || 'Welcome to **Domain Name**, an independent, employee-owned news publication dedicated to providing comprehensive coverage of national policies, international affairs, global markets, technology breakthroughs, and cultural trends.';
+  const leadParagraph = config?.leadParagraph || 'Welcome to **Magazine Gazette**, an independent, employee-owned news publication dedicated to providing comprehensive coverage of national policies, international affairs, global markets, technology breakthroughs, and cultural trends.';
   
   const missionHeading = config?.missionHeading || 'Our Mission';
-  const missionContent = config?.missionContent || 'At Domain Name, we believe that access to clear, unbiased, and accurate news is a fundamental cornerstone of a free society. Our mission is to cut through the noise and deliver journalism characterized by integrity, clarity, and depth. We write for readers who want to understand not just what happened, but why it happened and what it means for the future.';
+  const missionContent = config?.missionContent || 'At Magazine Gazette, we believe that access to clear, unbiased, and accurate news is a fundamental cornerstone of a free society. Our mission is to cut through the noise and deliver journalism characterized by integrity, clarity, and depth. We write for readers who want to understand not just what happened, but why it happened and what it means for the future.';
   
   const ownershipHeading = config?.ownershipHeading || 'Independent Ownership';
   const ownershipContent = config?.ownershipContent || 'As an employee-owned publication, our primary responsibility is to our readers—not to corporate conglomerates, hedge funds, or political entities. This independence guarantees our editorial team the freedom to cover critical stories objectively, hold institutions accountable, and pursue investigative reports without corporate or partisan pressure.';
@@ -75,7 +75,7 @@ export default function AboutPage() {
   ];
   
   const historyHeading = config?.historyHeading || 'Our History';
-  const historyContent = config?.historyContent || 'Established in 2026, Domain Name was founded by a coalition of veteran journalists, designers, and developers who recognized the need for a modern, independent digital publication built on classical journalistic values. Since our inception, we have grown into a trusted news source read by thousands of people globally.';
+  const historyContent = config?.historyContent || 'Established in 2026, Magazine Gazette was founded by a coalition of veteran journalists, designers, and developers who recognized the need for a modern, independent digital publication built on classical journalistic values. Since our inception, we have grown into a trusted news source read by thousands of people globally.';
 
   if (loading) {
     return (

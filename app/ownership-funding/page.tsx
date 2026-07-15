@@ -59,12 +59,12 @@ export default function OwnershipFundingPage() {
 
   const title = config?.title || 'Ownership & Funding';
   const subtitle = config?.subtitle || 'Editorial Independence through Transparent Revenue';
-  const leadParagraph = config?.leadParagraph || 'At **Domain Name**, we believe transparency about our owners and financial resources is critical to establishing trust with our readers.';
+  const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, we believe transparency about our owners and financial resources is critical to establishing trust with our readers.';
   
   const sections = config?.sections || [
     {
       heading: 'Ownership Structure',
-      content: 'Domain Name is owned and operated by an independent, employee-owned cooperative. This means our editors, writers, designers, and developers hold equity in the publication. Our board is elected democratically by staff, ensuring that our corporate structure aligns with our editorial mission to serve public interests, rather than private shareholders or venture capital funds.',
+      content: 'Magazine Gazette is owned and operated by an independent, employee-owned cooperative. This means our editors, writers, designers, and developers hold equity in the publication. Our board is elected democratically by staff, ensuring that our corporate structure aligns with our editorial mission to serve public interests, rather than private shareholders or venture capital funds.',
       listItems: []
     },
     {
@@ -78,7 +78,7 @@ export default function OwnershipFundingPage() {
     },
     {
       heading: 'Financial Disclosures',
-      content: 'We pledge to publish an annual transparency report summarizing our revenue distributions, staff compensation, and external funding sources. For specific investor relations, corporate inquiries, or grant partnership questions, please email **info@domainname.com**.',
+      content: 'We pledge to publish an annual transparency report summarizing our revenue distributions, staff compensation, and external funding sources. For specific investor relations, corporate inquiries, or grant partnership questions, please email **info@magazinegazette.com**.',
       listItems: []
     }
   ];

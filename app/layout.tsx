@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const settings = await SiteSettingsModel.findOne({ key: 'site_settings' });
     if (settings?.seo) {
       return {
-        title: settings.seo.globalTitle || "The Domain Name | US & World News, Analysis & Opinion",
+        title: settings.seo.globalTitle || "Magazine Gazette | US & World News, Analysis & Opinion",
         description: settings.seo.metaDescription || "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.",
       };
     }
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error("Failed to load metadata dynamically:", e);
   }
   return {
-    title: "The Domain Name | US & World News, Analysis & Opinion",
+    title: "Magazine Gazette | US & World News, Analysis & Opinion",
     description: "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.",
   };
 }

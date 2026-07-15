@@ -276,10 +276,10 @@ export default function Header({
   const renderDomainHeader = (sec: HeaderLayoutSection) => {
     const isText = stringSetting(sec.settings, 'logoType', 'text') !== 'image';
     const alignment = stringSetting(sec.settings, 'alignment', 'center');
-    const logoSize = stringSetting(sec.settings, 'logoSize', '72px');
+    const logoSize = stringSetting(sec.settings, 'logoSize', '54px');
     const logoColor = stringSetting(sec.settings, 'logoColor', '#000000');
     const logoImg = stringSetting(sec.settings, 'logoImage', '');
-    const tagline = stringSetting(sec.settings, 'taglineText', 'Truth, Clarity, and Perspective - Independent Journalism');
+    const tagline = stringSetting(sec.settings, 'taglineText', 'Truth, Clarity, and Perspective • Independent Journalism');
     const tagSize = stringSetting(sec.settings, 'taglineSize', '12px');
     const tagColor = stringSetting(sec.settings, 'taglineColor', '#71717a');
     const bgColor = stringSetting(sec.settings, 'bgColor', '#ffffff');
@@ -307,7 +307,7 @@ export default function Header({
                 setShowBookmarksOnly(false);
               }}
             >
-              DOMAIN NAME
+              MAGAZINE GAZETTE
             </h1>
             <p
               className="mt-2 font-sans font-bold uppercase tracking-widest text-center leading-tight select-none"

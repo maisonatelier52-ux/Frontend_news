@@ -50,9 +50,9 @@ export default function Footer() {
     fetchFooterSettings();
   }, []);
 
-  const logoText = config?.logoText || 'The Domain Name';
+  const logoText = config?.logoText || 'Magazine Gazette';
   const description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.';
-  const copyright = config?.copyright || '© 2026 The Domain Name. All rights reserved.';
+  const copyright = config?.copyright || '© 2026 Magazine Gazette. All rights reserved.';
   
   // Custom styling settings
   const bgColor = config?.bgColor || '#09090b';

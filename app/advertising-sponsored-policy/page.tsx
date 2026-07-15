@@ -59,7 +59,7 @@ export default function AdvertisingPolicyPage() {
 
   const title = config?.title || 'Advertising & Sponsored Policy';
   const subtitle = config?.subtitle || 'Separation of editorial and commercial activities';
-  const leadParagraph = config?.leadParagraph || 'At **Domain Name**, we value the trust of our readers. To maintain that trust, we enforce a strict separation between our newsroom and our commercial operations.';
+  const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, we value the trust of our readers. To maintain that trust, we enforce a strict separation between our newsroom and our commercial operations.';
   
   const sections = config?.sections || [
     {
@@ -84,7 +84,7 @@ export default function AdvertisingPolicyPage() {
     },
     {
       heading: 'Ad Slots Booking',
-      content: 'If you are interested in booking ad slots (such as our Header Banner, Sidebar slots, or custom placements), please contact our advertising desk at **ads@domainname.com**.',
+      content: 'If you are interested in booking ad slots (such as our Header Banner, Sidebar slots, or custom placements), please contact our advertising desk at **ads@magazinegazette.com**.',
       listItems: []
     }
   ];

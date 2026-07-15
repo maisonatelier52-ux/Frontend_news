@@ -59,7 +59,7 @@ export default function SourceMethodologyPage() {
 
   const title = config?.title || 'Source Methodology';
   const subtitle = config?.subtitle || 'How we gather and verify information';
-  const leadParagraph = config?.leadParagraph || 'The credibility of **Domain Name** rests on the reliability of our sources. We utilize strict standards for finding, vetting, and attributing information to ensure our coverage remains objective and factual.';
+  const leadParagraph = config?.leadParagraph || 'The credibility of **Magazine Gazette** rests on the reliability of our sources. We utilize strict standards for finding, vetting, and attributing information to ensure our coverage remains objective and factual.';
   
   const sections = config?.sections || [
     {

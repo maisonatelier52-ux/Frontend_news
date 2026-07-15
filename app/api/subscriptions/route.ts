@@ -141,7 +141,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       success: true,
-      message: 'Subscribed successfully! Welcome to The Domain Name.',
+      message: 'Subscribed successfully! Welcome to Magazine Gazette.',
       subscription: newSub
     });
 

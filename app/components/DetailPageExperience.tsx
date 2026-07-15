@@ -109,9 +109,9 @@ export default function DetailPageExperience({
     role: article.authorTitle || "Staff Reporter",
     category: article.category || "US & WORLD",
     bio: "A veteran journalist dedicated to in-depth research, reporting on critical affairs, and providing objective coverage of domestic and international issues.",
-    email: `${(article.author || "juliana.vance").toLowerCase().replace(/\s/g, '')}@domainname.com`,
+    email: `${(article.author || "juliana.vance").toLowerCase().replace(/\s/g, '')}@magazinegazette.com`,
     gender: "female",
-    websiteUrl: "https://domainname.com/staff/juliana-vance",
+    websiteUrl: "https://www.magazinegazette.com/staff/juliana-vance",
     socialLinks: {
       twitter: "https://twitter.com/julianavance",
       medium: "https://medium.com/@julianavance",
@@ -1124,7 +1124,7 @@ export default function DetailPageExperience({
 
             {/* Footer */}
             <div className="bg-zinc-50 border-t border-zinc-200 py-3 px-6 text-center text-[9px] text-zinc-400 font-mono">
-              © {new Date().getFullYear()} The Domain Name. Staff Bio Database.
+              © {new Date().getFullYear()} Magazine Gazette. Staff Bio Database.
             </div>
           </div>
         </div>

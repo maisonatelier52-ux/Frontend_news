@@ -250,7 +250,7 @@ export default function ArticleReader({
 
         {/* Footer info (At the bottom of the article reader drawer) */}
         <div className="bg-zinc-50 border-t border-zinc-200 py-4 px-6 text-center text-[10px] text-zinc-400 select-none font-mono">
-          © {new Date().getFullYear()} The Domain Name. All rights reserved.
+          © {new Date().getFullYear()} Magazine Gazette. All rights reserved.
         </div>
       </div>
     </div>

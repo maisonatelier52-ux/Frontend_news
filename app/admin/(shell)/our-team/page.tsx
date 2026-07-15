@@ -332,7 +332,7 @@ export default function OurTeamManagerPage() {
             <div className="border border-slate-100 rounded-lg p-4 bg-white max-h-[600px] overflow-y-auto space-y-3 select-none">
               <div className="pb-2 border-b border-slate-100">
                 <h2 className="font-serif text-base font-bold text-slate-900">{pageTitle || 'Our Team'}</h2>
-                <p className="text-[9.5px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider">{pageSubtitle || 'The journalists behind Domain Name'}</p>
+                <p className="text-[9.5px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider">{pageSubtitle || 'The journalists behind Magazine Gazette'}</p>
               </div>
               <p className="text-[10.5px] text-slate-600 leading-relaxed italic">{pageIntro || 'Intro paragraph...'}</p>
               <div className="grid grid-cols-1 gap-2">

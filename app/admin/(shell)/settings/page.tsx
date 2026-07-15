@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const [backupLoading, setBackupLoading] = useState(false)
 
   // Central site settings states
-  const [siteName, setSiteName] = useState('The Domain Name')
+  const [siteName, setSiteName] = useState('Magazine Gazette')
   const [tagline, setTagline] = useState('US & World News, Analysis & Opinion')
   const [timezone, setTimezone] = useState('America/New_York')
   const [language, setLanguage] = useState('en')

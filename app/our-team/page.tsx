@@ -31,8 +31,8 @@ const categoryColors: Record<string, string> = {
 
 export default function OurTeamPage() {
   const [pageTitle, setPageTitle] = useState('Our Team');
-  const [pageSubtitle, setPageSubtitle] = useState('The journalists behind Domain Name');
-  const [pageIntro, setPageIntro] = useState('Our newsroom is staffed by award-winning journalists, experienced analysts, and dedicated correspondents committed to local coverage and global perspectives. Meet the core members of the Domain Name editorial board.');
+  const [pageSubtitle, setPageSubtitle] = useState('The journalists behind Magazine Gazette');
+  const [pageIntro, setPageIntro] = useState('Our newsroom is staffed by award-winning journalists, experienced analysts, and dedicated correspondents committed to local coverage and global perspectives. Meet the core members of the Magazine Gazette editorial board.');
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);

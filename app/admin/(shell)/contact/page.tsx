@@ -78,7 +78,7 @@ export default function ContactUsPage() {
   }, []);
 
   function handleAddDept() {
-    setDepartments([...departments, { name: 'New Department Name', description: 'Brief description...', email: 'contact@domainname.com' }]);
+    setDepartments([...departments, { name: 'New Department Name', description: 'Brief description...', email: 'contact@magazinegazette.com' }]);
   }
 
   function handleRemoveDept(index: number) {

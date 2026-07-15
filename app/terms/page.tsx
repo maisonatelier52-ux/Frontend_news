@@ -53,13 +53,13 @@ export default function TermsPage() {
 
   const title = config?.title || 'Terms and Conditions';
   const subtitle = config?.subtitle || 'Last Updated: July 13, 2026';
-  const leadParagraph = config?.leadParagraph || 'Welcome to **Domain Name**. These terms and conditions outline the rules and regulations for the use of our website and services.';
-  const introParagraph = config?.introParagraph || 'By accessing this website, we assume you accept these terms and conditions in full. Do not continue to use Domain Name if you do not agree to all of the terms and conditions stated on this page.';
+  const leadParagraph = config?.leadParagraph || 'Welcome to **Magazine Gazette**. These terms and conditions outline the rules and regulations for the use of our website and services.';
+  const introParagraph = config?.introParagraph || 'By accessing this website, we assume you accept these terms and conditions in full. Do not continue to use Magazine Gazette if you do not agree to all of the terms and conditions stated on this page.';
   
   const sections = config?.sections || [
     {
       heading: '1. Intellectual Property Rights',
-      content: 'Unless otherwise stated, Domain Name and/or its licensors own the intellectual property rights for all material on this site. All intellectual property rights are reserved. You may view and/or print pages from the website for your own personal use, subject to restrictions set in these terms and conditions.\n\nYou must not:',
+      content: 'Unless otherwise stated, Magazine Gazette and/or its licensors own the intellectual property rights for all material on this site. All intellectual property rights are reserved. You may view and/or print pages from the website for your own personal use, subject to restrictions set in these terms and conditions.\n\nYou must not:',
       listItems: [
         'Republish material from this site without explicit credits or permission.',
         'Sell, rent, or sub-license material from the website.',
@@ -68,7 +68,7 @@ export default function TermsPage() {
     },
     {
       heading: '2. User-Generated Comments',
-      content: 'Certain parts of this website offer the opportunity for users to post opinions, feedback, and comments. Comments represent the views of the person who posts them, not of Domain Name. We reserve the right to monitor all comments and remove any which we consider inappropriate, offensive, or in breach of these terms.',
+      content: 'Certain parts of this website offer the opportunity for users to post opinions, feedback, and comments. Comments represent the views of the person who posts them, not of Magazine Gazette. We reserve the right to monitor all comments and remove any which we consider inappropriate, offensive, or in breach of these terms.',
       listItems: []
     },
     {
@@ -78,7 +78,7 @@ export default function TermsPage() {
     },
     {
       heading: '4. Limitation of Liability',
-      content: 'The materials on this website are provided "as is". While we strive for accuracy, Domain Name makes no warranties, expressed or implied, and hereby disclaims all other warranties, including without limitation, implied warranties or conditions of merchantability or fitness for a particular purpose.',
+      content: 'The materials on this website are provided "as is". While we strive for accuracy, Magazine Gazette makes no warranties, expressed or implied, and hereby disclaims all other warranties, including without limitation, implied warranties or conditions of merchantability or fitness for a particular purpose.',
       listItems: []
     }
   ];

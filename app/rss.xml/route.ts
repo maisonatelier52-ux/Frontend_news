@@ -5,7 +5,7 @@ import { NewsModel } from '@/models/News';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://domainname.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.magazinegazette.com';
   
   try {
     await connectToDatabase();
@@ -25,7 +25,7 @@ export async function GET() {
     const rssXml = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-  <title>The Domain Name News</title>
+  <title>Magazine Gazette News</title>
   <link>${baseUrl}</link>
   <description>Latest national and world news updates.</description>
   <language>en-us</language>

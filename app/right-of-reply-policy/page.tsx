@@ -59,7 +59,7 @@ export default function RightOfReplyPage() {
 
   const title = config?.title || 'Right of Reply Policy';
   const subtitle = config?.subtitle || 'Opportunity for fair response';
-  const leadParagraph = config?.leadParagraph || 'At **Domain Name**, we strive to be fair. In keeping with this principle, we recognize that individuals and organizations have a right of reply if they are the subject of critical or investigative reporting.';
+  const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, we strive to be fair. In keeping with this principle, we recognize that individuals and organizations have a right of reply if they are the subject of critical or investigative reporting.';
   
   const sections = config?.sections || [
     {
@@ -71,7 +71,7 @@ export default function RightOfReplyPage() {
       heading: 'Post-Publication Right of Reply',
       content: 'If an individual or organization is mentioned critically in a published story and was not contacted prior to publication, or has new facts to clarify the record, they may request a right of reply.\n\nTo submit a reply request:',
       listItems: [
-        'Email the editorial team at **letters@domainname.com**.',
+        'Email the editorial team at **letters@magazinegazette.com**.',
         'State the specific article title and URL.',
         'Outline the specific allegations you wish to reply to, and provide the facts supporting your response.'
       ]

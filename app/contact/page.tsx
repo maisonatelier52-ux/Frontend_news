@@ -51,22 +51,22 @@ export default function ContactPage() {
     {
       name: 'News Tips & Press Releases',
       description: 'Have a confidential tip or a story you think we should be covering? This is the best place to send it.',
-      email: 'tips@domainname.com'
+      email: 'tips@magazinegazette.com'
     },
     {
       name: 'To Report a Correction',
       description: 'If you believe one of our articles contains a factual error, please let our editors know. We take accuracy seriously.',
-      email: 'corrections@domainname.com'
+      email: 'corrections@magazinegazette.com'
     },
     {
       name: 'General Questions & Feedback',
       description: 'Have a question about the site or want to share your thoughts on our work? We read everything.',
-      email: 'contact@domainname.com'
+      email: 'contact@magazinegazette.com'
     },
     {
       name: 'Advertising & Partnerships',
       description: 'If you\'re interested in advertising opportunities or other business partnerships, please contact our business desk.',
-      email: 'partners@domainname.com'
+      email: 'partners@magazinegazette.com'
     }
   ];
 

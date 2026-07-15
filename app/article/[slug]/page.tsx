@@ -1642,7 +1642,7 @@ export default function ArticleDetailPage() {
 
             {/* Footer */}
             <div className="bg-zinc-50 border-t border-zinc-200 py-3 px-6 text-center text-[9px] text-zinc-400 font-mono">
-              © {new Date().getFullYear()} The Domain Name. Staff Bio Database.
+              © {new Date().getFullYear()} Magazine Gazette. Staff Bio Database.
             </div>
           </div>
         </div>

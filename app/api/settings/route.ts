@@ -96,12 +96,12 @@ const DEFAULT_SETTINGS = {
       { id: 3, platform: 'Instagram', icon: '📸', url: 'https://instagram.com/newssite' },
       { id: 4, platform: 'YouTube', icon: '▶', url: 'https://youtube.com/@newssite' }
     ],
-    copyright: '© 2026 The Domain Name. All rights reserved.',
+    copyright: '© 2026 Magazine Gazette. All rights reserved.',
     address: 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts. Headquartered in Washington, D.C.',
     phone: '',
     email: '',
     newsletter: false,
-    logoText: 'The Domain Name',
+    logoText: 'Magazine Gazette',
     bgColor: '#ffffff',
     textColor: '#4b5563',
     paddingY: '40px',
@@ -119,7 +119,7 @@ const DEFAULT_SETTINGS = {
     ]
   },
   seo: {
-    globalTitle: 'The Domain Name | US & World News, Analysis & Opinion',
+    globalTitle: 'Magazine Gazette | US & World News, Analysis & Opinion',
     metaDescription: 'Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.',
     openGraphImage: '/images/og-default.jpg',
     twitterCard: 'summary_large_image',
@@ -138,9 +138,9 @@ const DEFAULT_SETTINGS = {
   aboutUs: {
     title: 'About Us',
     subtitle: 'Independent, Truthful Journalism',
-    leadParagraph: 'Welcome to **Domain Name**, an independent, employee-owned news publication dedicated to providing comprehensive coverage of national policies, international affairs, global markets, technology breakthroughs, and cultural trends.',
+    leadParagraph: 'Welcome to **Magazine Gazette**, an independent, employee-owned news publication dedicated to providing comprehensive coverage of national policies, international affairs, global markets, technology breakthroughs, and cultural trends.',
     missionHeading: 'Our Mission',
-    missionContent: 'At Domain Name, we believe that access to clear, unbiased, and accurate news is a fundamental cornerstone of a free society. Our mission is to cut through the noise and deliver journalism characterized by integrity, clarity, and depth. We write for readers who want to understand not just what happened, but why it happened and what it means for the future.',
+    missionContent: 'At Magazine Gazette, we believe that access to clear, unbiased, and accurate news is a fundamental cornerstone of a free society. Our mission is to cut through the noise and deliver journalism characterized by integrity, clarity, and depth. We write for readers who want to understand not just what happened, but why it happened and what it means for the future.',
     ownershipHeading: 'Independent Ownership',
     ownershipContent: 'As an employee-owned publication, our primary responsibility is to our readers—not to corporate conglomerates, hedge funds, or political entities. This independence guarantees our editorial team the freedom to cover critical stories objectively, hold institutions accountable, and pursue investigative reports without corporate or partisan pressure.',
     valuesHeading: 'Our Values',
@@ -151,7 +151,7 @@ const DEFAULT_SETTINGS = {
       { title: 'Accountability', description: 'We hold ourselves to the highest standards of professional ethics and responsibility.' }
     ],
     historyHeading: 'Our History',
-    historyContent: 'Established in 2026, Domain Name was founded by a coalition of veteran journalists, designers, and developers who recognized the need for a modern, independent digital publication built on classical journalistic values. Since our inception, we have grown into a trusted news source read by thousands of people globally.'
+    historyContent: 'Established in 2026, Magazine Gazette was founded by a coalition of veteran journalists, designers, and developers who recognized the need for a modern, independent digital publication built on classical journalistic values. Since our inception, we have grown into a trusted news source read by thousands of people globally.'
   },
   contactUs: {
     title: 'Contact Us',
@@ -163,29 +163,29 @@ const DEFAULT_SETTINGS = {
       {
         name: 'News Tips & Press Releases',
         description: 'Have a confidential tip or a story you think we should be covering? This is the best place to send it.',
-        email: 'tips@domainname.com'
+        email: 'tips@magazinegazette.com'
       },
       {
         name: 'To Report a Correction',
         description: 'If you believe one of our articles contains a factual error, please let our editors know. We take accuracy seriously.',
-        email: 'corrections@domainname.com'
+        email: 'corrections@magazinegazette.com'
       },
       {
         name: 'General Questions & Feedback',
         description: 'Have a question about the site or want to share your thoughts on our work? We read everything.',
-        email: 'contact@domainname.com'
+        email: 'contact@magazinegazette.com'
       },
       {
         name: 'Advertising & Partnerships',
         description: 'If you\'re interested in advertising opportunities or other business partnerships, please contact our business desk.',
-        email: 'partners@domainname.com'
+        email: 'partners@magazinegazette.com'
       }
     ]
   },
   privacyPolicy: {
     title: 'Privacy Policy',
     subtitle: 'Last Updated: July 13, 2026',
-    leadParagraph: 'At **Domain Name**, we take the privacy of our visitors and users very seriously. This policy describes how we collect, store, share, and protect your information when you interact with our websites and applications.',
+    leadParagraph: 'At **Magazine Gazette**, we take the privacy of our visitors and users very seriously. This policy describes how we collect, store, share, and protect your information when you interact with our websites and applications.',
     sections: [
       {
         heading: '1. Information We Collect',
@@ -219,19 +219,19 @@ const DEFAULT_SETTINGS = {
         heading: '5. Your Data Rights',
         intro: '',
         listItems: [],
-        body: 'Depending on your jurisdiction (such as under the GDPR or CCPA), you may have the right to inspect, edit, or delete the personal details we hold about you. For any such data requests, please write to our Data Privacy Desk at **info@domainname.com**.'
+        body: 'Depending on your jurisdiction (such as under the GDPR or CCPA), you may have the right to inspect, edit, or delete the personal details we hold about you. For any such data requests, please write to our Data Privacy Desk at **info@magazinegazette.com**.'
       }
     ]
   },
   termsAndConditions: {
     title: 'Terms and Conditions',
     subtitle: 'Last Updated: July 13, 2026',
-    leadParagraph: 'Welcome to **Domain Name**. These terms and conditions outline the rules and regulations for the use of our website and services.',
-    introParagraph: 'By accessing this website, we assume you accept these terms and conditions in full. Do not continue to use Domain Name if you do not agree to all of the terms and conditions stated on this page.',
+    leadParagraph: 'Welcome to **Magazine Gazette**. These terms and conditions outline the rules and regulations for the use of our website and services.',
+    introParagraph: 'By accessing this website, we assume you accept these terms and conditions in full. Do not continue to use Magazine Gazette if you do not agree to all of the terms and conditions stated on this page.',
     sections: [
       {
         heading: '1. Intellectual Property Rights',
-        content: 'Unless otherwise stated, Domain Name and/or its licensors own the intellectual property rights for all material on this site. All intellectual property rights are reserved. You may view and/or print pages from the website for your own personal use, subject to restrictions set in these terms and conditions.\n\nYou must not:',
+        content: 'Unless otherwise stated, Magazine Gazette and/or its licensors own the intellectual property rights for all material on this site. All intellectual property rights are reserved. You may view and/or print pages from the website for your own personal use, subject to restrictions set in these terms and conditions.\n\nYou must not:',
         listItems: [
           'Republish material from this site without explicit credits or permission.',
           'Sell, rent, or sub-license material from the website.',
@@ -240,7 +240,7 @@ const DEFAULT_SETTINGS = {
       },
       {
         heading: '2. User-Generated Comments',
-        content: 'Certain parts of this website offer the opportunity for users to post opinions, feedback, and comments. Comments represent the views of the person who posts them, not of Domain Name. We reserve the right to monitor all comments and remove any which we consider inappropriate, offensive, or in breach of these terms.',
+        content: 'Certain parts of this website offer the opportunity for users to post opinions, feedback, and comments. Comments represent the views of the person who posts them, not of Magazine Gazette. We reserve the right to monitor all comments and remove any which we consider inappropriate, offensive, or in breach of these terms.',
         listItems: []
       },
       {
@@ -250,7 +250,7 @@ const DEFAULT_SETTINGS = {
       },
       {
         heading: '4. Limitation of Liability',
-        content: 'The materials on this website are provided "as is". While we strive for accuracy, Domain Name makes no warranties, expressed or implied, and hereby disclaims all other warranties, including without limitation, implied warranties or conditions of merchantability or fitness for a particular purpose.',
+        content: 'The materials on this website are provided "as is". While we strive for accuracy, Magazine Gazette makes no warranties, expressed or implied, and hereby disclaims all other warranties, including without limitation, implied warranties or conditions of merchantability or fitness for a particular purpose.',
         listItems: []
       }
     ]
@@ -258,7 +258,7 @@ const DEFAULT_SETTINGS = {
   correctionPolicy: {
     title: 'Correction Policy',
     subtitle: 'Commitment to Accuracy and Integrity',
-    leadParagraph: 'At **Domain Name**, our primary goal is to provide accurate, fair, and comprehensive coverage. However, when we make a mistake, we are committed to correcting the record promptly and transparently.',
+    leadParagraph: 'At **Magazine Gazette**, our primary goal is to provide accurate, fair, and comprehensive coverage. However, when we make a mistake, we are committed to correcting the record promptly and transparently.',
     sections: [
       {
         heading: 'Our Standards',
@@ -276,7 +276,7 @@ const DEFAULT_SETTINGS = {
       },
       {
         heading: 'Reporting a Correction',
-        content: 'If you spot a factual error in any of our articles, please report it immediately to our editors at **corrections@domainname.com**.\n\nPlease include:',
+        content: 'If you spot a factual error in any of our articles, please report it immediately to our editors at **corrections@magazinegazette.com**.\n\nPlease include:',
         listItems: [
           'The URL of the article.',
           'The headline and publication date.',
@@ -289,7 +289,7 @@ const DEFAULT_SETTINGS = {
   sourceMethodology: {
     title: 'Source Methodology',
     subtitle: 'How we gather and verify information',
-    leadParagraph: 'The credibility of **Domain Name** rests on the reliability of our sources. We utilize strict standards for finding, vetting, and attributing information to ensure our coverage remains objective and factual.',
+    leadParagraph: 'The credibility of **Magazine Gazette** rests on the reliability of our sources. We utilize strict standards for finding, vetting, and attributing information to ensure our coverage remains objective and factual.',
     sections: [
       {
         heading: '1. Vetting Sources',
@@ -320,7 +320,7 @@ const DEFAULT_SETTINGS = {
   advertisingPolicy: {
     title: 'Advertising & Sponsored Policy',
     subtitle: 'Separation of editorial and commercial activities',
-    leadParagraph: 'At **Domain Name**, we value the trust of our readers. To maintain that trust, we enforce a strict separation between our newsroom and our commercial operations.',
+    leadParagraph: 'At **Magazine Gazette**, we value the trust of our readers. To maintain that trust, we enforce a strict separation between our newsroom and our commercial operations.',
     sections: [
       {
         heading: 'Editorial Independence',
@@ -344,7 +344,7 @@ const DEFAULT_SETTINGS = {
       },
       {
         heading: 'Ad Slots Booking',
-        content: 'If you are interested in booking ad slots (such as our Header Banner, Sidebar slots, or custom placements), please contact our advertising desk at **ads@domainname.com**.',
+        content: 'If you are interested in booking ad slots (such as our Header Banner, Sidebar slots, or custom placements), please contact our advertising desk at **ads@magazinegazette.com**.',
         listItems: []
       }
     ]
@@ -352,11 +352,11 @@ const DEFAULT_SETTINGS = {
   ownershipFunding: {
     title: 'Ownership & Funding',
     subtitle: 'Editorial Independence through Transparent Revenue',
-    leadParagraph: 'At **Domain Name**, we believe transparency about our owners and financial resources is critical to establishing trust with our readers.',
+    leadParagraph: 'At **Magazine Gazette**, we believe transparency about our owners and financial resources is critical to establishing trust with our readers.',
     sections: [
       {
         heading: 'Ownership Structure',
-        content: 'Domain Name is owned and operated by an independent, employee-owned cooperative. This means our editors, writers, designers, and developers hold equity in the publication. Our board is elected democratically by staff, ensuring that our corporate structure aligns with our editorial mission to serve public interests, rather than private shareholders or venture capital funds.',
+        content: 'Magazine Gazette is owned and operated by an independent, employee-owned cooperative. This means our editors, writers, designers, and developers hold equity in the publication. Our board is elected democratically by staff, ensuring that our corporate structure aligns with our editorial mission to serve public interests, rather than private shareholders or venture capital funds.',
         listItems: []
       },
       {
@@ -370,7 +370,7 @@ const DEFAULT_SETTINGS = {
       },
       {
         heading: 'Financial Disclosures',
-        content: 'We pledge to publish an annual transparency report summarizing our revenue distributions, staff compensation, and external funding sources. For specific investor relations, corporate inquiries, or grant partnership questions, please email **info@domainname.com**.',
+        content: 'We pledge to publish an annual transparency report summarizing our revenue distributions, staff compensation, and external funding sources. For specific investor relations, corporate inquiries, or grant partnership questions, please email **info@magazinegazette.com**.',
         listItems: []
       }
     ]
@@ -378,7 +378,7 @@ const DEFAULT_SETTINGS = {
   rightOfReplyPolicy: {
     title: 'Right of Reply Policy',
     subtitle: 'Opportunity for fair response',
-    leadParagraph: 'At **Domain Name**, we strive to be fair. In keeping with this principle, we recognize that individuals and organizations have a right of reply if they are the subject of critical or investigative reporting.',
+    leadParagraph: 'At **Magazine Gazette**, we strive to be fair. In keeping with this principle, we recognize that individuals and organizations have a right of reply if they are the subject of critical or investigative reporting.',
     sections: [
       {
         heading: 'Our Standards for Fair Reporting',
@@ -389,7 +389,7 @@ const DEFAULT_SETTINGS = {
         heading: 'Post-Publication Right of Reply',
         content: 'If an individual or organization is mentioned critically in a published story and was not contacted prior to publication, or has new facts to clarify the record, they may request a right of reply.\n\nTo submit a reply request:',
         listItems: [
-          'Email the editorial team at **letters@domainname.com**.',
+          'Email the editorial team at **letters@magazinegazette.com**.',
           'State the specific article title and URL.',
           'Outline the specific allegations you wish to reply to, and provide the facts supporting your response.'
         ]
@@ -404,34 +404,34 @@ const DEFAULT_SETTINGS = {
   legalPolicy: {
     title: 'Legal Policy',
     subtitle: 'Governing Laws and Disclaimers',
-    leadParagraph: 'This document contains the legal disclosures and policy guidelines governing your use of the **Domain Name** website and digital services.',
+    leadParagraph: 'This document contains the legal disclosures and policy guidelines governing your use of the **Magazine Gazette** website and digital services.',
     sections: [
       {
         heading: '1. No Legal or Professional Advice',
-        content: 'The news, analysis, articles, and reviews published on Domain Name are for general informational and educational purposes only. They do not constitute financial, legal, medical, or other professional advice. Readers should consult with qualified professionals before making any decisions based on the content found on this site.',
+        content: 'The news, analysis, articles, and reviews published on Magazine Gazette are for general informational and educational purposes only. They do not constitute financial, legal, medical, or other professional advice. Readers should consult with qualified professionals before making any decisions based on the content found on this site.',
         listItems: []
       },
       {
         heading: '2. Copyright and Trademark Notice',
-        content: 'All contents of this site, including text, graphics, logos, layouts, icons, and software, are the exclusive property of Domain Name and are protected by international copyright laws. Any unauthorized distribution, reproduction, or modification of the site materials is strictly prohibited and will be prosecuted to the fullest extent of the law.',
+        content: 'All contents of this site, including text, graphics, logos, layouts, icons, and software, are the exclusive property of Magazine Gazette and are protected by international copyright laws. Any unauthorized distribution, reproduction, or modification of the site materials is strictly prohibited and will be prosecuted to the fullest extent of the law.',
         listItems: []
       },
       {
         heading: '3. Disclaimer of Endorsements',
-        content: 'Reference to any commercial products, services, processes, trade names, or corporate trademarks in our articles does not constitute or imply endorsement, sponsorship, or recommendation by Domain Name.',
+        content: 'Reference to any commercial products, services, processes, trade names, or corporate trademarks in our articles does not constitute or imply endorsement, sponsorship, or recommendation by Magazine Gazette.',
         listItems: []
       },
       {
         heading: '4. Governing Law and Jurisdiction',
-        content: 'Any disputes, claims, or legal proceedings arising out of or in connection with the use of Domain Name shall be governed by and construed in accordance with the laws of the District of Columbia, United States, without regard to its conflict of law provisions.',
+        content: 'Any disputes, claims, or legal proceedings arising out of or in connection with the use of Magazine Gazette shall be governed by and construed in accordance with the laws of the District of Columbia, United States, without regard to its conflict of law provisions.',
         listItems: []
       }
     ]
   },
   ourTeam: {
     pageTitle: 'Our Team',
-    pageSubtitle: 'The journalists behind Domain Name',
-    pageIntro: 'Our newsroom is staffed by award-winning journalists, experienced analysts, and dedicated correspondents committed to local coverage and global perspectives. Meet the core members of the Domain Name editorial board.',
+    pageSubtitle: 'The journalists behind Magazine Gazette',
+    pageIntro: 'Our newsroom is staffed by award-winning journalists, experienced analysts, and dedicated correspondents committed to local coverage and global perspectives. Meet the core members of the Magazine Gazette editorial board.',
     latestArticlesHeading: 'Latest Articles',
     members: [
       {

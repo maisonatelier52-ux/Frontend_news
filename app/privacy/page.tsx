@@ -65,7 +65,7 @@ export default function PrivacyPage() {
 
   const title = config?.title || 'Privacy Policy';
   const subtitle = config?.subtitle || 'Last Updated: July 13, 2026';
-  const leadParagraph = config?.leadParagraph || 'At **Domain Name**, we take the privacy of our visitors and users very seriously. This policy describes how we collect, store, share, and protect your information when you interact with our websites and applications.';
+  const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, we take the privacy of our visitors and users very seriously. This policy describes how we collect, store, share, and protect your information when you interact with our websites and applications.';
   
   const sections = config?.sections || [
     {
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
       heading: '5. Your Data Rights',
       intro: '',
       listItems: [],
-      body: 'Depending on your jurisdiction (such as under the GDPR or CCPA), you may have the right to inspect, edit, or delete the personal details we hold about you. For any such data requests, please write to our Data Privacy Desk at **info@domainname.com**.'
+      body: 'Depending on your jurisdiction (such as under the GDPR or CCPA), you may have the right to inspect, edit, or delete the personal details we hold about you. For any such data requests, please write to our Data Privacy Desk at **info@magazinegazette.com**.'
     }
   ];
 

@@ -1907,7 +1907,7 @@ return (
           <div className="max-w-7xl mx-auto border-t border-zinc-200 pt-10">
             <div className="max-w-2xl mx-auto text-center space-y-4">
               <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
-                Subscribe to The Domain Name
+                Subscribe to Magazine Gazette
               </h3>
               <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
                 Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.

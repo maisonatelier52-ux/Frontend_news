@@ -20,9 +20,9 @@ interface FooterColumn {
 
 export default function FooterPage() {
   const [columns, setColumns] = useState<FooterColumn[]>([]);
-  const [copyright, setCopyright] = useState('© 2026 The Domain Name. All rights reserved.');
+  const [copyright, setCopyright] = useState('© 2026 Magazine Gazette. All rights reserved.');
   const [description, setDescription] = useState('');
-  const [logoText, setLogoText] = useState('The Domain Name');
+  const [logoText, setLogoText] = useState('Magazine Gazette');
   
   // Custom styling settings
   const [bgColor, setBgColor] = useState('#09090b');
@@ -52,9 +52,9 @@ export default function FooterPage() {
         if (data.footer) {
           const f = data.footer;
           const configObj = {
-            logoText: f.logoText || 'The Domain Name',
+            logoText: f.logoText || 'Magazine Gazette',
             description: f.description || f.address || '',
-            copyright: f.copyright || '© 2026 The Domain Name. All rights reserved.',
+            copyright: f.copyright || '© 2026 Magazine Gazette. All rights reserved.',
             bgColor: f.bgColor || '#09090b',
             textColorPrimary: f.textColorPrimary || '#ffffff',
             textColorSecondary: f.textColorSecondary || '#a1a1aa',
@@ -407,7 +407,7 @@ export default function FooterPage() {
                 value={logoText} 
                 onChange={(e) => { pushStateToHistory(); setLogoText(e.target.value); }} 
                 style={{ ...inputStyle, width: '100%' }} 
-                placeholder="e.g. The Domain Name"
+                placeholder="e.g. Magazine Gazette"
               />
             </div>
 
@@ -427,7 +427,7 @@ export default function FooterPage() {
                 value={copyright} 
                 onChange={(e) => { pushStateToHistory(); setCopyright(e.target.value); }} 
                 style={{ ...inputStyle, width: '100%' }} 
-                placeholder="e.g. © 2026 The Domain Name. All rights reserved."
+                placeholder="e.g. © 2026 Magazine Gazette. All rights reserved."
               />
             </div>
           </div>

@@ -59,7 +59,7 @@ export default function CorrectionPolicyPage() {
 
   const title = config?.title || 'Correction Policy';
   const subtitle = config?.subtitle || 'Commitment to Accuracy and Integrity';
-  const leadParagraph = config?.leadParagraph || 'At **Domain Name**, our primary goal is to provide accurate, fair, and comprehensive coverage. However, when we make a mistake, we are committed to correcting the record promptly and transparently.';
+  const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, our primary goal is to provide accurate, fair, and comprehensive coverage. However, when we make a mistake, we are committed to correcting the record promptly and transparently.';
   
   const sections = config?.sections || [
     {
@@ -78,7 +78,7 @@ export default function CorrectionPolicyPage() {
     },
     {
       heading: 'Reporting a Correction',
-      content: 'If you spot a factual error in any of our articles, please report it immediately to our editors at **corrections@domainname.com**.\n\nPlease include:',
+      content: 'If you spot a factual error in any of our articles, please report it immediately to our editors at **corrections@magazinegazette.com**.\n\nPlease include:',
       listItems: [
         'The URL of the article.',
         'The headline and publication date.',
