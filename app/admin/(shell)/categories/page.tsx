@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 interface Category {
   _id: string
@@ -33,6 +34,7 @@ const initialTags = [
 ]
 
 export default function CategoriesPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [categories, setCategories] = useState<Category[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -179,11 +181,10 @@ export default function CategoriesPage() {
         }
       } else {
         const err = await res.json()
-        alert(err.error || 'Failed to check image file')
+        showAlert(err.error || 'Failed to check image file', 'error', 'Upload Error')
       }
     } catch (e) {
-      console.error('Check image error:', e)
-      alert('Error verifying image existence.')
+      showAlert('Error verifying image existence.', 'error', 'Upload Error')
     } finally {
       setUploading(false)
     }
@@ -241,15 +242,14 @@ export default function CategoriesPage() {
         })
         if (!uploadRes.ok) {
           const uploadErr = await uploadRes.json()
-          alert(uploadErr.error || 'Failed to upload image to server.')
+          showAlert(uploadErr.error || 'Failed to upload image to server.', 'error', 'Upload Failed')
           setIsUploadingOnSave(false)
           return
         }
         const uploadData = await uploadRes.json()
         finalImageUrl = uploadData.url
       } catch (err) {
-        console.error('Image upload on save failed:', err)
-        alert('Failed to upload image to public/images folder.')
+        showAlert('Failed to upload image to public/images folder.', 'error', 'Upload Failed')
         setIsUploadingOnSave(false)
         return
       } finally {
@@ -307,29 +307,34 @@ export default function CategoriesPage() {
           bannerImage: '',
           bannerImageAlt: ''
         })
-        setSaved('category')
-        setTimeout(() => setSaved(''), 3000)
+        showAlert(`Category ${editCatId ? 'updated' : 'created'} successfully!`, 'success', 'Saved')
       } else {
         const errData = await res.json()
-        alert(errData.error || 'Failed to save category')
+        showAlert(errData.error || 'Failed to save category', 'error', 'Save Failed')
       }
     } catch (err) {
-      console.error('Save category error:', err)
+      showAlert('Failed to save category', 'error', 'Save Error')
     }
   }
 
-  async function deleteCategory(id: string) {
-    if (!confirm('Are you sure you want to delete this category?')) return
-    try {
-      const res = await fetch(`/api/categories/${id}`, {
-        method: 'DELETE'
-      })
-      if (res.ok) {
-        setCategories((prev) => prev.filter((c) => c._id !== id))
-      }
-    } catch (err) {
-      console.error('Delete category error:', err)
-    }
+  function deleteCategory(id: string) {
+    showConfirm(
+      'Are you sure you want to delete this category?',
+      async () => {
+        try {
+          const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setCategories((prev) => prev.filter((c) => c._id !== id))
+            showAlert('Category deleted successfully.', 'success', 'Deleted')
+          } else {
+            showAlert('Failed to delete category.', 'error', 'Error')
+          }
+        } catch (err) {
+          showAlert('Failed to delete category.', 'error', 'Error')
+        }
+      },
+      'Delete Category'
+    )
   }
 
   async function toggleVisibility(category: Category) {
@@ -345,10 +350,10 @@ export default function CategoriesPage() {
         setCategories(prev => prev.map(c => c._id === category._id ? updated : c))
       } else {
         const errData = await res.json()
-        alert(errData.error || 'Failed to update visibility')
+        showAlert(errData.error || 'Failed to update visibility', 'error', 'Update Error')
       }
     } catch (err) {
-      console.error('Toggle visibility error:', err)
+      showAlert('Failed to update visibility', 'error', 'Update Error')
     }
   }
 

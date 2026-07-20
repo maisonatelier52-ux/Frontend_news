@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 const TABS = ['General', 'Theme Builder', 'SEO', 'Security', 'Backup & Restore', 'Activity Logs']
 
@@ -33,6 +34,7 @@ const TYPOGRAPHY_KEYS = [
 ]
 
 export default function SettingsPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [activeTab, setActiveTab] = useState('General')
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
@@ -170,7 +172,7 @@ export default function SettingsPage() {
     }
   }, [activeTab])
 
-  // Save中央 Site Configurations
+  // Save central Site Configurations
   async function handleSave() {
     try {
       const payload = {
@@ -215,6 +217,7 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Site settings updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 3000);
         
         // Log the change
@@ -228,25 +231,33 @@ export default function SettingsPage() {
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save settings', 'error', 'Error');
       }
     } catch (e) {
-      alert('Failed to save settings');
+      showAlert('Failed to save settings', 'error', 'Error');
     }
   }
 
   // Restore Default settings values
-  async function handleResetToDefault() {
-    if (confirm('Are you sure you want to restore default factory configurations? All theme colors, spacing and font selectors will be set back to original defaults.')) {
-      try {
-        const res = await fetch('/api/settings', { method: 'PATCH' });
-        if (res.ok) {
-          alert('Site settings reset successfully!');
-          loadSettings();
+  function handleResetToDefault() {
+    showConfirm(
+      'Are you sure you want to restore default factory configurations? All theme colors, spacing and font selectors will be set back to original defaults.',
+      async () => {
+        try {
+          const res = await fetch('/api/settings', { method: 'PATCH' });
+          if (res.ok) {
+            showAlert('Site settings reset successfully!', 'success', 'Reset Complete');
+            loadSettings();
+          } else {
+            showAlert('Failed to reset default settings', 'error', 'Error');
+          }
+        } catch (err) {
+          showAlert('Failed to reset default settings', 'error', 'Error');
         }
-      } catch (err) {
-        alert('Failed to reset default settings');
-      }
-    }
+      },
+      'Restore Defaults'
+    );
   }
 
   // Handle manual backup trigger
@@ -259,36 +270,42 @@ export default function SettingsPage() {
         body: JSON.stringify({ action: 'backup' })
       })
       if (res.ok) {
-        alert('Database snapshot created successfully!')
+        showAlert('Database snapshot created successfully!', 'success', 'Backup Complete')
         loadBackups()
+      } else {
+        showAlert('Backup failed.', 'error', 'Error')
       }
     } catch (err) {
-      alert('Backup failed')
+      showAlert('Backup failed', 'error', 'Error')
     } finally {
       setBackupLoading(false)
     }
   }
 
   // Handle restore DB trigger
-  async function triggerRestore(filename: string) {
-    if (confirm(`CRITICAL WARNING: Restoring the database to ${filename} will clear and overwrite all current collections. Are you sure you want to proceed?`)) {
-      try {
-        const res = await fetch('/api/backup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'restore', filename })
-        })
-        if (res.ok) {
-          alert('Database restored successfully! Loading updated settings.')
-          loadSettings()
-        } else {
-          const err = await res.json()
-          alert(`Restore failed: ${err.error}`)
+  function triggerRestore(filename: string) {
+    showConfirm(
+      `CRITICAL WARNING: Restoring the database to ${filename} will clear and overwrite all current collections. Are you sure you want to proceed?`,
+      async () => {
+        try {
+          const res = await fetch('/api/backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'restore', filename })
+          })
+          if (res.ok) {
+            showAlert('Database restored successfully! Loading updated settings.', 'success', 'Restore Complete')
+            loadSettings()
+          } else {
+            const err = await res.json()
+            showAlert(`Restore failed: ${err.error}`, 'error', 'Restore Error')
+          }
+        } catch (err) {
+          showAlert('Restore operation failed', 'error', 'Restore Error')
         }
-      } catch (err) {
-        alert('Restore operation failed')
-      }
-    }
+      },
+      'Restore Database'
+    );
   }
 
   const updateTypographyAttr = (key: string, field: string, value: string) => {

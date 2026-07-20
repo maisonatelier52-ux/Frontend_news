@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import StatusBadge from '../../components/StatusBadge'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 interface User {
   _id: string
@@ -12,6 +13,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -58,6 +60,7 @@ export default function UsersPage() {
         setUsers((prev) => [created, ...prev])
         setNewUser({ name: '', email: '', role: 'editor', password: '' })
         setShowModal(false)
+        showAlert('User account created successfully.', 'success', 'Created')
         
         // Log activity
         await fetch('/api/logs', {
@@ -71,38 +74,43 @@ export default function UsersPage() {
         })
       } else {
         const err = await res.json()
-        alert(err.error || 'Failed to create user')
+        showAlert(err.error || 'Failed to create user', 'error', 'Create Error')
       }
     } catch (err) {
-      alert('Network error creating user')
+      showAlert('Network error creating user', 'error', 'Create Error')
     }
   }
 
-  async function deleteUser(id: string) {
-    if (confirm('Are you sure you want to delete this console user?')) {
-      try {
-        const res = await fetch(`/api/users?id=${id}`, {
-          method: 'DELETE'
-        })
-        if (res.ok) {
-          const deleted = users.find(u => u._id === id)
-          setUsers((prev) => prev.filter((u) => u._id !== id))
-          
-          // Log activity
-          await fetch('/api/logs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'security',
-              action: 'USER_DELETE',
-              details: { email: deleted?.email }
+  function deleteUser(id: string) {
+    showConfirm(
+      'Are you sure you want to delete this console user?',
+      async () => {
+        try {
+          const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            const deleted = users.find(u => u._id === id)
+            setUsers((prev) => prev.filter((u) => u._id !== id))
+            showAlert('User deleted successfully.', 'success', 'Deleted')
+            
+            // Log activity
+            await fetch('/api/logs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'security',
+                action: 'USER_DELETE',
+                details: { email: deleted?.email }
+              })
             })
-          })
+          } else {
+            showAlert('Failed to delete user.', 'error', 'Error')
+          }
+        } catch (err) {
+          showAlert('Failed to delete user', 'error', 'Error')
         }
-      } catch (err) {
-        alert('Failed to delete user')
-      }
-    }
+      },
+      'Delete User'
+    )
   }
 
   async function changeUserRole(id: string, newRole: string) {
@@ -114,9 +122,12 @@ export default function UsersPage() {
       })
       if (res.ok) {
         setUsers((prev) => prev.map((u) => u._id === id ? { ...u, role: newRole } : u))
+        showAlert('User role updated successfully.', 'success', 'Updated')
+      } else {
+        showAlert('Failed to update user role', 'error', 'Error')
       }
     } catch (err) {
-      alert('Failed to update user role')
+      showAlert('Failed to update user role', 'error', 'Error')
     }
   }
 

@@ -14,28 +14,28 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   // Normalize URL slug → canonical display category name (case-insensitive)
   const CATEGORY_MAP: Record<string, string> = {
-    "us": "US",
+    "business": "Business",
     "world": "World",
     "finance": "Finance",
     "technology": "Technology",
-    "entertainment": "Entertainment",
-    "marketing": "Marketing",
-    "pr news": "PR News",
-    "pr-news": "PR News",
-    "prnews": "PR News",
+    "politics": "Politics",
+    "lifestyle": "Lifestyle",
+    "opinion": "Opinion",
+    "investigation": "Investigation"
   };
   const slugDecoded = decodedCategory.toLowerCase();
-  const normalizedCategory = CATEGORY_MAP[slugDecoded] || decodedCategory;
+  const normalizedCategory = CATEGORY_MAP[slugDecoded] || (decodedCategory.charAt(0).toUpperCase() + decodedCategory.slice(1));
 
   // One-line editorial tagline per category
   const categoryTaglines: Record<string, string> = {
-    "US": "Covering American politics, policy, and national affairs.",
+    "Business": "Markets, corporate updates, and strategic industry developments.",
     "World": "Global dispatches from correspondents across every continent.",
-    "Finance": "Markets, economics, and the forces shaping global capital.",
+    "Finance": "Personal finance, banking, economics, and investment strategies.",
     "Technology": "The intersection of innovation, AI, and the digital future.",
-    "Entertainment": "Arts, culture, film, music, and the stories behind the spotlight.",
-    "Marketing": "Strategy, brand, and the science of reaching modern audiences.",
-    "PR News": "Official statements, press releases, and institutional announcements.",
+    "Politics": "National policy, political dynamics, and legislative updates.",
+    "Lifestyle": "Culture, travel, food, wellness, and contemporary living.",
+    "Opinion": "Analysis, commentary, and editorial perspectives from our columnists.",
+    "Investigation": "In-depth investigative reports, exposes, and deep-dive journalism."
   };
   const tagline = categoryTaglines[normalizedCategory] || `In-depth reporting on ${normalizedCategory}.`;
 

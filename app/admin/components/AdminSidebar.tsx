@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
@@ -132,6 +133,22 @@ const navGroups: { label: string; items: NavItem[] }[] = [
 export default function AdminSidebar({ collapsed, setCollapsed, user }: AdminSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [newsCount, setNewsCount] = useState<number>(0)
+
+  useEffect(() => {
+    async function loadNewsCount() {
+      try {
+        const res = await fetch('/api/news')
+        if (res.ok) {
+          const data = await res.json()
+          setNewsCount(Array.isArray(data) ? data.length : 0)
+        }
+      } catch (err) {
+        console.error('Failed to load news count for sidebar badge:', err)
+      }
+    }
+    loadNewsCount()
+  }, [pathname])
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -142,6 +159,16 @@ export default function AdminSidebar({ collapsed, setCollapsed, user }: AdminSid
     if (href === '/admin/dashboard') return pathname === href
     return pathname.startsWith(href)
   }
+
+  const dynamicNavGroups = navGroups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => {
+      if (item.label === 'News Articles') {
+        return { ...item, badge: String(newsCount) }
+      }
+      return item
+    }),
+  }))
 
   return (
     <aside className={`animate-[admin-slide-right_0.4s_cubic-bezier(0.16,1,0.3,1)_both] min-h-screen bg-white flex flex-col fixed top-0 left-0 bottom-0 z-40 shadow-[10px_0_30px_rgba(15,23,42,0.04),_1px_0_0_rgba(15,23,42,0.05)] transition-all duration-300 ${
@@ -207,7 +234,7 @@ export default function AdminSidebar({ collapsed, setCollapsed, user }: AdminSid
 
         {/* Navigation Groups */}
         <div className="flex flex-col gap-6">
-          {navGroups.map((group) => (
+          {dynamicNavGroups.map((group) => (
             <div key={group.label} className="mb-0">
               {!collapsed && (
                 <div className="text-[10px] font-bold text-[#94a3b8] tracking-[0.1em] uppercase px-2.5 mb-1.5">

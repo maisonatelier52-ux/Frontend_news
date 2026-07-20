@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
-interface TermsSection {
+interface PolicySection {
   heading: string;
   content: string;
   listItems?: string[];
 }
 
 export default function TermsManagerPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [leadParagraph, setLeadParagraph] = useState('');
-  const [introParagraph, setIntroParagraph] = useState('');
-  const [sections, setSections] = useState<TermsSection[]>([]);
+  const [sections, setSections] = useState<PolicySection[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -24,12 +26,11 @@ export default function TermsManagerPage() {
       const res = await fetch('/api/settings');
       if (res.ok) {
         const data = await res.json();
-        if (data.termsAndConditions) {
-          const t = data.termsAndConditions;
+        if (data.terms) {
+          const t = data.terms;
           setTitle(t.title || '');
           setSubtitle(t.subtitle || '');
           setLeadParagraph(t.leadParagraph || '');
-          setIntroParagraph(t.introParagraph || '');
           setSections(t.sections || []);
         }
       }
@@ -40,32 +41,43 @@ export default function TermsManagerPage() {
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=termsAndConditions');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.termsAndConditions) {
-          const t = data.termsAndConditions;
-          setTitle(t.title || '');
-          setSubtitle(t.subtitle || '');
-          setLeadParagraph(t.leadParagraph || '');
-          setIntroParagraph(t.introParagraph || '');
-          setSections(t.sections || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=terms');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.terms) {
+              const t = data.terms;
+              setTitle(t.title || '');
+              setSubtitle(t.subtitle || '');
+              setLeadParagraph(t.leadParagraph || '');
+              setSections(t.sections || []);
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await fetchSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await fetchSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
@@ -80,7 +92,7 @@ export default function TermsManagerPage() {
     setSections(sections.filter((_, i) => i !== index));
   }
 
-  function handleSectionChange(index: number, field: keyof TermsSection, value: any) {
+  function handleSectionChange(index: number, field: keyof PolicySection, value: any) {
     setSections(prev => prev.map((sec, i) => i === index ? { ...sec, [field]: value } : sec));
   }
 
@@ -127,11 +139,10 @@ export default function TermsManagerPage() {
   async function handleSave() {
     try {
       const payload = {
-        termsAndConditions: {
+        terms: {
           title,
           subtitle,
           leadParagraph,
-          introParagraph,
           sections
         }
       };
@@ -144,6 +155,7 @@ export default function TermsManagerPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Terms & Conditions updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
 
         // Audit Log
@@ -152,26 +164,23 @@ export default function TermsManagerPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'activity',
-            action: 'TERMS_AND_CONDITIONS_UPDATE',
+            action: 'TERMS_UPDATE',
             details: { title },
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save Terms & Conditions settings', 'error', 'Error');
       }
     } catch (err) {
-      alert('Failed to save Terms & Conditions settings');
+      showAlert('Failed to save Terms & Conditions settings', 'error', 'Error');
     }
   }
 
   const inputStyle: React.CSSProperties = { border: '1px solid #e2e8f0', borderRadius: 6, padding: '7px 11px', fontSize: 12, color: '#111', outline: 'none', background: '#fff', boxSizing: 'border-box' }
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] gap-2">
-        {/* <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div> */}
-        {/* <span className="text-xs font-semibold text-slate-500 font-sans">Syncing Terms & Conditions configuration...</span> */}
-      </div>
-    );
+    return <AdminLoader />;
   }
 
   return (

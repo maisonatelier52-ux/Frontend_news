@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import StatusBadge from '../../components/StatusBadge'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 const adPositions = [
   'Header Banner', 
@@ -27,6 +28,7 @@ interface Ad {
 }
 
 export default function AdvertisementsPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [ads, setAds] = useState<Ad[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -79,11 +81,10 @@ export default function AdvertisementsPage() {
         const data = await res.json()
         setNewAd((prev) => ({ ...prev, imageUrl: data.url }))
       } else {
-        alert('Failed to upload image. Please try again.')
+        showAlert('Failed to upload image. Please try again.', 'error', 'Upload Error')
       }
     } catch (err) {
-      console.error('Image upload error:', err)
-      alert('Failed to upload image due to a network error.')
+      showAlert('Failed to upload image due to a network error.', 'error', 'Upload Error')
     } finally {
       setUploading(false)
     }
@@ -109,22 +110,27 @@ export default function AdvertisementsPage() {
     }
   }
 
-  async function deleteAd(id: string) {
-    if (confirm('Are you sure you want to delete this ad slot?')) {
-      try {
-        const res = await fetch(`/api/advertisements?id=${id}`, {
-          method: 'DELETE'
-        })
-        if (res.ok) {
-          setAds((prev) => prev.filter((a) => a._id !== id))
-          if (editingId === id) {
-            cancelEdit()
+  function deleteAd(id: string) {
+    showConfirm(
+      'Are you sure you want to delete this ad slot?',
+      async () => {
+        try {
+          const res = await fetch(`/api/advertisements?id=${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setAds((prev) => prev.filter((a) => a._id !== id))
+            if (editingId === id) {
+              cancelEdit()
+            }
+            showAlert('Ad slot deleted successfully.', 'success', 'Deleted')
+          } else {
+            showAlert('Failed to delete ad slot.', 'error', 'Error')
           }
+        } catch (e) {
+          showAlert('Failed to delete ad campaign', 'error', 'Error')
         }
-      } catch (e) {
-        console.error('Failed to delete ad campaign', e)
-      }
-    }
+      },
+      'Delete Ad Slot'
+    )
   }
 
   function handleEdit(ad: Ad) {

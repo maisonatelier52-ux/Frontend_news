@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface FooterLink {
   id: number;
@@ -19,6 +20,7 @@ interface FooterColumn {
 }
 
 export default function FooterPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [columns, setColumns] = useState<FooterColumn[]>([]);
   const [copyright, setCopyright] = useState('© 2026 Magazine Gazette. All rights reserved.');
   const [description, setDescription] = useState('');
@@ -270,24 +272,27 @@ export default function FooterPage() {
     }
   };
 
-  const revertToOriginal = async () => {
-    if (!confirm('Are you sure you want to revert to original database settings?')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings', { method: 'PATCH' });
-      if (res.ok) {
-        await fetchSettings();
-        setMessage('factory-reset');
-      } else {
-        setMessage('failed');
-      }
-    } catch (e) {
-      console.error(e);
-      setMessage('failed');
-    } finally {
-      setLoading(false);
-      setTimeout(() => setMessage(null), 4000);
-    }
+  const revertToOriginal = () => {
+    showConfirm(
+      'Are you sure you want to revert to original database settings?',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings', { method: 'PATCH' });
+          if (res.ok) {
+            await fetchSettings();
+            showAlert('Reverted to original database settings.', 'success', 'Reset Complete');
+          } else {
+            showAlert('Failed to revert settings.', 'error', 'Error');
+          }
+        } catch (e) {
+          showAlert('Failed to revert settings.', 'error', 'Error');
+        } finally {
+          setLoading(false);
+        }
+      },
+      'Revert Settings'
+    );
   };
 
   const inputStyle: React.CSSProperties = { 

@@ -2,18 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
-interface PolicySection {
-  heading: string;
-  content: string;
-  listItems?: string[];
+interface KeyPoint {
+  title: string;
+  description: string;
 }
 
-export default function AdvertisingPolicyManagerPage() {
+export default function AdvertisingPolicyPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [leadParagraph, setLeadParagraph] = useState('');
-  const [sections, setSections] = useState<PolicySection[]>([]);
+  
+  const [introHeading, setIntroHeading] = useState('');
+  const [introContent, setIntroContent] = useState('');
+
+  const [guidelinesHeading, setGuidelinesHeading] = useState('');
+  const [guidelinesItems, setGuidelinesItems] = useState<KeyPoint[]>([]);
+
+  const [transparencyHeading, setTransparencyHeading] = useState('');
+  const [transparencyContent, setTransparencyContent] = useState('');
   
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -29,97 +38,79 @@ export default function AdvertisingPolicyManagerPage() {
           setTitle(a.title || '');
           setSubtitle(a.subtitle || '');
           setLeadParagraph(a.leadParagraph || '');
-          setSections(a.sections || []);
+          setIntroHeading(a.introHeading || '');
+          setIntroContent(a.introContent || '');
+          setGuidelinesHeading(a.guidelinesHeading || '');
+          setGuidelinesItems(a.guidelinesItems || []);
+          setTransparencyHeading(a.transparencyHeading || '');
+          setTransparencyContent(a.transparencyContent || '');
         }
       }
     } catch (e) {
-      console.error('Failed to load advertising policy settings', e);
+      console.error('Failed to load Advertising Policy settings', e);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=advertisingPolicy');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.advertisingPolicy) {
-          const a = data.advertisingPolicy;
-          setTitle(a.title || '');
-          setSubtitle(a.subtitle || '');
-          setLeadParagraph(a.leadParagraph || '');
-          setSections(a.sections || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=advertisingPolicy');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.advertisingPolicy) {
+              const a = data.advertisingPolicy;
+              setTitle(a.title || '');
+              setSubtitle(a.subtitle || '');
+              setLeadParagraph(a.leadParagraph || '');
+              setIntroHeading(a.introHeading || '');
+              setIntroContent(a.introContent || '');
+              setGuidelinesHeading(a.guidelinesHeading || '');
+              setGuidelinesItems(a.guidelinesItems || []);
+              setTransparencyHeading(a.transparencyHeading || '');
+              setTransparencyContent(a.transparencyContent || '');
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await fetchSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await fetchSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
     fetchSettings();
   }, []);
 
-  function handleAddSection() {
-    setSections([...sections, { heading: 'New Section Heading', content: 'New section content paragraphs...', listItems: [] }]);
+  function handleAddItem() {
+    setGuidelinesItems([...guidelinesItems, { title: 'New Rule', description: 'Rule description...' }]);
   }
 
-  function handleRemoveSection(index: number) {
-    setSections(sections.filter((_, i) => i !== index));
+  function handleRemoveItem(index: number) {
+    setGuidelinesItems(guidelinesItems.filter((_, i) => i !== index));
   }
 
-  function handleSectionChange(index: number, field: keyof PolicySection, value: any) {
-    setSections(prev => prev.map((sec, i) => i === index ? { ...sec, [field]: value } : sec));
-  }
-
-  function handleAddListItem(secIdx: number) {
-    setSections(prev => prev.map((sec, i) => {
-      if (i === secIdx) {
-        const currentList = sec.listItems || [];
-        return {
-          ...sec,
-          listItems: [...currentList, 'New list item content...']
-        };
-      }
-      return sec;
-    }));
-  }
-
-  function handleRemoveListItem(secIdx: number, itemIdx: number) {
-    setSections(prev => prev.map((sec, i) => {
-      if (i === secIdx) {
-        const currentList = sec.listItems || [];
-        return {
-          ...sec,
-          listItems: currentList.filter((_, idx) => idx !== itemIdx)
-        };
-      }
-      return sec;
-    }));
-  }
-
-  function handleListItemChange(secIdx: number, itemIdx: number, val: string) {
-    setSections(prev => prev.map((sec, i) => {
-      if (i === secIdx) {
-        const currentList = sec.listItems || [];
-        const updatedList = currentList.map((item, idx) => idx === itemIdx ? val : item);
-        return {
-          ...sec,
-          listItems: updatedList
-        };
-      }
-      return sec;
-    }));
+  function handleItemChange(index: number, field: 'title' | 'description', value: string) {
+    setGuidelinesItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
   }
 
   async function handleSave() {
@@ -129,7 +120,12 @@ export default function AdvertisingPolicyManagerPage() {
           title,
           subtitle,
           leadParagraph,
-          sections
+          introHeading,
+          introContent,
+          guidelinesHeading,
+          guidelinesItems,
+          transparencyHeading,
+          transparencyContent
         }
       };
 
@@ -141,6 +137,7 @@ export default function AdvertisingPolicyManagerPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Advertising Policy updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
 
         // Audit Log
@@ -154,9 +151,11 @@ export default function AdvertisingPolicyManagerPage() {
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save Advertising Policy settings', 'error', 'Error');
       }
     } catch (err) {
-      alert('Failed to save Advertising Policy settings');
+      showAlert('Failed to save Advertising Policy settings', 'error', 'Error');
     }
   }
 

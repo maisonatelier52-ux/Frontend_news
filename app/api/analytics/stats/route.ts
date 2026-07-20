@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import { VisitorLogModel } from '@/models/VisitorLog';
 import { NewsModel } from '@/models/News';
 import { CategoryModel } from '@/models/Category';
+import { AuthorModel } from '@/models/Author';
 import { CommentModel } from '@/models/Comment';
 import { SubscriptionModel } from '@/models/Subscription';
 import { AdvertisementModel } from '@/models/Advertisement';
@@ -298,6 +299,37 @@ export async function GET() {
     }
     const storageUsage = `${storageSizeMB} MB / 512 MB`;
 
+    // 6. Category & Author Database Analysis
+    const categoriesList = await CategoryModel.find({}, 'name color articles').lean();
+    const categoryArticleCounts = await NewsModel.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]);
+    const catMap = new Map<string, number>();
+    categoryArticleCounts.forEach(item => {
+      if (item._id) catMap.set(item._id, item.count);
+    });
+
+    const categoryBreakdown = categoriesList.map((cat: any) => ({
+      name: cat.name,
+      color: cat.color || '#6366f1',
+      count: catMap.get(cat.name) || 0
+    }));
+
+    const authorsList = await AuthorModel.find({}, 'name slug profileImage articlesCount category').lean();
+    const authorArticleCounts = await NewsModel.aggregate([
+      { $group: { _id: '$author', count: { $sum: 1 } } }
+    ]);
+    const authorMap = new Map<string, number>();
+    authorArticleCounts.forEach(item => {
+      if (item._id) authorMap.set(item._id, item.count);
+    });
+
+    const authorBreakdown = authorsList.map((auth: any) => ({
+      name: auth.name,
+      category: auth.category,
+      count: authorMap.get(auth.name) || 0
+    }));
+
     return NextResponse.json({
       traffic: {
         totalVisitors,
@@ -326,7 +358,9 @@ export async function GET() {
         trendingArticles,
         recentlyPublished,
         avgReadingTime,
-        bounceRate
+        bounceRate,
+        categoryBreakdown,
+        authorBreakdown
       },
       audit: {
         totalArticles: totalArticlesCount,
@@ -353,7 +387,7 @@ export async function GET() {
         rssFeedStatus: 'Active (/rss.xml)',
         commentsPending: pendingCommentsCount,
         activeAdSlots,
-        lastCacheCleared: new Date(now.getTime() - 2.5 * 60 * 60 * 1000).toLocaleString()
+        lastCacheCleared: new Date(now.getTime() - Math.floor(process.uptime() * 1000)).toLocaleString()
       }
     });
   } catch (err: any) {

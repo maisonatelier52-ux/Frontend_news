@@ -423,8 +423,17 @@ export default function HomePageExperience({
       {/* Main Content Body */}
       <main className="flex-grow">
 
-        {/* Render Hero layout only if on front-page, no query, and no bookmark filter */}
-        {activeCategory === "All" && searchQuery === "" && !showBookmarksOnly ? (
+        {articles.length === 0 ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center select-none">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="text-4xl text-zinc-300">📰</div>
+              <h2 className="font-serif text-2xl font-bold text-zinc-900">No Articles Found</h2>
+              <p className="text-sm text-zinc-500 leading-relaxed font-sans">
+                There are currently no articles published on the home page. Please check back later or log in to the admin panel to add new articles.
+              </p>
+            </div>
+          </div>
+        ) : activeCategory === "All" && searchQuery === "" && !showBookmarksOnly ? (
           <>
             <LeadStory
               leadArticle={leadArticleWithStats}

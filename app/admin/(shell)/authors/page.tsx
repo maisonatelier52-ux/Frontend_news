@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 interface Author {
   _id: string
@@ -34,6 +35,7 @@ const categoryColors: Record<string, string> = {
 }
 
 export default function AuthorsPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [authors, setAuthors] = useState<Author[]>([])
   const [categoriesList, setCategoriesList] = useState<string[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -132,11 +134,10 @@ export default function AuthorsPage() {
         }
       } else {
         const err = await res.json()
-        alert(err.error || 'Failed to check image file')
+        showAlert(err.error || 'Failed to check image file', 'error', 'Upload Error')
       }
     } catch (e) {
-      console.error('Check image error:', e)
-      alert('Error verifying image existence.')
+      showAlert('Error verifying image existence.', 'error', 'Upload Error')
     } finally {
       setUploading(false)
     }
@@ -206,19 +207,24 @@ export default function AuthorsPage() {
     setIsModalOpen(true)
   }
 
-  const deleteAuthor = async (id: string) => {
-    if (confirm('Are you sure you want to delete this author?')) {
-      try {
-        const res = await fetch(`/api/authors/${id}`, {
-          method: 'DELETE'
-        })
-        if (res.ok) {
-          setAuthors((prev) => prev.filter((a) => a._id !== id))
+  const deleteAuthor = (id: string) => {
+    showConfirm(
+      'Are you sure you want to delete this author?',
+      async () => {
+        try {
+          const res = await fetch(`/api/authors/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setAuthors((prev) => prev.filter((a) => a._id !== id))
+            showAlert('Author deleted successfully.', 'success', 'Deleted')
+          } else {
+            showAlert('Failed to delete author.', 'error', 'Error')
+          }
+        } catch (err) {
+          showAlert('Failed to delete author.', 'error', 'Error')
         }
-      } catch (err) {
-        console.error('Delete author error:', err)
-      }
-    }
+      },
+      'Delete Author'
+    )
   }
 
   const saveAuthor = async () => {
@@ -309,15 +315,14 @@ export default function AuthorsPage() {
         })
         if (!uploadRes.ok) {
           const uploadErr = await uploadRes.json()
-          alert(uploadErr.error || 'Failed to upload profile image to server.')
+          showAlert(uploadErr.error || 'Failed to upload profile image to server.', 'error', 'Upload Error')
           setIsUploadingOnSave(false)
           return
         }
         const uploadData = await uploadRes.json()
         finalImageUrl = uploadData.url
       } catch (err) {
-        console.error('Profile image upload on save failed:', err)
-        alert('Failed to upload profile image to server.')
+        showAlert('Failed to upload profile image to server.', 'error', 'Upload Error')
         setIsUploadingOnSave(false)
         return
       } finally {
@@ -353,7 +358,7 @@ export default function AuthorsPage() {
         if (res.ok) {
           const data = await res.json()
           setAuthors((prev) => prev.map((a) => (a._id === editingAuthorId ? data : a)))
-          setSavedMessage('updated')
+          showAlert('Author updated successfully!', 'success', 'Saved')
         }
       } else {
         const res = await fetch('/api/authors', {
@@ -364,18 +369,17 @@ export default function AuthorsPage() {
         if (res.ok) {
           const data = await res.json()
           setAuthors((prev) => [...prev, data])
-          setSavedMessage('added')
+          showAlert('Author created successfully!', 'success', 'Saved')
         } else {
           const errData = await res.json()
-          alert(errData.error || 'Failed to create author')
+          showAlert(errData.error || 'Failed to create author', 'error', 'Save Failed')
           return
         }
       }
 
       setIsModalOpen(false)
-      setTimeout(() => setSavedMessage(''), 3000)
     } catch (err) {
-      console.error('Save author error:', err)
+      showAlert('Failed to save author.', 'error', 'Save Error')
     }
   }
 

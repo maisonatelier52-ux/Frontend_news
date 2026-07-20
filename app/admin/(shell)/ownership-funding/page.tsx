@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface PolicySection {
   heading: string;
@@ -10,6 +11,7 @@ interface PolicySection {
 }
 
 export default function OwnershipFundingManagerPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [leadParagraph, setLeadParagraph] = useState('');
@@ -33,37 +35,49 @@ export default function OwnershipFundingManagerPage() {
         }
       }
     } catch (e) {
-      console.error('Failed to load ownership settings', e);
+      console.error('Failed to load ownership funding settings', e);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=ownershipFunding');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ownershipFunding) {
-          const o = data.ownershipFunding;
-          setTitle(o.title || '');
-          setSubtitle(o.subtitle || '');
-          setLeadParagraph(o.leadParagraph || '');
-          setSections(o.sections || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=ownershipFunding');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.ownershipFunding) {
+              const o = data.ownershipFunding;
+              setTitle(o.title || '');
+              setSubtitle(o.subtitle || '');
+              setLeadParagraph(o.leadParagraph || '');
+              setSections(o.sections || []);
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await fetchSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await fetchSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
@@ -141,6 +155,7 @@ export default function OwnershipFundingManagerPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Ownership & Funding page updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
 
         // Audit Log
@@ -154,9 +169,11 @@ export default function OwnershipFundingManagerPage() {
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save Ownership & Funding settings', 'error', 'Error');
       }
     } catch (err) {
-      alert('Failed to save Ownership & Funding settings');
+      showAlert('Failed to save Ownership & Funding settings', 'error', 'Error');
     }
   }
 

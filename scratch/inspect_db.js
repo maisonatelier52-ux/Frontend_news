@@ -12,13 +12,15 @@ async function run() {
     console.log('Connected to Database successfully!');
     
     const categories = await mongoose.connection.db.collection('categories').find({}).toArray();
-    console.log('Categories detail:');
-    categories.forEach(c => {
-      console.log(`Name: ${c.name}, Slug: ${c.slug}, isVisible: ${c.isVisible}, showInNav: ${c.showInNav}`);
-    });
+    console.log('Categories in DB:');
+    console.log(categories.map(c => ({ name: c.name, slug: c.slug })));
+
+    const authors = await mongoose.connection.db.collection('authors').find({}).toArray();
+    console.log('Authors in DB:');
+    console.log(authors.map(a => ({ name: a.name, slug: a.slug })));
     
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error inspecting database:', error);
   } finally {
     await mongoose.disconnect();
   }

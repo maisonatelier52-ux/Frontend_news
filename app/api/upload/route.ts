@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
-import path from 'path'
-import fs from 'fs'
+import { v2 as cloudinary } from 'cloudinary'
+
+// Configure Cloudinary using environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export async function POST(request: Request) {
   try {
@@ -12,73 +18,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
 
-    const filename = file.name.replace(/\s+/g, '-').toLowerCase()
-    const folder = (formData.get('folder') as string) || 'images'
-    const publicTargetDir = path.join(process.cwd(), 'public', folder)
-    
-    // Ensure target directory exists
-    if (!fs.existsSync(publicTargetDir)) {
-      fs.mkdirSync(publicTargetDir, { recursive: true })
-    }
-
-    const filePath = path.join(publicTargetDir, filename)
-    const fileUrl = `/${folder}/${filename}`
-
-    const overwrite = formData.get('overwrite') === 'true'
-
-    // Check if file already exists
-    let fileExists = false
-    try {
-      fileExists = fs.existsSync(filePath)
-    } catch (e) {
-      fileExists = false
-    }
-
-    if (fileExists && !overwrite) {
-      return NextResponse.json({ 
-        exists: true, 
-        url: fileUrl, 
-        message: 'An image with this filename already exists.' 
-      })
-    }
+    // Upload directly to "magazinegazette" folder as requested
+    const folderName = 'magazinegazette'
 
     if (checkOnly) {
+      // Cloudinary automatically handles folders, skip existence check
       return NextResponse.json({ exists: false })
     }
 
     // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer())
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
 
-    try {
-      // Ensure target directory exists
-      if (!fs.existsSync(publicTargetDir)) {
-        fs.mkdirSync(publicTargetDir, { recursive: true })
-      }
+    // Upload to Cloudinary using upload_stream
+    const uploadResult = await new Promise<{ secure_url: string } | null>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folderName,
+          public_id: file.name.substring(0, file.name.lastIndexOf('.')).replace(/\s+/g, '-').toLowerCase(),
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve(result || null)
+          }
+        }
+      )
+      uploadStream.end(buffer)
+    })
 
-      // Save the file to public/images
-      fs.writeFileSync(filePath, buffer)
-    } catch (writeError: any) {
-      console.warn('Writing to local filesystem failed, falling back to base64 data URL:', writeError.message);
-      
-      // Convert buffer to base64 Data URL fallback
-      const base64Data = buffer.toString('base64');
-      const mimeType = file.type || 'image/png';
-      const fallbackUrl = `data:${mimeType};base64,${base64Data}`;
-      
-      return NextResponse.json({ 
-        exists: false, 
-        url: fallbackUrl, 
-        message: 'Image uploaded successfully (base64 fallback due to read-only filesystem).' 
-      })
+    if (!uploadResult) {
+      throw new Error('Cloudinary upload returned empty response')
     }
 
     return NextResponse.json({ 
       exists: false, 
-      url: fileUrl, 
-      message: 'Image uploaded successfully.' 
+      url: uploadResult.secure_url, 
+      message: 'Image uploaded successfully to Cloudinary.' 
     })
   } catch (error: any) {
-    console.error('Upload image error:', error)
+    console.error('Upload image to Cloudinary error:', error)
     return NextResponse.json({ error: error.message || 'Failed to upload image' }, { status: 500 })
   }
 }

@@ -84,9 +84,10 @@ export default function Footer() {
       heading: 'Categories',
       isVisible: true,
       links: [
-        { id: 1, label: 'U.S. News & Politics', url: '/Politics', isVisible: true },
-        { id: 2, label: 'Technology & Science', url: '/Technology', isVisible: true },
-        { id: 3, label: 'Marketing & Strategy', url: '/Business', isVisible: true }
+        { id: 1, label: 'Business', url: '/business', isVisible: true },
+        { id: 2, label: 'World', url: '/world', isVisible: true },
+        { id: 3, label: 'Finance', url: '/finance', isVisible: true },
+        { id: 4, label: 'Technology', url: '/technology', isVisible: true }
       ]
     },
     {
@@ -94,9 +95,10 @@ export default function Footer() {
       heading: '',
       isVisible: true,
       links: [
-        { id: 1, label: 'Finance & Markets', url: '/Business', isVisible: true },
-        { id: 2, label: 'World Affairs', url: '/World', isVisible: true },
-        { id: 3, label: 'Arts & Entertainment', url: '/Entertainment', isVisible: true }
+        { id: 1, label: 'Politics', url: '/politics', isVisible: true },
+        { id: 2, label: 'Lifestyle', url: '/lifestyle', isVisible: true },
+        { id: 3, label: 'Opinion', url: '/opinion', isVisible: true },
+        { id: 4, label: 'Investigation', url: '/investigation', isVisible: true }
       ]
     },
     {

@@ -27,10 +27,14 @@ export async function connectToDatabase() {
       bufferCommands: false,
       tls: true,
       tlsAllowInvalidCertificates: true,
+      serverSelectionTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
       return mongooseInstance;
+    }).catch((err) => {
+      cached.promise = null;
+      throw err;
     });
   }
 
@@ -38,11 +42,16 @@ export async function connectToDatabase() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
     throw e;
   }
 
   // Run the seeder dynamically if collections are empty
-  await seedDatabase();
+  try {
+    await seedDatabase();
+  } catch (err) {
+    console.error('Seeding database failed:', err);
+  }
 
   return cached.conn;
 }
@@ -63,14 +72,14 @@ async function seedDatabase() {
     const categoryCount = await CategoryModel.countDocuments();
     if (categoryCount === 0) {
       const initialCategories = [
-        { name: 'Politics', slug: 'politics', articles: 312, color: '#3b82f6', description: 'National and global political news and updates.', position: 1, isVisible: true, showInNav: true },
-        { name: 'Technology', slug: 'technology', articles: 245, color: '#8b5cf6', description: 'Gadgets, software, internet, and industry developments.', position: 2, isVisible: true, showInNav: true },
-        { name: 'Business', slug: 'business', articles: 198, color: '#f59e0b', description: 'Market trends, corporate updates, and financial advice.', position: 3, isVisible: true, showInNav: true },
-        { name: 'World', slug: 'world', articles: 167, color: '#10b981', description: 'International events, global perspectives, and culture.', position: 4, isVisible: true, showInNav: true },
-        { name: 'Sports', slug: 'sports', articles: 143, color: '#ef4444', description: 'Match reports, athlete updates, and tournament news.', position: 5, isVisible: true, showInNav: true },
-        { name: 'Entertainment', slug: 'entertainment', articles: 98, color: '#ec4899', description: 'Celebrity gossip, movie reviews, and pop culture.', position: 6, isVisible: true, showInNav: false },
-        { name: 'Science', slug: 'science', articles: 76, color: '#06b6d4', description: 'Discoveries, space updates, and environmental news.', position: 7, isVisible: true, showInNav: false },
-        { name: 'Health', slug: 'health', articles: 45, color: '#84cc16', description: 'Medical research, wellness tips, and public health updates.', position: 8, isVisible: true, showInNav: false },
+        { name: 'Business', slug: 'business', articles: 0, color: '#f59e0b', description: 'Market trends, corporate updates, and financial advice.', position: 1, isVisible: true, showInNav: true },
+        { name: 'World', slug: 'world', articles: 0, color: '#10b981', description: 'International events, global perspectives, and culture.', position: 2, isVisible: true, showInNav: true },
+        { name: 'Finance', slug: 'finance', articles: 0, color: '#06b6d4', description: 'Personal finance, markets, and investment strategies.', position: 3, isVisible: true, showInNav: true },
+        { name: 'Technology', slug: 'technology', articles: 0, color: '#8b5cf6', description: 'Gadgets, software, internet, and industry developments.', position: 4, isVisible: true, showInNav: true },
+        { name: 'Politics', slug: 'politics', articles: 0, color: '#3b82f6', description: 'National and global political news and updates.', position: 5, isVisible: true, showInNav: true },
+        { name: 'Lifestyle', slug: 'lifestyle', articles: 0, color: '#ec4899', description: 'Culture, travel, food, fashion, and well-being.', position: 6, isVisible: true, showInNav: true },
+        { name: 'Opinion', slug: 'opinion', articles: 0, color: '#84cc16', description: 'Editorials, columns, and analytical viewpoints.', position: 7, isVisible: true, showInNav: true },
+        { name: 'Investigation', slug: 'investigation', articles: 0, color: '#ef4444', description: 'In-depth investigative reports and investigative journalism.', position: 8, isVisible: true, showInNav: true }
       ];
       await CategoryModel.insertMany(initialCategories);
       console.log('Seeded categories successfully!');
@@ -150,45 +159,7 @@ async function seedDatabase() {
       console.log('Seeded authors successfully!');
     }
 
-    // 3. Seed News if empty
-    const newsCount = await NewsModel.countDocuments();
-    if (newsCount === 0) {
-      // We can grab the mock NEWS_ARTICLES from news data helper to seed them!
-      const { NEWS_ARTICLES } = await import('@/app/data/news');
-      const formattedArticles = NEWS_ARTICLES.map((art, idx) => {
-        // Convert array of string paragraphs to block layout matching new structure
-        const blocks = art.content.map((p, pIdx) => ({
-          id: `block-seed-${idx}-${pIdx}`,
-          type: 'paragraph',
-          value: p
-        }));
-
-        return {
-          title: art.title,
-          slug: art.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `article-${idx}`,
-          category: art.category,
-          author: art.author,
-          readTime: art.readTime,
-          status: 'published',
-          excerpt: art.excerpt,
-          featuredImage: art.image || '/article-placeholder.jpg',
-          imageAltText: art.title,
-          featuredVideoUrl: '',
-          cardLabel: art.isLead ? 'Lead Story' : (art.isBreaking ? 'Breaking' : ''),
-          options: {
-            featuredArticle: art.isLead || false,
-            editorsPick: false,
-            breakingNews: art.isBreaking || false,
-            allowComments: true
-          },
-          blocks: blocks,
-          date: new Date(art.date).toString() !== 'Invalid Date' ? new Date(art.date) : new Date()
-        };
-      });
-
-      await NewsModel.insertMany(formattedArticles);
-      console.log('Seeded news articles successfully!');
-    }
+    // 3. Seed News if empty (disabled as user wants clean-slate news)
 
     // 4. Seed HomeLayout if empty
     const layoutCount = await HomeLayoutModel.countDocuments();
@@ -224,40 +195,7 @@ async function seedDatabase() {
       console.log('Seeded default category layout successfully!');
     }
 
-    // 6. Seed Comments if empty
-    const { CommentModel } = await import('@/models/Comment');
-    const commentCount = await CommentModel.countDocuments();
-    if (commentCount === 0) {
-      const articles = await NewsModel.find();
-      const initialComments = [];
-
-      const politicsArticle = articles.find((a) => a.category === 'Politics');
-      if (politicsArticle) {
-        initialComments.push(
-          { articleId: politicsArticle._id.toString(), articleTitle: politicsArticle.title, name: 'Arthur Pendelton, D.C.', email: 'arthur@example.com', text: 'This bipartisan agreement is long overdue. Upgrading rural grids is critical for agricultural tech integrations.', status: 'approved' },
-          { articleId: politicsArticle._id.toString(), articleTitle: politicsArticle.title, name: 'Sophia Martinez, Chicago', email: 'sophia@example.com', text: 'Excellent news, but I hope a significant chunk goes toward upgrading locks and dams in the Midwest.', status: 'approved' }
-        );
-      }
-
-      const techArticle = articles.find((a) => a.category === 'Technology');
-      if (techArticle) {
-        initialComments.push(
-          { articleId: techArticle._id.toString(), articleTitle: techArticle.title, name: 'Gary Reynolds, NY', email: 'gary@example.com', text: 'The Fed is playing it safe, which is wise. Inflation is cooling, but retail costs are still quite high.', status: 'approved' }
-        );
-      }
-
-      const businessArticle = articles.find((a) => a.category === 'Business');
-      if (businessArticle) {
-        initialComments.push(
-          { articleId: businessArticle._id.toString(), articleTitle: businessArticle.title, name: 'Dev_Architect', email: 'dev@example.com', text: 'Enterprise custom models are a game changer. We shifted to a local 7B model and saw a massive drop in latency and cost.', status: 'approved' }
-        );
-      }
-
-      if (initialComments.length > 0) {
-        await CommentModel.insertMany(initialComments);
-        console.log('Seeded comments successfully!');
-      }
-    }
+    // 6. Seed Comments if empty (disabled as user wants clean-slate news)
   } catch (err) {
     console.error('Database seeding failed:', err);
   }

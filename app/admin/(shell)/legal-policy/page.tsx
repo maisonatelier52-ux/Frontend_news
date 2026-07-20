@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface PolicySection {
   heading: string;
@@ -10,6 +11,7 @@ interface PolicySection {
 }
 
 export default function LegalPolicyManagerPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [leadParagraph, setLeadParagraph] = useState('');
@@ -39,31 +41,43 @@ export default function LegalPolicyManagerPage() {
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=legalPolicy');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.legalPolicy) {
-          const l = data.legalPolicy;
-          setTitle(l.title || '');
-          setSubtitle(l.subtitle || '');
-          setLeadParagraph(l.leadParagraph || '');
-          setSections(l.sections || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=legalPolicy');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.legalPolicy) {
+              const l = data.legalPolicy;
+              setTitle(l.title || '');
+              setSubtitle(l.subtitle || '');
+              setLeadParagraph(l.leadParagraph || '');
+              setSections(l.sections || []);
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await fetchSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await fetchSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
@@ -141,6 +155,7 @@ export default function LegalPolicyManagerPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Legal Policy updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
 
         // Audit Log
@@ -154,9 +169,11 @@ export default function LegalPolicyManagerPage() {
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save Legal Policy settings', 'error', 'Error');
       }
     } catch (err) {
-      alert('Failed to save Legal Policy settings');
+      showAlert('Failed to save Legal Policy settings', 'error', 'Error');
     }
   }
 

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import StatusBadge from '../../components/StatusBadge'
+import { useAdminModal } from '../../components/AdminModalContext'
 
 interface Article {
   _id: string
@@ -15,6 +16,7 @@ interface Article {
 }
 
 export default function NewsPage() {
+  const { showAlert, showConfirm } = useAdminModal()
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [search, setSearch] = useState('')
@@ -50,19 +52,25 @@ export default function NewsPage() {
     return matchSearch && matchStatus && matchCat
   })
 
-  async function deleteArticle(id: string) {
-    if (!confirm('Are you sure you want to delete this article?')) return
-    try {
-      const res = await fetch(`/api/news/${id}`, {
-        method: 'DELETE'
-      })
-      if (res.ok) {
-        setArticles((prev) => prev.filter((a) => a._id !== id))
-        setSelected((prev) => prev.filter((i) => i !== id))
-      }
-    } catch (err) {
-      console.error('Delete article error:', err)
-    }
+  function deleteArticle(id: string) {
+    showConfirm(
+      'Are you sure you want to delete this article? This action cannot be undone.',
+      async () => {
+        try {
+          const res = await fetch(`/api/news/${id}`, { method: 'DELETE' })
+          if (res.ok) {
+            setArticles((prev) => prev.filter((a) => a._id !== id))
+            setSelected((prev) => prev.filter((i) => i !== id))
+            showAlert('Article deleted successfully.', 'success', 'Deleted')
+          } else {
+            showAlert('Failed to delete article.', 'error', 'Error')
+          }
+        } catch (err) {
+          showAlert('Failed to delete article.', 'error', 'Error')
+        }
+      },
+      'Delete Article'
+    )
   }
 
   async function toggleVisibility(id: string, currentStatus: string) {
@@ -79,10 +87,10 @@ export default function NewsPage() {
         )
       } else {
         const errData = await res.json()
-        alert(errData.error || 'Failed to update article visibility')
+        showAlert(errData.error || 'Failed to update article visibility', 'error', 'Update Error')
       }
     } catch (err) {
-      console.error('Toggle visibility error:', err)
+      showAlert('Failed to update article visibility', 'error', 'Update Error')
     }
   }
 

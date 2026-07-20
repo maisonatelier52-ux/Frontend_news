@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminLoader from '../../components/AdminLoader';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface Department {
   name: string;
@@ -10,6 +11,7 @@ interface Department {
 }
 
 export default function ContactUsPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [introText, setIntroText] = useState('');
@@ -44,33 +46,45 @@ export default function ContactUsPage() {
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=contactUs');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.contactUs) {
-          const c = data.contactUs;
-          setTitle(c.title || '');
-          setSubtitle(c.subtitle || '');
-          setIntroText(c.introText || '');
-          setDeptHeading(c.deptHeading || '');
-          setDeptSubheading(c.deptSubheading || '');
-          setDepartments(c.departments || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=contactUs');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.contactUs) {
+              const c = data.contactUs;
+              setTitle(c.title || '');
+              setSubtitle(c.subtitle || '');
+              setIntroText(c.introText || '');
+              setDeptHeading(c.deptHeading || '');
+              setDeptSubheading(c.deptSubheading || '');
+              setDepartments(c.departments || []);
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await fetchSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await fetchSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
@@ -110,6 +124,7 @@ export default function ContactUsPage() {
 
       if (res.ok) {
         setSaved(true);
+        showAlert('Contact Us page updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
 
         // Audit Log
@@ -123,9 +138,11 @@ export default function ContactUsPage() {
             user: 'Admin'
           })
         });
+      } else {
+        showAlert('Failed to save Contact Us settings', 'error', 'Error');
       }
     } catch (err) {
-      alert('Failed to save Contact Us settings');
+      showAlert('Failed to save Contact Us settings', 'error', 'Error');
     }
   }
 

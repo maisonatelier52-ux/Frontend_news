@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface SubscriptionItem {
   _id: string;
@@ -29,6 +30,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function SubscriptionsPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [subs, setSubs] = useState<SubscriptionItem[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, uniqueCountries: 0, countryDistribution: [] });
   const [loading, setLoading] = useState(true);
@@ -82,20 +84,27 @@ export default function SubscriptionsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this subscriber permanently?')) return;
-    setBusy((b) => ({ ...b, [`del_${id}`]: true }));
-    try {
-      const res = await fetch(`/api/subscriptions?id=${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setSubs((prev) => prev.filter((s) => s._id !== id));
-        showToast('Subscriber deleted.');
-      }
-    } catch (err) {
-      console.error('Delete error:', err);
-    } finally {
-      setBusy((b) => ({ ...b, [`del_${id}`]: false }));
-    }
+  const handleDelete = (id: string) => {
+    showConfirm(
+      'Are you sure you want to delete this subscriber permanently?',
+      async () => {
+        setBusy((b) => ({ ...b, [`del_${id}`]: true }));
+        try {
+          const res = await fetch(`/api/subscriptions?id=${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setSubs((prev) => prev.filter((s) => s._id !== id));
+            showAlert('Subscriber deleted successfully.', 'success', 'Deleted');
+          } else {
+            showAlert('Failed to delete subscriber.', 'error', 'Error');
+          }
+        } catch (err) {
+          showAlert('Failed to delete subscriber.', 'error', 'Error');
+        } finally {
+          setBusy((b) => ({ ...b, [`del_${id}`]: false }));
+        }
+      },
+      'Delete Subscriber'
+    );
   };
 
   const filteredSubs = subs.filter((sub) => {

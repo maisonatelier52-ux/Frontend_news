@@ -23,6 +23,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function OurTeamManagerPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [pageTitle, setPageTitle] = useState('');
   const [pageSubtitle, setPageSubtitle] = useState('');
   const [pageIntro, setPageIntro] = useState('');
@@ -64,32 +65,44 @@ export default function OurTeamManagerPage() {
     }
   }
 
-  async function handleResetOriginal() {
-    if (!confirm('Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.')) return;
-    try {
-      setLoading(true);
-      const res = await fetch('/api/settings/defaults?key=ourTeam');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ourTeam) {
-          const t = data.ourTeam;
-          setPageTitle(t.pageTitle || '');
-          setPageSubtitle(t.pageSubtitle || '');
-          setPageIntro(t.pageIntro || '');
-          setLatestArticlesHeading(t.latestArticlesHeading || 'Latest Articles');
-          setMembers(t.members || []);
+  function handleResetOriginal() {
+    showConfirm(
+      'Are you sure you want to reset all fields to original defaults? This will not be saved until you click Save Changes.',
+      async () => {
+        try {
+          setLoading(true);
+          const res = await fetch('/api/settings/defaults?key=ourTeam');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.ourTeam) {
+              const t = data.ourTeam;
+              setPageTitle(t.pageTitle || '');
+              setPageSubtitle(t.pageSubtitle || '');
+              setPageIntro(t.pageIntro || '');
+              setLatestArticlesHeading(t.latestArticlesHeading || 'Latest Articles');
+              setMembers(t.members || []);
+            }
+            showAlert('Fields reset to original defaults.', 'info', 'Reset');
+          }
+        } catch (e) {
+          showAlert('Failed to reset to original', 'error', 'Error');
+        } finally {
+          setLoading(false);
         }
-      }
-    } catch (e) {
-      console.error('Failed to reset to original', e);
-    } finally {
-      setLoading(false);
-    }
+      },
+      'Reset to Original'
+    );
   }
 
-  async function handleGetPrevious() {
-    if (!confirm('Are you sure you want to revert all changes to the last saved version?')) return;
-    await loadSettings();
+  function handleGetPrevious() {
+    showConfirm(
+      'Are you sure you want to revert all changes to the last saved version?',
+      async () => {
+        await loadSettings();
+        showAlert('Reverted to last saved version.', 'info', 'Reverted');
+      },
+      'Revert Changes'
+    );
   }
 
   useEffect(() => {
@@ -170,15 +183,18 @@ export default function OurTeamManagerPage() {
       });
       if (res.ok) {
         setSaved(true);
+        showAlert('Our Team page updated successfully!', 'success', 'Saved');
         setTimeout(() => setSaved(false), 2500);
         await fetch('/api/logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'activity', action: 'OUR_TEAM_UPDATE', details: { memberCount: members.length }, user: 'Admin' }),
         });
+      } else {
+        showAlert('Failed to save Our Team settings', 'error', 'Error');
       }
     } catch {
-      alert('Failed to save Our Team settings');
+      showAlert('Failed to save Our Team settings', 'error', 'Error');
     }
   }
 

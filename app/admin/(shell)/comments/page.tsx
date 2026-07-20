@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import StatusBadge from '../../components/StatusBadge';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface CommentItem {
   _id: string;
@@ -22,6 +23,7 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 export default function CommentsPage() {
+  const { showAlert, showConfirm } = useAdminModal();
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -67,19 +69,27 @@ export default function CommentsPage() {
     }
   };
 
-  const handleDeleteComment = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this comment permanently?')) return;
-    setBusy((prev) => ({ ...prev, [`del_${id}`]: true }));
-    try {
-      const res = await fetch(`/api/comments?id=${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setComments((prev) => prev.filter((c) => c._id !== id));
-      }
-    } catch (err) {
-      console.error('Failed to delete comment:', err);
-    } finally {
-      setBusy((prev) => ({ ...prev, [`del_${id}`]: false }));
-    }
+  const handleDeleteComment = (id: string) => {
+    showConfirm(
+      'Are you sure you want to delete this comment permanently?',
+      async () => {
+        setBusy((prev) => ({ ...prev, [`del_${id}`]: true }));
+        try {
+          const res = await fetch(`/api/comments?id=${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setComments((prev) => prev.filter((c) => c._id !== id));
+            showAlert('Comment deleted successfully.', 'success', 'Deleted');
+          } else {
+            showAlert('Failed to delete comment.', 'error', 'Error');
+          }
+        } catch (err) {
+          showAlert('Failed to delete comment.', 'error', 'Error');
+        } finally {
+          setBusy((prev) => ({ ...prev, [`del_${id}`]: false }));
+        }
+      },
+      'Delete Comment'
+    );
   };
 
   const filtered = comments.filter((c) => {

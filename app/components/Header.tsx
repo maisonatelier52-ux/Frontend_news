@@ -91,7 +91,7 @@ export default function Header({
         if (catRes.ok) {
           const data = (await catRes.json()) as CategoryApiItem[];
           const visibleCats = data
-            .filter((c) => c.isVisible !== false && (c.articles || 0) > 0)
+            .filter((c) => c.isVisible !== false)
             .map((c) => c.name);
           setCategories(["All", ...visibleCats]);
         }

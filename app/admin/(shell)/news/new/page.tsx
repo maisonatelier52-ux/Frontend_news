@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useAdminModal } from '../../../components/AdminModalContext'
 
 type BlockType = 'paragraph' | 'subheading' | 'pullquote' | 'image' | 'at-glance' | 'faq'
 
@@ -15,6 +16,7 @@ interface Block {
 type TabType = 'write' | 'meta' | 'visuals' | 'seo'
 
 function NewArticleForm() {
+  const { showAlert } = useAdminModal()
   const searchParams = useSearchParams()
   const router = useRouter()
   const articleId = searchParams.get('id')
@@ -638,11 +640,10 @@ function NewArticleForm() {
         }
       } else {
         const err = await res.json()
-        alert(err.error || 'Failed to check image file')
+        showAlert(err.error || 'Failed to check image file', 'error', 'Upload Error')
       }
     } catch (e) {
-      console.error('Check image error:', e)
-      alert('Error verifying image existence.')
+      showAlert('Error verifying image existence.', 'error', 'Upload Error')
     } finally {
       setUploading(false)
     }

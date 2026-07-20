@@ -11,14 +11,16 @@ async function run() {
     
     console.log('Connected to Database successfully!');
     
-    const categories = await mongoose.connection.db.collection('categories').find({}).toArray();
-    console.log('Categories detail:');
-    categories.forEach(c => {
-      console.log(`Name: ${c.name}, Slug: ${c.slug}, isVisible: ${c.isVisible}, showInNav: ${c.showInNav}`);
+    const newsList = await mongoose.connection.db.collection('news').find({}).sort({ date: -1 }).toArray();
+    console.log(`Total News Articles in DB: ${newsList.length}`);
+    
+    console.log('\nList of all articles in DB (newest first):');
+    newsList.forEach((art, index) => {
+      console.log(`${index + 1}. [${art.status}] ${art.title} (${art.category}) - Date: ${art.date}`);
     });
     
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error querying database:', error);
   } finally {
     await mongoose.disconnect();
   }

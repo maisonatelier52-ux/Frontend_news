@@ -161,76 +161,76 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Interactive World Map & Country comparison */}
+          {/* Articles Distribution by Category Analysis */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0">
+                Articles Analysis by Category
+              </h3>
+              <span className="text-[11px] font-bold text-slate-500 font-mono">
+                Total Articles: {audit.totalArticles}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(content.categoryBreakdown || []).map((cat: any) => {
+                const percent = audit.totalArticles > 0 ? (cat.count / audit.totalArticles) * 100 : 0;
+                return (
+                  <div key={cat.name} className="p-3 bg-slate-50 rounded-lg border border-slate-100 flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center text-[12.5px] font-sans">
+                      <span className="font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                        {cat.name}
+                      </span>
+                      <span className="font-bold text-indigo-900">{cat.count} articles</span>
+                    </div>
+                    <div className="h-[6px] bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-300" 
+                        style={{ width: `${percent}%`, backgroundColor: cat.color }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Geographic Visitor Traffic Analysis */}
           <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
             <h3 className="font-sans font-bold text-[14.5px] text-[#1e1b4b] m-0 mb-4">
-              Geographic Traffic Analysis
+              Geographic Visitor Traffic Analysis
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-              {/* Sleek Low-Poly Dots Interactive SVG World Map */}
-              <div className="relative border border-slate-100 rounded-lg p-3 bg-slate-50 flex items-center justify-center overflow-hidden h-[280px]">
-                <svg className="w-full h-full opacity-80" viewBox="0 0 1000 500" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-                  {/* Stylized dotted background for continents outline */}
-                  <rect width="1000" height="500" fill="#f8fafc" rx="6" />
-                  
-                  {/* Grid layout dots for map */}
-                  <circle cx="150" cy="180" r="12" fill="#cbd5e1" opacity="0.6" /> {/* North America */}
-                  <circle cx="280" cy="150" r="16" fill="#cbd5e1" opacity="0.6" />
-                  <circle cx="220" cy="200" r="34" fill="#6366f1" className="animate-pulse" /> {/* US Highlight */}
-                  <circle cx="340" cy="360" r="14" fill="#cbd5e1" opacity="0.6" /> {/* South America */}
-                  <circle cx="500" cy="160" r="15" fill="#a5b4fc" /> {/* Western Europe */}
-                  <circle cx="520" cy="130" r="22" fill="#4f46e5" /> {/* UK & DE */}
-                  <circle cx="540" cy="280" r="18" fill="#cbd5e1" opacity="0.6" /> {/* Africa */}
-                  <circle cx="720" cy="220" r="28" fill="#818cf8" /> {/* India */}
-                  <circle cx="830" cy="160" r="18" fill="#4f46e5" /> {/* Japan & KR */}
-                  <circle cx="860" cy="380" r="12" fill="#cbd5e1" opacity="0.6" /> {/* Australia */}
-                  
-                  <text x="220" y="250" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">US</text>
-                  <text x="495" y="105" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">EU</text>
-                  <text x="705" y="260" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">IN</text>
-                  <text x="815" y="195" fill="#1e1b4b" fontSize="12" fontWeight="bold" fontFamily="sans-serif">JP/KR</text>
-                </svg>
-                <div className="absolute bottom-2 left-2 bg-white/95 border border-slate-200 shadow-sm p-2 rounded text-[10px] space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold"><span className="w-2 h-2 bg-[#4f46e5] rounded-full" /> High Traffic</div>
-                  <div className="flex items-center gap-1.5 font-bold"><span className="w-2 h-2 bg-[#cbd5e1] rounded-full" /> Low Traffic</div>
-                </div>
+            {countries.topCountries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center text-slate-400 py-8">
+                <span className="text-3xl mb-2">🌍</span>
+                <span className="text-[12.5px] font-bold text-slate-700">No Visitor Traffic Yet</span>
+                <span className="text-[11px] mt-1 max-w-[240px] text-slate-500 leading-normal">
+                  Real-time country tracking will update automatically as visitors navigate the site.
+                </span>
               </div>
-
-              {/* Country stats checklist */}
-              <div className="flex flex-col justify-between py-1 min-h-[280px]">
-                <div>
-                  <span className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider block mb-3">Top Visitor Countries</span>
-                  {countries.topCountries.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center text-slate-400 py-12">
-                      <span className="text-3xl mb-2.5">🌍</span>
-                      <span className="text-[12.5px] font-bold text-slate-700">No Visitor Traffic Yet</span>
-                      <span className="text-[11px] mt-1 max-w-[220px] text-slate-500 leading-normal">
-                        Real-time country tracking will appear here once visitors browse the site.
+            ) : (
+              <div className="space-y-3">
+                {countries.topCountries.map((c: any, idx: number) => (
+                  <div key={c.code || idx} className="p-3 bg-slate-50 border border-slate-100 rounded-lg space-y-1.5">
+                    <div className="flex justify-between items-center text-[12px] font-sans font-medium">
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 text-center rounded bg-indigo-100 text-[10px] font-bold text-indigo-700">{idx + 1}</span>
+                        <span className="font-bold text-slate-800">{c.country} ({c.code})</span>
                       </span>
+                      <span className="text-slate-700 font-bold">{c.views.toLocaleString()} views ({c.percentage}%)</span>
                     </div>
-                  ) : (
-                    countries.topCountries.slice(0, 5).map((c: any, idx: number) => (
-                      <div key={c.code} className="space-y-1 mb-3.5 last:mb-0">
-                        <div className="flex justify-between items-center text-[12px] font-sans font-medium">
-                          <span className="flex items-center gap-2">
-                            <span className="w-4 h-4 text-center rounded bg-slate-100 text-[10px] font-bold text-slate-500">{idx + 1}</span>
-                            <span className="font-bold text-slate-800">{c.country} ({c.code})</span>
-                          </span>
-                          <span className="text-slate-600 font-bold">{c.views.toLocaleString()} views ({c.percentage}%)</span>
-                        </div>
-                        <div className="h-[6px] bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-indigo-650 rounded-full" 
-                            style={{ width: `${c.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                    <div className="h-[6px] bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-indigo-600 rounded-full transition-all duration-300" 
+                        style={{ width: `${c.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
         </div>
@@ -295,6 +295,26 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Authors Output Analysis */}
+          <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+            <h3 className="font-sans font-bold text-[14px] text-[#1e1b4b] uppercase tracking-widest m-0 mb-4">
+              Authors Output Analysis
+            </h3>
+            <div className="flex flex-col gap-3">
+              {(content.authorBreakdown || []).map((auth: any) => (
+                <div key={auth.name} className="flex justify-between items-center text-[12.5px] p-2 bg-slate-50 rounded-lg border border-slate-100">
+                  <div>
+                    <span className="font-bold text-slate-800 block">{auth.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{auth.category}</span>
+                  </div>
+                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded text-[11px]">
+                    {auth.count} articles
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -311,21 +331,27 @@ export default function DashboardPage() {
               </h3>
             </div>
             <div className="divide-y divide-slate-100">
-              {content.mostViewedNews.slice(0, 5).map((art: any, i: number) => (
-                <div key={i} className="p-3.5 flex justify-between items-start gap-4">
-                  <div className="min-w-0">
-                    <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
-                      {art.title}
+              {content.mostViewedNews.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-[12.5px] font-sans font-medium">
+                  No articles found in database.
+                </div>
+              ) : (
+                content.mostViewedNews.slice(0, 5).map((art: any, i: number) => (
+                  <div key={i} className="p-3.5 flex justify-between items-start gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
+                        {art.title}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Beat: {art.category}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Beat: {art.category}
+                    <span className="shrink-0 bg-indigo-50 text-[#1e40af] text-[11px] font-bold px-2 py-0.5 rounded">
+                      {art.views.toLocaleString()} views
                     </span>
                   </div>
-                  <span className="shrink-0 bg-indigo-50 text-[#1e40af] text-[11px] font-bold px-2 py-0.5 rounded">
-                    {art.views.toLocaleString()} views
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -339,21 +365,27 @@ export default function DashboardPage() {
               </h3>
             </div>
             <div className="divide-y divide-slate-100">
-              {content.leastViewedNews.slice(0, 5).map((art: any, i: number) => (
-                <div key={i} className="p-3.5 flex justify-between items-start gap-4">
-                  <div className="min-w-0">
-                    <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
-                      {art.title}
+              {content.leastViewedNews.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-[12.5px] font-sans font-medium">
+                  No articles found in database.
+                </div>
+              ) : (
+                content.leastViewedNews.slice(0, 5).map((art: any, i: number) => (
+                  <div key={i} className="p-3.5 flex justify-between items-start gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] text-slate-800 font-semibold truncate max-w-[280px]">
+                        {art.title}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Beat: {art.category}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Beat: {art.category}
+                    <span className="shrink-0 bg-rose-50 text-[#dc2626] text-[11px] font-bold px-2 py-0.5 rounded">
+                      {art.views.toLocaleString()} views
                     </span>
                   </div>
-                  <span className="shrink-0 bg-rose-50 text-[#dc2626] text-[11px] font-bold px-2 py-0.5 rounded">
-                    {art.views.toLocaleString()} views
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
