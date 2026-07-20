@@ -121,8 +121,8 @@ export default function CategoriesPage() {
 
     if (!descVal) {
       errors.description = "Description is required."
-    } else if (descVal.length < 10 || descVal.length > 200) {
-      errors.description = "Description must be between 10 and 200 characters."
+    } else if (descVal.length < 10 || descVal.length > 300) {
+      errors.description = "Description must be between 10 and 300 characters."
     } else if ((descVal.match(/[a-zA-Z]/g) || []).length < 3) {
       errors.description = "Description must contain at least 3 letters."
     } else if (!/[.!?]$/.test(descVal)) {
@@ -137,8 +137,8 @@ export default function CategoriesPage() {
 
     if (!altVal) {
       errors.bannerImageAlt = "Image Alt Text description is required."
-    } else if (altVal.length < 5 || altVal.length > 100) {
-      errors.bannerImageAlt = "Image Alt Text must be between 5 and 100 characters."
+    } else if (altVal.length < 5 || altVal.length > 150) {
+      errors.bannerImageAlt = "Image Alt Text must be between 5 and 150 characters."
     } else if ((altVal.match(/[a-zA-Z]/g) || []).length < 3) {
       errors.bannerImageAlt = "Image Alt Text must contain at least 3 letters."
     }

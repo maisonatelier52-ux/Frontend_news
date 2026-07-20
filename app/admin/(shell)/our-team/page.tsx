@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAdminModal } from '../../components/AdminModalContext';
 
 interface TeamMember {
   name: string;

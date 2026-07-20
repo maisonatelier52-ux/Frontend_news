@@ -279,8 +279,8 @@ function NewArticleForm() {
       // Excerpt / Short Description
       if (!trimmedExcerpt) {
         errors.excerpt = "Excerpt description is required."
-      } else if (trimmedExcerpt.length < 50 || trimmedExcerpt.length > 200) {
-        errors.excerpt = "Excerpt description must be between 50 and 200 characters for SEO."
+      } else if (trimmedExcerpt.length < 10 || trimmedExcerpt.length > 300) {
+        errors.excerpt = "Excerpt description must be between 10 and 300 characters for SEO."
       } else if ((trimmedExcerpt.match(/[a-zA-Z]/g) || []).length < 3) {
         errors.excerpt = "Excerpt description must contain at least 3 letters."
       } else if (trimmedExcerpt.toLowerCase() === trimmedTitle.toLowerCase()) {
@@ -351,16 +351,16 @@ function NewArticleForm() {
       if (form.tags.trim()) {
         const tagList = form.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
         
-        if (tagList.length > 15) {
-          errors.tags = "You cannot have more than 15 tags."
+        if (tagList.length > 30) {
+          errors.tags = "You cannot have more than 30 tags."
         } else {
           const uniqueTags = new Set(tagList.map(t => t.toLowerCase()))
           if (uniqueTags.size !== tagList.length) {
             errors.tags = "Duplicate tags are not allowed."
           } else {
-            const invalidTag = tagList.find(t => t.length < 2 || t.length > 20 || !/^[a-zA-Z0-9-]+$/.test(t))
+            const invalidTag = tagList.find(t => t.length < 2 || t.length > 50 || !/^[a-zA-Z0-9\s-]+$/.test(t))
             if (invalidTag) {
-              errors.tags = "Each tag must be 2-20 characters and contain only letters, numbers, and hyphens (no spaces or special symbols like @, #, $, %)."
+              errors.tags = "Each tag must be 2-50 characters and contain letters, numbers, spaces, or hyphens."
             } else {
               delete errors.tags
             }
@@ -381,8 +381,8 @@ function NewArticleForm() {
       const trimmedAlt = form.imageAltText.trim()
       if (!trimmedAlt) {
         errors.imageAltText = "Image Alt Text description is required."
-      } else if (trimmedAlt.length < 5 || trimmedAlt.length > 100) {
-        errors.imageAltText = "Image Alt Text must be between 5 and 100 characters."
+      } else if (trimmedAlt.length < 5 || trimmedAlt.length > 150) {
+        errors.imageAltText = "Image Alt Text must be between 5 and 150 characters."
       } else if ((trimmedAlt.match(/[a-zA-Z]/g) || []).length < 3) {
         errors.imageAltText = "Image Alt Text must contain at least 3 letters."
       } else {
@@ -1128,18 +1128,18 @@ function NewArticleForm() {
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label htmlFor="art-tags" className="text-[13px] font-extrabold text-[#0f172a]">Tags</label>
-                    <span className={`text-[10px] font-semibold ${form.tags.length > 200 ? 'text-red-500' : 'text-slate-400'}`}>{form.tags.length}/200</span>
+                    <span className={`text-[10px] font-semibold ${form.tags.length > 500 ? 'text-red-500' : 'text-slate-400'}`}>{form.tags.length}/500</span>
                   </div>
                   <input
                     id="art-tags"
                     name="tags"
                     value={form.tags}
-                    maxLength={200}
+                    maxLength={500}
                     onChange={handleChange}
-                    placeholder="e.g. senate, updates, voting"
+                    placeholder="e.g. Paid CEOs, Executive Pay, Salary Comparison"
                     className={`${fieldClass} ${validationErrors.tags ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
-                  <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Separate with commas. Maximum 15 tags, 2-20 characters per tag (letters, numbers, hyphens only).</div>
+                  <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Separate with commas. Maximum 30 tags, 2-50 characters per tag (letters, numbers, spaces, hyphens).</div>
                   {validationErrors.tags && (
                     <div className="text-[12px] text-red-500 font-semibold mt-1 flex items-center gap-1">
                       <span>⚠️</span> {validationErrors.tags}

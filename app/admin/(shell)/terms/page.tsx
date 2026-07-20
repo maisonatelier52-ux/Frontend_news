@@ -231,19 +231,9 @@ export default function TermsManagerPage() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-slate-600">Lead Paragraph Text (use **Text** for bold highlight)</label>
               <textarea 
-                rows={2}
+                rows={4}
                 value={leadParagraph} 
                 onChange={(e) => setLeadParagraph(e.target.value)} 
-                style={{ ...inputStyle, width: '100%', fontFamily: 'sans-serif', lineHeight: 1.5 }} 
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-600">Introductory Agreement Clause</label>
-              <textarea 
-                rows={3}
-                value={introParagraph} 
-                onChange={(e) => setIntroParagraph(e.target.value)} 
                 style={{ ...inputStyle, width: '100%', fontFamily: 'sans-serif', lineHeight: 1.5 }} 
               />
             </div>
@@ -326,10 +316,6 @@ export default function TermsManagerPage() {
               <p className="text-[11.5px] font-medium font-serif leading-relaxed text-slate-800 italic">
                 {leadParagraph.replace(/\*\*/g, '') || 'Lead paragraph text details...'}
               </p>
-
-              {introParagraph && (
-                <p className="text-[11px] text-slate-500 leading-relaxed m-0">{introParagraph}</p>
-              )}
 
               {sections.map((sec, idx) => (
                 <div key={idx} className="space-y-2 mt-4">
