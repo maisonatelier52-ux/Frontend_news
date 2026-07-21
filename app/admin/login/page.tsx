@@ -38,6 +38,35 @@ export default function LoginPage() {
     return () => clearInterval(interval)
   }, [mode, timer])
 
+  async function parseJsonResponse(res: Response) {
+    try {
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        return await res.json()
+      }
+    } catch {
+      // Ignore JSON parse failure
+    }
+    return null
+  }
+
+  function sanitizeErrorMessage(err: any, fallbackMessage = 'Something went wrong. Try again later.'): string {
+    if (!err) return fallbackMessage
+    const msg = typeof err === 'string' ? err : err.message || ''
+    if (
+      !msg ||
+      msg.includes('Unexpected token') ||
+      msg.includes('is not valid JSON') ||
+      msg.includes('JSON.parse') ||
+      msg.includes('SyntaxError') ||
+      msg.includes('<!DOCTYPE') ||
+      msg.includes('Failed to fetch')
+    ) {
+      return 'Something went wrong. Try again later.'
+    }
+    return msg
+  }
+
   async function handleSignInSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -49,11 +78,11 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-      const data = await res.json()
+      const data = await parseJsonResponse(res)
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed')
+        throw new Error(data?.error || (res.status >= 500 ? 'Something went wrong. Try again later.' : 'Incorrect email or password.'))
       }
-      if (data.requireOtp) {
+      if (data?.requireOtp) {
         setActiveOtpEmail(data.email)
         setTimer(60)
         setResendSuccess('')
@@ -62,7 +91,7 @@ export default function LoginPage() {
         router.push('/admin/dashboard')
       }
     } catch (err: any) {
-      setError(err.message || 'Incorrect email or password.')
+      setError(sanitizeErrorMessage(err, 'Something went wrong. Try again later.'))
     } finally {
       setLoading(false)
     }
@@ -79,16 +108,16 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail }),
       })
-      const data = await res.json()
+      const data = await parseJsonResponse(res)
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to send OTP')
+        throw new Error(data?.error || 'Something went wrong. Try again later.')
       }
       setActiveOtpEmail(resetEmail)
       setTimer(60)
       setResendSuccess('')
       setMode('verification')
     } catch (err: any) {
-      setError(err.message || 'Error sending verification code.')
+      setError(sanitizeErrorMessage(err, 'Something went wrong. Try again later.'))
     } finally {
       setLoading(false)
     }
@@ -106,13 +135,13 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: activeOtpEmail, otp: enteredCode }),
       })
-      const data = await res.json()
+      const data = await parseJsonResponse(res)
       if (!res.ok) {
-        throw new Error(data.error || 'Verification failed')
+        throw new Error(data?.error || 'Something went wrong. Try again later.')
       }
       router.push('/admin/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Incorrect verification code.')
+      setError(sanitizeErrorMessage(err, 'Something went wrong. Try again later.'))
     } finally {
       setLoading(false)
     }
@@ -129,15 +158,15 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: activeOtpEmail }),
       })
-      const data = await res.json()
+      const data = await parseJsonResponse(res)
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to resend OTP')
+        throw new Error(data?.error || 'Something went wrong. Try again later.')
       }
       setResendSuccess('Verification code resent successfully!')
       setTimer(60)
       setTimeout(() => setResendSuccess(''), 4000)
     } catch (err: any) {
-      setError(err.message || 'Failed to resend code.')
+      setError(sanitizeErrorMessage(err, 'Something went wrong. Try again later.'))
     } finally {
       setLoading(false)
     }
