@@ -332,9 +332,9 @@ export default function DetailPageExperience({
       case "subheading":
       case "header":
         return (
-          <h3 key={block.id || index} className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900 pt-3 pb-2">
+          <h2 key={block.id || index} className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900 pt-3 pb-2">
             {block.value}
-          </h3>
+          </h2>
         );
 
       case "pullquote":
@@ -837,9 +837,9 @@ export default function DetailPageExperience({
                       <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ${accentColorClass} block leading-none mb-1`}>
                         Journalist Profile
                       </span>
-                      <h4 className="text-sm sm:text-lg font-serif font-black text-zinc-900 tracking-tight leading-tight cursor-pointer" onClick={() => setShowAuthorPanel(true)}>
+                      <p className="text-sm sm:text-lg font-serif font-black text-zinc-900 tracking-tight leading-tight cursor-pointer" onClick={() => setShowAuthorPanel(true)}>
                         {authorDetails.name}
-                      </h4>
+                      </p>
                     </div>
                   </div>
                   
@@ -877,7 +877,7 @@ export default function DetailPageExperience({
                     {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-zinc-900">{authorDetails.name}</h4>
+                    <p className="text-sm font-bold text-zinc-900">{authorDetails.name}</p>
                     <span className="text-[10px] text-zinc-555 font-medium">{authorDetails.role}</span>
                   </div>
                 </div>
@@ -1239,9 +1239,9 @@ export default function DetailPageExperience({
                   {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="font-editorial-title text-2xl font-black text-zinc-900 leading-snug">
+                  <p className="font-editorial-title text-2xl font-black text-zinc-900 leading-snug">
                     {authorDetails.name}
-                  </h2>
+                  </p>
                   <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest mt-1">
                     {authorDetails.role} • {authorDetails.category} Beat
                   </p>

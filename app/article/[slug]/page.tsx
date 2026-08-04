@@ -19,16 +19,29 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
     };
   }
 
-  const title = `${article.title} | Magazine Gazette`;
-  const description = article.excerpt || (article.content && article.content[0]) || article.title;
-  const keywords = [
-    article.category,
-    article.author,
-    "news",
-    "breaking news",
-    "magazine gazette",
-    ...(article.title ? article.title.split(" ").slice(0, 5) : [])
-  ];
+  const title = article.seoTitle && article.seoTitle.trim()
+    ? article.seoTitle.trim()
+    : `${article.title} | Magazine Gazette`;
+
+  const description = (article.seoMetaDescription && article.seoMetaDescription.trim())
+    ? article.seoMetaDescription.trim()
+    : (article.excerpt || (article.content && article.content[0]) || article.title);
+
+  let keywords: string[] = [];
+  if (article.keywords) {
+    keywords = typeof article.keywords === 'string'
+      ? article.keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
+      : article.keywords;
+  } else {
+    keywords = [
+      article.category,
+      typeof article.author === 'object' ? article.author?.name : article.author,
+      "news",
+      "breaking news",
+      "magazine gazette",
+      ...(article.title ? article.title.split(" ").slice(0, 5) : [])
+    ].filter(Boolean);
+  }
 
   const rawImage = article.image || article.featuredImage;
   const ogImage = rawImage && rawImage.trim() ? rawImage : "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";

@@ -294,7 +294,7 @@ export default function Header({
       >
         {isText ? (
           <div className="flex flex-col items-center select-none w-full overflow-hidden">
-            <h1 
+            <div 
               className="font-editorial-title font-extrabold tracking-tight cursor-pointer m-0 leading-none text-center select-none whitespace-nowrap w-full"
               style={{ 
                 color: logoColor,
@@ -308,7 +308,7 @@ export default function Header({
               }}
             >
               MAGAZINE GAZETTE
-            </h1>
+            </div>
             <p
               className="mt-2 font-sans font-bold uppercase tracking-widest text-center leading-tight select-none"
               style={{ fontSize: `clamp(8px, 1.5vw, ${tagSize})`, color: tagColor, letterSpacing: '0.15em' }}

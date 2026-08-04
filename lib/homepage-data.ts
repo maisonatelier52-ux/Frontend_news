@@ -154,6 +154,10 @@ export async function fetchArticleBySlug(slug: string) {
         readTime: formatReadTime(art.readTime),
         image: art.featuredImage || '/article-placeholder.jpg',
         imageAltText: art.imageAltText || art.title,
+        seoTitle: art.seoTitle,
+        seoMetaDescription: art.seoMetaDescription || (art as any).seoDescription,
+        keywords: art.keywords,
+        tags: art.tags,
       }));
     }
   } catch (e) {
