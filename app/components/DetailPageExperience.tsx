@@ -136,16 +136,29 @@ export default function DetailPageExperience({
     gender: "female",
     websiteUrl: `https://www.magazinegazette.com/staff/${authorName.toLowerCase().replace(/\s/g, '-')}`,
     socialLinks: {
-      twitter: isAuthorObj && article.author.twitter ? article.author.twitter : `https://twitter.com/${authorName.toLowerCase().replace(/\s/g, '')}`,
-      medium: isAuthorObj && article.author.medium ? article.author.medium : `https://medium.com/@${authorName.toLowerCase().replace(/\s/g, '')}`,
-      substack: isAuthorObj && article.author.substack ? article.author.substack : `https://substack.com/@${authorName.toLowerCase().replace(/\s/g, '')}`
-    }
+      twitter: isAuthorObj && article.author.twitter ? article.author.twitter : '',
+      medium: isAuthorObj && article.author.medium ? article.author.medium : '',
+      substack: isAuthorObj && article.author.substack ? article.author.substack : ''
+    },
+    twitter: isAuthorObj && article.author.twitter ? article.author.twitter : '',
+    medium: isAuthorObj && article.author.medium ? article.author.medium : '',
+    substack: isAuthorObj && article.author.substack ? article.author.substack : ''
   };
 
-  const authorArticles = [
-    { _id: "art-1", category: "US", slug: "clean-energy-grids-see-record-infrastructure-investments", title: "Clean Energy Grids See Record Infrastructure Investments" },
-    { _id: "art-2", category: "US", slug: "midterm-legislative-priorities-shift-in-bipartisan-consensus", title: "Midterm Legislative Priorities Shift in Bipartisan Consensus" }
-  ];
+  const matchingAuthorArticles = (trendingArticles || []).filter((a: any) => {
+    const aAuthor = typeof a.author === 'object' ? a.author?.name : a.author;
+    return aAuthor && authorName && aAuthor.trim().toLowerCase() === authorName.trim().toLowerCase();
+  });
+
+  const authorArticlesList: any[] = [...matchingAuthorArticles];
+  if (article && authorName && (typeof article.author === 'object' ? article.author?.name : article.author)?.toLowerCase() === authorName.toLowerCase()) {
+    const currentId = article._id || article.id || article.slug;
+    if (!authorArticlesList.some((a: any) => (a._id || a.id || a.slug) === currentId)) {
+      authorArticlesList.unshift(article);
+    }
+  }
+
+  const authorArticles = authorArticlesList;
 
   if (!article) return null;
 
@@ -856,13 +869,6 @@ export default function DetailPageExperience({
 
                 {/* Bottom row: links */}
                 <div className="flex flex-wrap items-center justify-start gap-2 pt-2 border-t border-zinc-200/60 text-xs text-zinc-555 font-medium">
-                  <span className={`hover:${accentColorClass} transition duration-200 flex items-center gap-1 bg-white border border-zinc-200 px-2 py-1 rounded-sm shadow-3xs hover:shadow-2xs text-[10px] sm:text-xs`}>
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span>{authorDetails.email}</span>
-                  </span>
-                  <span className="text-zinc-300 hidden sm:inline select-none">•</span>
                   <button className={`text-zinc-655 hover:${accentColorClass} font-bold transition duration-200 cursor-pointer text-[10px] sm:text-xs`} onClick={() => setShowAuthorPanel(true)}>
                     View Profile
                   </button>
@@ -1243,7 +1249,7 @@ export default function DetailPageExperience({
                     {authorDetails.name}
                   </p>
                   <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest mt-1">
-                    {authorDetails.role} • {authorDetails.category} Beat
+                    {authorDetails.role}
                   </p>
                 </div>
               </div>
@@ -1257,47 +1263,61 @@ export default function DetailPageExperience({
                 </p>
               </div>
 
-              <div className="space-y-1 text-xs text-zinc-605 bg-zinc-50 border border-zinc-200 p-3 rounded-xs font-mono text-left">
-                <div>
-                  <span className="font-bold text-zinc-700">Email Contact:</span>{" "}
-                  <a href={`mailto:${authorDetails.email}`} className="text-blue-700 hover:underline">
-                    {authorDetails.email}
-                  </a>
+              {/* Social Channels list - Render only if social links exist */}
+              {((authorDetails.twitter && authorDetails.twitter.trim()) || 
+                (authorDetails.medium && authorDetails.medium.trim()) || 
+                (authorDetails.substack && authorDetails.substack.trim())) && (
+                <div className="space-y-2 border-t border-zinc-150 pt-4 text-left">
+                  <h4 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">
+                    Social Networks
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {authorDetails.twitter && authorDetails.twitter.trim() && (
+                      <a 
+                        href={authorDetails.twitter.startsWith('http') ? authorDetails.twitter : `https://twitter.com/${authorDetails.twitter.replace(/^@/, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-zinc-900 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-zinc-800 transition font-mono cursor-pointer"
+                      >
+                        Twitter/X
+                      </a>
+                    )}
+                    {authorDetails.medium && authorDetails.medium.trim() && (
+                      <a 
+                        href={authorDetails.medium.startsWith('http') ? authorDetails.medium : `https://medium.com/@${authorDetails.medium.replace(/^@/, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-zinc-800 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-zinc-700 transition font-mono cursor-pointer"
+                      >
+                        Medium
+                      </a>
+                    )}
+                    {authorDetails.substack && authorDetails.substack.trim() && (
+                      <a 
+                        href={authorDetails.substack.startsWith('http') ? authorDetails.substack : `https://${authorDetails.substack.replace(/^@/, '')}.substack.com`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-amber-700 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-amber-600 transition font-mono cursor-pointer"
+                      >
+                        Substack
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <span className="font-bold text-zinc-700">Gender:</span>{" "}
-                  <span className="capitalize">{authorDetails.gender}</span>
-                </div>
-              </div>
-
-              {/* Social Channels list */}
-              <div className="space-y-2 border-t border-zinc-150 pt-4 text-left">
-                <h4 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">
-                  Social Networks
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className="bg-zinc-900 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-zinc-800 transition font-mono cursor-pointer">
-                    Twitter/X
-                  </span>
-                  <span className="bg-zinc-800 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-zinc-700 transition font-mono cursor-pointer">
-                    Medium
-                  </span>
-                  <span className="bg-amber-700 text-white text-[10px] px-2.5 py-1.5 rounded-sm hover:bg-amber-600 transition font-mono cursor-pointer">
-                    Substack
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Other stories published list */}
               <div className="space-y-3 border-t border-zinc-150 pt-4 text-left">
                 <h4 className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest">
-                  Published Coverage ({authorArticles.length})
+                  Recent Coverage
                 </h4>
-                <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-56 overflow-y-auto pr-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   {authorArticles.map((art) => (
-                    <div
-                      key={art._id}
-                      className="p-3 bg-zinc-50 border border-zinc-205/60 hover:border-zinc-400 rounded-sm cursor-pointer transition flex justify-between gap-3 items-center group"
+                    <Link
+                      key={art._id || art.id || art.slug}
+                      href={art.slug ? `/article/${art.slug}` : "#"}
+                      onClick={() => setShowAuthorPanel(false)}
+                      className="p-3 bg-zinc-50 border border-zinc-205/60 hover:border-zinc-400 rounded-sm cursor-pointer transition flex justify-between gap-3 items-center group text-left block"
                     >
                       <div>
                         <span className="text-[8px] font-extrabold text-red-700 uppercase tracking-wider">
@@ -1310,15 +1330,10 @@ export default function DetailPageExperience({
                       <svg className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-800 transition shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-zinc-50 border-t border-zinc-200 py-3 px-6 text-center text-[9px] text-zinc-400 font-mono">
-              © {new Date().getFullYear()} Magazine Gazette. Staff Bio Database.
             </div>
           </div>
         </div>
