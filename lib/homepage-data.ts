@@ -4,6 +4,7 @@ import { CategoryModel } from '@/models/Category';
 import { HomeLayoutModel } from '@/models/HomeLayout';
 import { AdvertisementModel } from '@/models/Advertisement';
 import { DetailLayoutModel } from '@/models/DetailLayout';
+import { AuthorModel } from '@/models/Author';
 import { formatReadTime } from './formatters';
 
 export { formatReadTime };
@@ -50,14 +51,17 @@ export async function fetchHomeArticles() {
   try {
     await connectToDatabase();
 
-    // Filter news belonging to hidden categories
-    const visibleCategories = await CategoryModel.find({ isVisible: { $ne: false } }).select('name');
-    const visibleCategoryNames = visibleCategories.map(c => c.name);
+    // Filter news belonging to explicitly hidden categories
+    const hiddenCategories = await CategoryModel.find({ isVisible: false }).select('name');
+    const hiddenCategoryNames = hiddenCategories.map(c => c.name);
 
-    const query = {
-      status: 'published',
-      category: { $in: visibleCategoryNames }
+    const query: any = {
+      status: 'published'
     };
+
+    if (hiddenCategoryNames.length > 0) {
+      query.category = { $nin: hiddenCategoryNames };
+    }
 
     const data = await NewsModel.find(query).sort({ date: -1 }).lean();
 
@@ -115,6 +119,26 @@ export async function fetchArticleBySlug(slug: string) {
         ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
         : [art.excerpt || ''];
       const id = art._id.toString();
+      // Look up author
+      let authorData: any = art.author;
+      if (typeof art.author === 'string') {
+        const foundAuthor = await AuthorModel.findOne({ 
+          $or: [{ name: art.author }, { slug: art.author }] 
+        }).lean();
+        if (foundAuthor) {
+          authorData = {
+            name: foundAuthor.name,
+            role: foundAuthor.role,
+            bio: foundAuthor.bio,
+            email: foundAuthor.email,
+            image: foundAuthor.profileImage,
+            twitter: foundAuthor.socialLinks?.twitter,
+            medium: foundAuthor.socialLinks?.medium,
+            substack: foundAuthor.socialLinks?.substack,
+          };
+        }
+      }
+
       return JSON.parse(JSON.stringify({
         id,
         slug: art.slug || slug,
@@ -123,8 +147,8 @@ export async function fetchArticleBySlug(slug: string) {
         content: paragraphs,
         blocks: art.blocks || [{ id: 'b-0', type: 'paragraph', value: art.excerpt || '' }],
         category: art.category,
-        author: art.author,
-        authorTitle: 'Staff Reporter',
+        author: authorData,
+        authorTitle: authorData?.role || 'Staff Reporter',
         date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         isoDate: new Date(art.date).toISOString(),
         readTime: formatReadTime(art.readTime),

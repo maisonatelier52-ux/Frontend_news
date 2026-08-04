@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { NEWS_ARTICLES } from "../data/news";
+
+export interface TickerArticle {
+  title: string;
+  slug: string;
+}
 
 // --- Stock Ticker Sub-component ---
 export function StockTicker() {
@@ -18,15 +24,19 @@ export function StockTicker() {
         </div>
         {/* Scrolling Marquee */}
         <div className="relative w-full overflow-hidden flex items-center">
-          <div className="animate-ticker flex items-center whitespace-nowrap gap-12">
+          <div className="animate-ticker flex items-center whitespace-nowrap gap-12 hover:[animation-play-state:paused]">
             {/* Render items multiple times for seamless scrolling loop */}
             {[...breakingNews, ...breakingNews, ...breakingNews].map((article, idx) => (
-              <span key={idx} className="flex items-center gap-2">
+              <Link
+                key={idx}
+                href={`/article/${article.slug}`}
+                className="flex items-center gap-2 group cursor-pointer hover:underline"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
-                <span className="font-semibold text-zinc-100 hover:text-zinc-300 transition">
+                <span className="font-semibold text-zinc-100 group-hover:text-red-400 transition">
                   {article.title}
                 </span>
-              </span>
+              </Link>
             ))}
           </div>
         </div>
@@ -49,14 +59,16 @@ export function DynamicBreakingNewsTicker({
 } = {}) {
   const [settings, setSettings] = useState<Record<string, any> | null>(settingsOverride || null)
   const [limit, setLimit] = useState<number>(limitOverride || 5)
-  const [breakingArticles, setBreakingArticles] = useState<string[]>(breakingArticleTitlesOverride || [])
+  const [breakingArticles, setBreakingArticles] = useState<TickerArticle[]>(
+    breakingArticleTitlesOverride?.map(t => ({ title: t, slug: '#' })) || []
+  )
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     if (settingsOverride || breakingArticleTitlesOverride || limitOverride !== undefined) {
       setSettings(settingsOverride || null)
       setLimit(limitOverride ?? 5)
-      setBreakingArticles(breakingArticleTitlesOverride || [])
+      setBreakingArticles(breakingArticleTitlesOverride?.map(t => ({ title: t, slug: '#' })) || [])
       setLoaded(true)
       return
     }
@@ -78,10 +90,13 @@ export function DynamicBreakingNewsTicker({
         const newsRes = await fetch('/api/news?activeOnly=true')
         if (newsRes.ok) {
           const articles = await newsRes.json()
-          const titles = articles
+          const items: TickerArticle[] = articles
             .filter((a: any) => a.options?.breakingNews)
-            .map((a: any) => a.title as string)
-          setBreakingArticles(titles)
+            .map((a: any) => ({
+              title: a.title as string,
+              slug: (a.slug || '') as string
+            }))
+          setBreakingArticles(items)
         }
       } catch (err) {
         console.error('Failed to load breaking news settings:', err)
@@ -113,9 +128,12 @@ export function DynamicBreakingNewsTicker({
   const scrollSpeed  = settings?.scrollSpeed
 
   // Fall back to static articles if none from DB
-  const fallback = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => a.title)
+  const fallback: TickerArticle[] = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => ({
+    title: a.title,
+    slug: a.slug
+  }))
   const tickerItems = (breakingArticles.length > 0 ? breakingArticles : fallback).slice(0, limit)
-  const alertText   = customText || tickerItems.join('   •   ')
+  const alertText   = customText || tickerItems.map(item => item.title).join('   •   ')
 
   // Resolve border thickness, defaulting to 0 if 'none', 1 if 'thin', 3 if 'thick'.
   const defaultThickness = borderStyle === 'thick' ? 3 : borderStyle === 'thin' ? 1 : 0;
@@ -129,9 +147,9 @@ export function DynamicBreakingNewsTicker({
 
   const blinkClass = isBlinking ? 'animate-pulse' : ''
 
-  // Determine animation speed and class
+  // Determine animation speed and class (50s for relaxed, comfortable reading)
   let animClass = ''
-  let defaultSpeed = 28
+  let defaultSpeed = 50
   if (animation === 'flash-fast' || animation === 'glitch-shiver') {
     defaultSpeed = 0.8
   } else if (animation === 'fade' || animation === 'zoom-pulse' || animation === 'vertical-roll') {
@@ -226,7 +244,10 @@ export function DynamicBreakingNewsTicker({
         100% { background-position: 200% 0; }
       }
       .animate-custom-scroll {
-        animation: ticker-scroll var(--ticker-duration, 28s) linear infinite;
+        animation: ticker-scroll var(--ticker-duration, 50s) linear infinite;
+      }
+      .animate-custom-scroll:hover {
+        animation-play-state: paused;
       }
       .animate-custom-fade {
         animation: custom-fade var(--ticker-duration, 3s) ease-in-out infinite;
@@ -256,7 +277,7 @@ export function DynamicBreakingNewsTicker({
         -webkit-text-fill-color: transparent;
         animation: shimmer-sweep var(--ticker-duration, 2.5s) linear infinite;
       }
-    `}} />
+    ` }} />
   )
 
   const renderTextContent = () => {
@@ -264,16 +285,23 @@ export function DynamicBreakingNewsTicker({
       return (
         <div className="relative w-full overflow-hidden flex items-center">
           <div 
-            className={`flex items-center whitespace-nowrap gap-12 ${animClass}`}
+            className={`flex items-center whitespace-nowrap gap-12 ${animClass} hover:[animation-play-state:paused]`}
             style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
           >
-            {[...tickerItems, ...tickerItems, ...tickerItems].map((title, idx) => (
-              <span key={idx} className="flex items-center gap-2">
+            {[...tickerItems, ...tickerItems, ...tickerItems].map((item, idx) => (
+              <Link
+                key={idx}
+                href={item.slug ? `/article/${item.slug}` : '#'}
+                className="flex items-center gap-2 group/item cursor-pointer hover:underline shrink-0"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
-                <span className="font-semibold" style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}>
-                  {title}
+                <span
+                  className="font-semibold transition-colors group-hover/item:text-red-500"
+                  style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}
+                >
+                  {item.title}
                 </span>
-              </span>
+              </Link>
             ))}
           </div>
         </div>

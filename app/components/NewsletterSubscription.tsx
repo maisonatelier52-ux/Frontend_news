@@ -81,7 +81,7 @@ export default function NewsletterSubscription({
             Subscribe to Magazine Gazette
           </h3>
           <p className="text-xs text-zinc-505 text-zinc-500 max-w-md mx-auto leading-relaxed">
-            Join 240,000+ readers. Get curated briefs, breaking news alerts, and deep-dive investigations sent directly to your inbox every morning.
+            Join 20,000+ readers who rely on our daily newsletter for the latest breaking news, expert analysis, and exclusive stories delivered straight to your inbox.
           </p>
 
           <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto mt-2">

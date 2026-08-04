@@ -85,7 +85,7 @@ export default function Footer() {
   }, []);
 
   const logoText = config?.logoText || 'Magazine Gazette';
-  let description = config?.description || config?.address || 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts.';
+  let description = 'A premium news publication delivering breaking news, expert analysis, and in-depth reporting on global markets, technology, and politics.';
   // Clean up any location mention dynamically
   description = description.replace(/[\s\.]*Headquartered in Washington,\s*D\.C\./i, '').trim();
   if (description && !description.endsWith('.')) {

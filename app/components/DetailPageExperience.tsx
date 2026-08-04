@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import Header from "./Header";
 import Footer from "./Footer";
 
@@ -54,22 +55,36 @@ export default function DetailPageExperience({
   const resolvedShareTitle = layout.sharePerspectiveTitle?.trim() || "Share your perspective";
   const [showShareNotification, setShowShareNotification] = useState(false);
   const [showAuthorPanel, setShowAuthorPanel] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      name: "Arthur Pendelton, D.C.",
-      date: "July 6, 2026",
-      text: "This is a massive development for administrative law and regulatory oversight in the United States."
-    },
-    {
-      name: "Sophia Martinez, Chicago",
-      date: "July 6, 2026",
-      text: "Excellent coverage. Highly detailed and objective reporting on this complex case."
-    }
-  ]);
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
   const [nameInput, setNameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   const [commentInput, setCommentInput] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [commentSuccess, setCommentSuccess] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [ads, setAds] = useState<any[]>([]);
   const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
+
+  React.useEffect(() => {
+    async function loadComments() {
+      if (isPreview || !article?.id) return;
+      try {
+        const res = await fetch(`/api/comments?articleId=${article.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setComments(data);
+        }
+      } catch (e) {
+        console.error("Failed to load comments", e);
+      }
+    }
+    loadComments();
+  }, [article?.id, isPreview]);
 
   React.useEffect(() => {
     function syncClosedAds() {
@@ -104,18 +119,26 @@ export default function DetailPageExperience({
     loadAds();
   }, []);
 
+  const isAuthorObj = article.author && typeof article.author === 'object';
+  const authorName = isAuthorObj ? (article.author.name || "Juliana Vance") : (article.author || "Juliana Vance");
+  const authorRole = isAuthorObj ? (article.author.role || article.authorTitle || "Staff Reporter") : (article.authorTitle || "Staff Reporter");
+  const authorBio = isAuthorObj && article.author.bio ? article.author.bio : "A veteran journalist dedicated to in-depth research, reporting on critical affairs, and providing objective coverage of domestic and international issues.";
+  const authorEmail = isAuthorObj && article.author.email ? article.author.email : `${(authorName).toLowerCase().replace(/\s/g, '')}@magazinegazette.com`;
+  const authorImage = isAuthorObj ? article.author.image : null;
+
   const authorDetails = {
-    name: article.author || "Juliana Vance",
-    role: article.authorTitle || "Staff Reporter",
+    name: authorName,
+    role: authorRole,
     category: article.category || "US & WORLD",
-    bio: "A veteran journalist dedicated to in-depth research, reporting on critical affairs, and providing objective coverage of domestic and international issues.",
-    email: `${(article.author || "juliana.vance").toLowerCase().replace(/\s/g, '')}@magazinegazette.com`,
+    bio: authorBio,
+    email: authorEmail,
+    image: authorImage,
     gender: "female",
-    websiteUrl: "https://www.magazinegazette.com/staff/juliana-vance",
+    websiteUrl: `https://www.magazinegazette.com/staff/${authorName.toLowerCase().replace(/\s/g, '-')}`,
     socialLinks: {
-      twitter: "https://twitter.com/julianavance",
-      medium: "https://medium.com/@julianavance",
-      substack: "https://substack.com/@julianavance"
+      twitter: isAuthorObj && article.author.twitter ? article.author.twitter : `https://twitter.com/${authorName.toLowerCase().replace(/\s/g, '')}`,
+      medium: isAuthorObj && article.author.medium ? article.author.medium : `https://medium.com/@${authorName.toLowerCase().replace(/\s/g, '')}`,
+      substack: isAuthorObj && article.author.substack ? article.author.substack : `https://substack.com/@${authorName.toLowerCase().replace(/\s/g, '')}`
     }
   };
 
@@ -191,6 +214,17 @@ export default function DetailPageExperience({
   const footerBannerAds = visibleAds.filter((ad: any) => ad.position === "Footer Banner");
   const stickyBottomAd = visibleAds.find((ad: any) => ad.position === "Sticky Bottom");
 
+  const filteredTrendingArticles = (trendingArticles || []).filter(
+    (trend: any) =>
+      trend.slug !== article.slug &&
+      trend._id !== article.id &&
+      trend.id !== article.id &&
+      trend._id !== article._id &&
+      trend.title?.trim().toLowerCase() !== article.title?.trim().toLowerCase()
+  );
+
+  const displayTrendingArticles = filteredTrendingArticles.length > 0 ? filteredTrendingArticles : (trendingArticles || []);
+
   const handleToggleBookmark = () => {
     if (bookmarkedIds.includes(article.id)) {
       setBookmarkedIds([]);
@@ -199,32 +233,67 @@ export default function DetailPageExperience({
     }
   };
 
-  const handleShare = () => {
-    setShowShareNotification(true);
-    setTimeout(() => setShowShareNotification(false), 2000);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(currentUrl || window.location.href);
+      setShowShareNotification(true);
+      setTimeout(() => setShowShareNotification(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link");
+    }
   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nameInput.trim() || !commentInput.trim()) return;
-    setComments([
-      ...comments,
-      {
-        name: nameInput.trim(),
-        date: "Just now",
-        text: commentInput.trim(),
+    setCommentError("");
+    setCommentSuccess("");
+
+    if (!nameInput.trim() || !emailInput.trim() || !commentInput.trim()) {
+      setCommentError("Please fill in all fields.");
+      return;
+    }
+
+    if (isPreview) {
+      setCommentError("Comments cannot be submitted in preview mode.");
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleId: article.id,
+          articleTitle: article.title,
+          name: nameInput,
+          email: emailInput,
+          text: commentInput,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCommentError(data.error || "Failed to submit comment.");
+      } else {
+        setCommentSuccess(data.message || "Comment submitted for review!");
+        setNameInput("");
+        setEmailInput("");
+        setCommentInput("");
       }
-    ]);
-    setNameInput("");
-    setCommentInput("");
+    } catch (e) {
+      setCommentError("An unexpected error occurred.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const renderBlock = (block: any, index: number) => {
     const fontClasses: Record<FontSize, string> = {
-      sm: "text-sm sm:text-base leading-relaxed text-zinc-800 font-serif",
-      base: "text-base sm:text-lg leading-relaxed text-zinc-800 font-serif",
-      lg: "text-lg sm:text-xl leading-relaxed text-zinc-900 font-serif",
-      xl: "text-xl sm:text-2xl leading-relaxed text-zinc-900 font-serif",
+      sm: "text-xs sm:text-sm leading-[1.6] text-zinc-800 font-serif",
+      base: "text-sm sm:text-base leading-[1.6] text-zinc-800 font-serif",
+      lg: "text-base sm:text-lg leading-[1.6] text-zinc-900 font-serif",
+      xl: "text-lg sm:text-xl leading-[1.6] text-zinc-900 font-serif",
     };
     const fontSize = (layout.fontSizeDefault as FontSize) || "base";
 
@@ -263,7 +332,7 @@ export default function DetailPageExperience({
       case "subheading":
       case "header":
         return (
-          <h3 key={block.id || index} className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900 pt-6 pb-2">
+          <h3 key={block.id || index} className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900 pt-3 pb-2">
             {block.value}
           </h3>
         );
@@ -279,6 +348,67 @@ export default function DetailPageExperience({
             )}
           </blockquote>
         );
+
+      case "list":
+      case "bullet-list":
+      case "bulletList": {
+        let items: string[] = [];
+        let introText = "";
+        let isLightBox = false;
+
+        if (typeof block.value === 'object' && block.value !== null) {
+          introText = block.value.intro || block.value.title || "";
+          isLightBox = block.value.style === 'light-box' || block.value.isLightBox === true;
+          if (Array.isArray(block.value.items)) {
+            items = block.value.items;
+          } else if (typeof block.value.rawText === 'string') {
+            items = block.value.rawText.split('\n');
+          }
+        } else if (Array.isArray(block.value)) {
+          items = block.value;
+        } else if (typeof block.value === 'string') {
+          items = block.value.split('\n');
+        }
+
+        const cleanItems = items
+          .map((s: string) => s.replace(/^[•\-\*\d+\.]\s*/, '').trim())
+          .filter(Boolean);
+
+        if (cleanItems.length === 0 && !introText) return null;
+
+        const listContent = (
+          <div className="space-y-3">
+            {introText && (
+              <p className="font-serif text-base sm:text-lg text-zinc-900 leading-relaxed font-semibold">
+                {introText}
+              </p>
+            )}
+            {cleanItems.length > 0 && (
+              <ul className="space-y-1.5 pl-6 list-disc font-serif text-sm sm:text-base text-zinc-800 leading-relaxed">
+                {cleanItems.map((item: string, i: number) => (
+                  <li key={i} className="pl-1">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+
+        if (isLightBox) {
+          return (
+            <div key={block.id || index} className="my-8 bg-slate-50 border border-slate-200/80 rounded-xl p-6 sm:p-7 shadow-xs">
+              {listContent}
+            </div>
+          );
+        }
+
+        return (
+          <div key={block.id || index} className="my-6">
+            {listContent}
+          </div>
+        );
+      }
 
       case "image":
         return (
@@ -353,9 +483,16 @@ export default function DetailPageExperience({
     <div className="flex flex-col min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200">
       <Header
         activeCategory={article.category}
-        setActiveCategory={() => {}}
+        setActiveCategory={(cat) => {
+          const targetUrl = cat === "All" ? "/" : `/${encodeURIComponent(cat.toLowerCase())}`;
+          window.location.href = targetUrl;
+        }}
         searchQuery=""
-        setSearchQuery={() => {}}
+        setSearchQuery={(query) => {
+          if (query) {
+            window.location.href = `/?search=${encodeURIComponent(query)}`;
+          }
+        }}
         bookmarkCount={2}
         showBookmarksOnly={false}
         setShowBookmarksOnly={() => {}}
@@ -374,12 +511,12 @@ export default function DetailPageExperience({
             </div>
             
             {/* Title */}
-            <h1 className="font-editorial-title text-4xl sm:text-5xl md:text-6xl font-black text-zinc-900 leading-tight tracking-tight">
+            <h1 className="font-editorial-title text-4xl sm:text-5xl md:text-6xl font-black text-zinc-900 leading-[1.08] tracking-tight">
               {article.title}
             </h1>
 
             {/* Excerpt / Subtitle */}
-            <p className="text-zinc-550 text-base sm:text-lg leading-relaxed italic font-serif border-l-2 border-zinc-300 pl-4 py-1">
+            <p className="text-zinc-550 text-sm sm:text-base leading-snug italic font-serif border-l-2 border-zinc-300 pl-4 py-1">
               {article.excerpt}
             </p>
 
@@ -392,9 +529,9 @@ export default function DetailPageExperience({
                   className={`font-bold text-zinc-800 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
                   title="View Author Profile"
                 >
-                  {article.author}
+                  {authorDetails.name}
                 </button>
-                <span className="text-zinc-400"> • {article.authorTitle || "Staff Reporter"}</span>
+                <span className="text-zinc-400"> • {authorDetails.role}</span>
               </div>
               <div className="flex items-center gap-4">
                 <span>Published {article.date}</span>
@@ -447,18 +584,18 @@ export default function DetailPageExperience({
 
                 {/* Headline */}
                 <div className={designStyle === "minimal-focus" ? "pt-2 text-center" : "pt-0.5 text-left"}>
-                  <h1 className={designStyle === "minimal-focus" ? "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-tight tracking-tight px-2" : "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-tight tracking-tight"}>
+                  <h1 className={designStyle === "minimal-focus" ? "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-[1.08] tracking-tight px-2" : "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-[1.08] tracking-tight"}>
                     {article.title}
                   </h1>
                 </div>
 
                 {/* Excerpt / Subtitle */}
                 {designStyle === "minimal-focus" ? (
-                  <p className="text-center text-zinc-555 text-base sm:text-lg leading-relaxed italic font-serif max-w-2xl mx-auto border-none pl-0 pt-2">
+                  <p className="text-center text-zinc-555 text-sm sm:text-base leading-snug italic font-serif max-w-2xl mx-auto border-none pl-0 pt-2">
                     {article.excerpt}
                   </p>
                 ) : (
-                  <p className="text-zinc-555 text-base sm:text-lg leading-relaxed italic font-serif border-l-2 border-zinc-300 pl-4 py-1 text-left">
+                  <p className="text-zinc-555 text-sm sm:text-base leading-snug italic font-serif border-l-2 border-zinc-300 pl-4 py-1 text-left">
                     {article.excerpt}
                   </p>
                 )}
@@ -472,9 +609,9 @@ export default function DetailPageExperience({
                         onClick={() => setShowAuthorPanel(true)}
                         className={`font-bold text-zinc-800 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
                       >
-                        {article.author}
+                        {authorDetails.name}
                       </button>
-                      <span className="text-zinc-400"> • {authorDetails?.role || "Staff Reporter"}</span>
+                      <span className="text-zinc-400"> • {authorDetails.role}</span>
                     </div>
                     <span className="text-zinc-300 select-none">•</span>
                     <div>Published {article.date}</div>
@@ -490,9 +627,9 @@ export default function DetailPageExperience({
                         className={`font-bold text-zinc-800 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
                         title="View Author Profile"
                       >
-                        {article.author}
+                        {authorDetails.name}
                       </button>
-                      <span className="text-zinc-400"> • {article.authorTitle || "Staff Reporter"}</span>
+                      <span className="text-zinc-400"> • {authorDetails.role}</span>
                     </div>
                     <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="flex items-center gap-1.5 font-sans">
@@ -552,33 +689,40 @@ export default function DetailPageExperience({
               <div className="hidden xl:block fixed left-10 top-40 bg-white border border-zinc-200 rounded-full p-2 space-y-4 shadow-sm z-30 animate-[admin-fade-in_0.3s_ease-out]">
                 <button
                   onClick={handleShare}
-                  className={`p-2 rounded-full text-zinc-550 ${accentHoverTextClass} transition cursor-pointer`}
+                  className={`p-2 rounded-full text-zinc-550 ${accentHoverTextClass} transition cursor-pointer relative flex items-center justify-center`}
                   title="Copy Link"
                 >
                   <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 10.742l4.636-2.318m0 0a3 3 0 10-4.243-4.243m4.243 4.243L13.32 12.35" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
+                  {showShareNotification && (
+                    <span className="absolute left-10 top-1 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md">
+                      Copied!
+                    </span>
+                  )}
                 </button>
                 <div className="h-4 border-l border-zinc-200 mx-auto" />
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full text-zinc-555 hover:text-green-600 transition cursor-pointer"
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(article.title)}%20${encodeURIComponent(currentUrl)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="p-2 flex items-center justify-center rounded-full text-zinc-555 hover:text-green-600 transition cursor-pointer"
                   title="Share on WhatsApp"
                 >
-                  <span className="font-bold text-[10px]">WA</span>
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full text-zinc-555 hover:text-orange-600 transition cursor-pointer"
+                  <svg className="w-4.5 h-4.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                </a>
+                <a
+                  href={`https://reddit.com/submit?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(article.title)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="p-2 flex items-center justify-center rounded-full text-zinc-555 hover:text-orange-600 transition cursor-pointer"
                   title="Share on Reddit"
                 >
-                  <span className="font-bold text-[10px]">RD</span>
-                </button>
+                  <svg className="w-4.5 h-4.5 fill-current" viewBox="0 0 24 24"><path d="M24 11.779c0-1.459-1.192-2.645-2.657-2.645-.715 0-1.363.275-1.84.731-1.81-1.191-4.259-1.949-6.971-2.046l1.483-4.669 4.016.941-.006.058c0 1.193.975 2.163 2.174 2.163 1.198 0 2.172-.97 2.172-2.163s-.975-2.164-2.172-2.164c-.92 0-1.704.574-2.021 1.379l-4.329-1.015c-.189-.046-.381.063-.44.249l-1.654 5.207c-2.838.034-5.409.798-7.3 2.025-.474-.438-1.103-.712-1.799-.712-1.465 0-2.656 1.187-2.656 2.646 0 .97.533 1.811 1.317 2.271-.052.282-.086.567-.086.857 0 3.911 4.808 7.093 10.719 7.093s10.72-3.182 10.72-7.093c0-.274-.029-.544-.075-.81.832-.447 1.405-1.312 1.405-2.318zm-17.224 1.816c0-.868.71-1.575 1.582-1.575.872 0 1.581.707 1.581 1.575s-.709 1.574-1.581 1.574-1.582-.706-1.582-1.574zm9.061 4.669c-.797.793-2.048 1.179-3.824 1.179l-.013-.003-.013.003c-1.777 0-3.028-.386-3.824-1.179-.145-.144-.145-.379 0-.523.145-.145.381-.145.526 0 .65.647 1.729.961 3.298.961l.013.003.013-.003c1.569 0 2.648-.315 3.298-.962.145-.145.381-.144.526 0 .145.145.145.379 0 .524zm-.189-3.095c-.872 0-1.581-.706-1.581-1.574 0-.868.709-1.575 1.581-1.575s1.581.707 1.581 1.575-.709 1.574-1.581 1.574z"/></svg>
+                </a>
               </div>
             )}
 
             {/* Article Content */}
-            <article className="mt-8 font-editorial-body space-y-6 pb-2 text-left">
+            <article className="mt-8 font-editorial-body space-y-3.5 pb-2 text-left">
               {(article.blocks || [{ type: "paragraph", value: article.excerpt }]).map((block: any, idx: number) => renderBlock(block, idx))}
             </article>
 
@@ -594,81 +738,76 @@ export default function DetailPageExperience({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {/* WhatsApp */}
-                    <button
-                      onClick={handleShare}
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 hover:${accentColorClass} hover:${accentBorderClass} transition`}
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(article.title)}%20${encodeURIComponent(currentUrl)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-green-600 hover:border-green-600 transition flex items-center justify-center w-[34px] h-[34px]`}
                       title="Share on WhatsApp"
                     >
-                      <span className="font-bold text-[10px]">WA</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                    </a>
                     
                     {/* Reddit */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-600 hover:border-orange-600 transition"
+                    <a
+                      href={`https://reddit.com/submit?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(article.title)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-600 hover:border-orange-600 transition flex items-center justify-center w-[34px] h-[34px]"
                       title="Share on Reddit"
                     >
-                      <span className="font-bold text-[10px]">RD</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 11.779c0-1.459-1.192-2.645-2.657-2.645-.715 0-1.363.275-1.84.731-1.81-1.191-4.259-1.949-6.971-2.046l1.483-4.669 4.016.941-.006.058c0 1.193.975 2.163 2.174 2.163 1.198 0 2.172-.97 2.172-2.163s-.975-2.164-2.172-2.164c-.92 0-1.704.574-2.021 1.379l-4.329-1.015c-.189-.046-.381.063-.44.249l-1.654 5.207c-2.838.034-5.409.798-7.3 2.025-.474-.438-1.103-.712-1.799-.712-1.465 0-2.656 1.187-2.656 2.646 0 .97.533 1.811 1.317 2.271-.052.282-.086.567-.086.857 0 3.911 4.808 7.093 10.719 7.093s10.72-3.182 10.72-7.093c0-.274-.029-.544-.075-.81.832-.447 1.405-1.312 1.405-2.318zm-17.224 1.816c0-.868.71-1.575 1.582-1.575.872 0 1.581.707 1.581 1.575s-.709 1.574-1.581 1.574-1.582-.706-1.582-1.574zm9.061 4.669c-.797.793-2.048 1.179-3.824 1.179l-.013-.003-.013.003c-1.777 0-3.028-.386-3.824-1.179-.145-.144-.145-.379 0-.523.145-.145.381-.145.526 0 .65.647 1.729.961 3.298.961l.013.003.013-.003c1.569 0 2.648-.315 3.298-.962.145-.145.381-.144.526 0 .145.145.145.379 0 .524zm-.189-3.095c-.872 0-1.581-.706-1.581-1.574 0-.868.709-1.575 1.581-1.575s1.581.707 1.581 1.575-.709 1.574-1.581 1.574z"/></svg>
+                    </a>
 
-                    {/* Substack */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-700 hover:border-orange-700 transition"
-                      title="Share on Substack"
+                    {/* LinkedIn */}
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-700 hover:border-blue-700 transition flex items-center justify-center w-[34px] h-[34px]"
+                      title="Share on LinkedIn"
                     >
-                      <span className="font-bold text-[10px]">SB</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    </a>
 
-                    {/* Medium */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-zinc-950 hover:border-zinc-950 transition"
-                      title="Share on Medium"
+                    {/* Email */}
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent("Check out this article: " + currentUrl)}`}
+                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-zinc-950 hover:border-zinc-950 transition flex items-center justify-center w-[34px] h-[34px]"
+                      title="Share via Email"
                     >
-                      <span className="font-bold text-[10px]">MD</span>
-                    </button>
-
-                    {/* Instagram */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-pink-600 hover:border-pink-600 transition cursor-pointer"
-                      title="Share on Instagram"
-                    >
-                      <span className="font-bold text-[10px]">IG</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </a>
 
                     {/* Facebook */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-600 hover:border-blue-600 transition"
+                    <a
+                      href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-600 hover:border-blue-600 transition flex items-center justify-center w-[34px] h-[34px]"
                       title="Share on Facebook"
                     >
-                      <span className="font-bold text-[10px]">FB</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    </a>
 
                     {/* Twitter / X */}
-                    <button
-                      onClick={handleShare}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-black hover:border-black transition"
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(article.title)}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-black hover:border-black transition flex items-center justify-center w-[34px] h-[34px]"
                       title="Share on X"
                     >
-                      <span className="font-bold text-[10px]">X</span>
-                    </button>
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
 
                     {/* Copy Link Button */}
                     <button
                       onClick={handleShare}
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 ${accentHoverTextClass} ${accentHoverBorderClass} transition cursor-pointer relative`}
+                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 ${accentHoverTextClass} ${accentHoverBorderClass} transition cursor-pointer relative flex items-center justify-center w-[34px] h-[34px]`}
                       title="Copy Article Link"
                     >
-                      <svg className="w-4.5 h-4.5 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M8 9a3 3 0 00-3 3v4a3 3 0 003 3h3a3 3 0 003-3v-4a3 3 0 00-3-3H8z" />
-                        <path d="M16 15a3 3 0 003-3V8a3 3 0 00-3-3h-3a3 3 0 00-3 3v4a3 3 0 003 3h3z" />
+                      <svg className="w-4 h-4 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24">
+                        <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                       {showShareNotification && (
-                        <span className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md z-20">
-                          Link copied!
+                        <span className="absolute bottom-11 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md z-20">
+                          Copied!
                         </span>
                       )}
                     </button>
@@ -688,8 +827,8 @@ export default function DetailPageExperience({
                   <div className="flex items-center gap-3">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-red-50 ${accentColorClass} flex items-center justify-center font-bold border-2 border-white shadow-md cursor-pointer text-lg sm:text-xl`} onClick={() => setShowAuthorPanel(true)}>
-                        {article.author.charAt(0)}
+                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-red-50 ${accentColorClass} flex items-center justify-center font-bold border-2 border-white shadow-md cursor-pointer text-lg sm:text-xl overflow-hidden`} onClick={() => setShowAuthorPanel(true)}>
+                        {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
                       </div>
                     </div>
                     
@@ -699,20 +838,20 @@ export default function DetailPageExperience({
                         Journalist Profile
                       </span>
                       <h4 className="text-sm sm:text-lg font-serif font-black text-zinc-900 tracking-tight leading-tight cursor-pointer" onClick={() => setShowAuthorPanel(true)}>
-                        {article.author}
+                        {authorDetails.name}
                       </h4>
                     </div>
                   </div>
                   
                   {/* Badge role */}
                   <span className="shrink-0 text-[8px] sm:text-[10px] px-2 sm:px-3 py-1 bg-zinc-900 text-white font-extrabold uppercase tracking-widest rounded-sm shadow-3xs">
-                    {article.authorTitle || "Staff Reporter"}
+                    {authorDetails.role}
                   </span>
                 </div>
 
                 {/* Bio description */}
                 <p className="text-xs sm:text-sm text-zinc-650 leading-relaxed font-sans italic text-left border-t border-zinc-200/40 pt-3">
-                  “A veteran journalist dedicated to in-depth research, reporting on critical affairs, and providing objective coverage of domestic and international issues.”
+                  “{authorDetails.bio}”
                 </p>
 
                 {/* Bottom row: links */}
@@ -721,7 +860,7 @@ export default function DetailPageExperience({
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    <span>{article.author.toLowerCase().replace(/\s/g, '')}@domain.com</span>
+                    <span>{authorDetails.email}</span>
                   </span>
                   <span className="text-zinc-300 hidden sm:inline select-none">•</span>
                   <button className={`text-zinc-655 hover:${accentColorClass} font-bold transition duration-200 cursor-pointer text-[10px] sm:text-xs`} onClick={() => setShowAuthorPanel(true)}>
@@ -734,16 +873,16 @@ export default function DetailPageExperience({
             {layout.authorCardStyle === "classic" && (
               <div className="my-10 border border-zinc-200 bg-white p-5 select-none rounded shadow-3xs text-left animate-[admin-fade-in_0.3s_ease-out]">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded bg-zinc-100 flex items-center justify-center font-bold text-zinc-700">
-                    {article.author.charAt(0)}
+                  <div className="w-10 h-10 rounded bg-zinc-100 flex items-center justify-center font-bold text-zinc-700 overflow-hidden">
+                    {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-zinc-900">{article.author}</h4>
-                    <span className="text-[10px] text-zinc-555 font-medium">{article.authorTitle || "Staff Reporter"}</span>
+                    <h4 className="text-sm font-bold text-zinc-900">{authorDetails.name}</h4>
+                    <span className="text-[10px] text-zinc-555 font-medium">{authorDetails.role}</span>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-605 leading-relaxed font-sans mt-3">
-                  A veteran journalist dedicated to in-depth research, reporting on critical affairs, and providing objective coverage of domestic and international issues.
+                  {authorDetails.bio}
                 </p>
               </div>
             )}
@@ -751,7 +890,7 @@ export default function DetailPageExperience({
             {layout.authorCardStyle === "minimal" && (
               <div className="my-8 py-4 border-t border-b border-zinc-250/60 flex items-center justify-between text-xs text-zinc-655 select-none text-left animate-[admin-fade-in_0.3s_ease-out]">
                 <div>
-                  Written by <span className="font-bold text-zinc-900">{article.author}</span> ({article.authorTitle || "Staff Reporter"})
+                  Written by <span className="font-bold text-zinc-900">{authorDetails.name}</span> ({authorDetails.role})
                 </div>
                 <button className={`font-bold hover:underline cursor-pointer ${accentColorClass}`} onClick={() => setShowAuthorPanel(true)}>
                   Contact Author
@@ -768,11 +907,14 @@ export default function DetailPageExperience({
 
                 {/* List of comments */}
                 <div className="space-y-4">
+                  {comments.length === 0 && (
+                    <div className="text-xs text-zinc-500 italic">No comments yet. Be the first to share your perspective.</div>
+                  )}
                   {comments.map((comment, index) => (
-                    <div key={index} className="bg-zinc-50/50 border border-zinc-200 p-4 rounded-xs transition hover:shadow-2xs text-left">
+                    <div key={comment._id || index} className="bg-zinc-50/50 border border-zinc-200 p-4 rounded-xs transition hover:shadow-2xs text-left">
                       <div className="flex justify-between items-center text-[10.5px] text-zinc-500 mb-1.5 font-mono">
                         <span className="font-bold text-zinc-800">{comment.name}</span>
-                        <span>{comment.date}</span>
+                        <span>{comment.createdAt ? new Date(comment.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : comment.date}</span>
                       </div>
                       <p className="text-xs text-zinc-750 leading-relaxed font-sans">{comment.text}</p>
                     </div>
@@ -782,7 +924,19 @@ export default function DetailPageExperience({
                 {/* Submit Comment Form */}
                 <form onSubmit={handleCommentSubmit} className="border border-zinc-200 p-5 bg-zinc-50/40 rounded-xs space-y-4">
                   <h4 className="text-xs font-bold text-zinc-850 uppercase tracking-widest text-left">{resolvedShareTitle}</h4>
-                  <div className="grid grid-cols-1 gap-3">
+                  
+                  {commentError && (
+                    <div className="bg-red-50 text-red-600 text-[11px] p-3 rounded border border-red-100 text-left">
+                      {commentError}
+                    </div>
+                  )}
+                  {commentSuccess && (
+                    <div className="bg-emerald-50 text-emerald-700 text-[11px] p-3 rounded border border-emerald-100 text-left">
+                      {commentSuccess}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input
                       type="text"
                       placeholder="Your Name / Signature"
@@ -790,21 +944,33 @@ export default function DetailPageExperience({
                       onChange={(e) => setNameInput(e.target.value)}
                       className="bg-white border border-zinc-200 rounded px-3.5 py-2.5 text-xs text-zinc-800 w-full focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
                       required
+                      disabled={isSubmittingComment}
                     />
-                    <textarea
-                      placeholder="Add your comments here..."
-                      value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
-                      className="bg-white border border-zinc-200 rounded px-3.5 py-3 text-xs text-zinc-800 w-full h-24 resize-none focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
+                    <input
+                      type="email"
+                      placeholder="Subscriber Email Address"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="bg-white border border-zinc-200 rounded px-3.5 py-2.5 text-xs text-zinc-800 w-full focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
                       required
+                      disabled={isSubmittingComment}
                     />
-                    <button
-                      type="submit"
-                      className="bg-zinc-900 text-white text-xs font-bold py-2.5 px-5 rounded cursor-pointer hover:bg-zinc-800 transition btn-3d-indigo self-start font-sans"
-                    >
-                      Submit Comment
-                    </button>
                   </div>
+                  <textarea
+                    placeholder="Add your comments here..."
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                    className="bg-white border border-zinc-200 rounded px-3.5 py-3 text-xs text-zinc-800 w-full h-24 resize-none focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
+                    required
+                    disabled={isSubmittingComment}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingComment}
+                    className={`text-white text-xs font-bold py-2.5 px-5 rounded transition btn-3d-indigo self-start font-sans ${isSubmittingComment ? 'bg-zinc-400 cursor-not-allowed' : 'bg-zinc-900 cursor-pointer hover:bg-zinc-800'}`}
+                  >
+                    {isSubmittingComment ? "Submitting..." : "Submit Comment"}
+                  </button>
                 </form>
               </section>
             )}
@@ -818,9 +984,10 @@ export default function DetailPageExperience({
                     {resolvedTrendingTitle}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {trendingArticles.map((trend, index) => (
-                      <div
-                        key={index}
+                    {displayTrendingArticles.map((trend, index) => (
+                      <Link
+                        key={trend._id || trend.id || index}
+                        href={trend.slug ? `/article/${trend.slug}` : "#"}
                         className="flex items-start gap-4 group cursor-pointer"
                       >
                         <span className={`font-serif text-3xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none`}>
@@ -834,7 +1001,7 @@ export default function DetailPageExperience({
                             {trend.title}
                           </h5>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -892,9 +1059,10 @@ export default function DetailPageExperience({
                   {resolvedTrendingTitle}
                 </h4>
                 <div className="space-y-5 text-left">
-                  {trendingArticles.map((trend, index) => (
-                    <div
-                      key={index}
+                  {displayTrendingArticles.map((trend, index) => (
+                    <Link
+                      key={trend._id || trend.id || index}
+                      href={trend.slug ? `/article/${trend.slug}` : "#"}
                       className="flex items-start gap-4 group cursor-pointer"
                     >
                       <span className={`font-serif text-3xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none`}>
@@ -904,11 +1072,11 @@ export default function DetailPageExperience({
                         <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">
                           {trend.category}
                         </span>
-                        <h5 className={`text-xs sm:text-sm font-bold text-zinc-900 leading-snug font-serif group-hover:${accentColorClass} transition duration-300`}>
+                        <h5 className={`text-xs sm:text-sm font-medium text-zinc-800 leading-snug font-serif group-hover:${accentColorClass} transition duration-300`}>
                           {trend.title}
                         </h5>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -916,11 +1084,11 @@ export default function DetailPageExperience({
               {/* Newsletter Dispatch box */}
               <div className="bg-zinc-900 text-white p-6 rounded-sm space-y-4 shadow-xs text-left">
                 <div className="space-y-1">
-                  <h4 className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">The Dispatch</h4>
-                  <p className="text-base font-serif font-bold leading-tight">Stay informed with weekly analysis</p>
+                  <h4 className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Magazine Gazette</h4>
+                  <p className="text-base font-serif font-bold leading-tight">Stay informed with daily analysis</p>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Join our newsletter list to receive investigative reports directly in your inbox.
+                  Join 20,000+ readers. Get curated briefs and breaking news alerts sent directly to your inbox.
                 </p>
                 <form onSubmit={(e) => e.preventDefault()} className="space-y-2.5">
                   <input
@@ -958,6 +1126,32 @@ export default function DetailPageExperience({
         </div>
       </main>
 
+      {/* More News Section */}
+      <div className="w-full border-t border-zinc-200 mt-6 pt-6 pb-6 select-none">
+        <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-xl font-editorial-title font-black text-zinc-900 uppercase tracking-wide mb-6">
+            More News
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {displayTrendingArticles.slice(0, 4).map((art, index) => (
+              <Link key={art._id || art.id || index} href={`/article/${art.slug}`} className="group flex flex-col gap-3 cursor-pointer">
+                <div className="w-full aspect-[4/3] overflow-hidden rounded bg-zinc-100">
+                  <img 
+                    src={art.image || art.featuredImage || '/article-placeholder.jpg'} 
+                    alt={art.title} 
+                    className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-zinc-800 leading-snug group-hover:underline">
+                    {art.title}
+                  </h4>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
       {footerBannerAds.length > 0 && (
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 select-none border-t border-zinc-150 pt-6">
           <div className="relative bg-zinc-50/50 p-3 rounded border border-zinc-200 flex flex-col items-center justify-center animate-[admin-fade-in_0.3s_ease-out]">
@@ -1041,8 +1235,8 @@ export default function DetailPageExperience({
             {/* Profile Content */}
             <div className="flex-grow p-6 sm:p-8 space-y-6">
               <div className="flex flex-col items-center text-center space-y-3">
-                <div className="w-24 h-24 rounded-full bg-zinc-200 flex items-center justify-center font-bold text-zinc-555 border-2 border-zinc-300 shadow-md text-3xl">
-                  {authorDetails.name.charAt(0)}
+                <div className="w-24 h-24 rounded-full bg-zinc-200 flex items-center justify-center font-bold text-zinc-555 border-2 border-zinc-300 shadow-md text-3xl overflow-hidden">
+                  {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
                 </div>
                 <div>
                   <h2 className="font-editorial-title text-2xl font-black text-zinc-900 leading-snug">

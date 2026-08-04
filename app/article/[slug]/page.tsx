@@ -146,6 +146,18 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     ]
   };
 
+  const trendingArticlesFiltered = allArticles.filter(
+    (a: any) =>
+      a.slug !== article.slug &&
+      a._id !== article._id &&
+      a.id !== article.id &&
+      a.title?.trim().toLowerCase() !== article.title?.trim().toLowerCase()
+  );
+
+  const finalTrendingArticles = trendingArticlesFiltered.length > 0 
+    ? trendingArticlesFiltered.slice(0, 8) 
+    : allArticles.filter((a: any) => a.slug !== article.slug).slice(0, 8);
+
   return (
     <>
       {/* SEO JSON-LD Structured Data Scripts */}
@@ -161,7 +173,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
       <DetailPageExperience
         layout={layout}
         article={article}
-        trendingArticles={allArticles.slice(0, 8)}
+        trendingArticles={finalTrendingArticles}
       />
     </>
   );

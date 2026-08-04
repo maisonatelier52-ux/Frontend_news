@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
+import Link from "next/link";
 import { DynamicBreakingNewsTicker } from "./Widgets";
 
 type SectionSettingValue = string | number | boolean | undefined;
@@ -396,18 +396,20 @@ export default function Header({
                 }
               }
 
+              const catHref = cat === "All" ? "/" : `/${encodeURIComponent(cat.toLowerCase())}`;
               return (
-                <button
+                <Link
                   key={cat}
+                  href={catHref}
                   onClick={() => {
-                    setActiveCategory(cat);
+                    if (setActiveCategory) setActiveCategory(cat);
                     setShowBookmarksOnly(false);
                   }}
                   className={itemClass}
                   style={itemStyle}
                 >
                   {cat}
-                </button>
+                </Link>
               );
             })}
           </nav>

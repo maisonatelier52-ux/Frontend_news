@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAdminModal } from '../../../components/AdminModalContext'
 
-type BlockType = 'paragraph' | 'subheading' | 'pullquote' | 'image' | 'at-glance' | 'faq'
+type BlockType = 'paragraph' | 'subheading' | 'pullquote' | 'list' | 'image' | 'at-glance' | 'faq'
 
 interface Block {
   id: string
@@ -70,6 +70,8 @@ function NewArticleForm() {
   const [existingArticles, setExistingArticles] = useState<{ id: string; title: string; slug: string; featuredImage?: string }[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const loadedArticleIdRef = useRef<string | null>(null)
+
   // Fetch options and/or existing article
   useEffect(() => {
     async function loadFormOptions() {
@@ -102,6 +104,9 @@ function NewArticleForm() {
         }
 
         if (articleId) {
+          if (loadedArticleIdRef.current === articleId) return
+          loadedArticleIdRef.current = articleId
+
           const articleRes = await fetch(`/api/news/${articleId}`)
           if (articleRes.ok) {
             const art = await articleRes.json()
@@ -136,6 +141,7 @@ function NewArticleForm() {
             if (art.featuredImage) {
               setImagePreview(art.featuredImage)
             }
+            setIsDirty(false)
           }
         } else {
           // Keep category and author empty so they default to "Not Chosen" placeholder
@@ -160,6 +166,7 @@ function NewArticleForm() {
       [name]: value,
     }))
     setIsDirty(true)
+    setSaved(false)
 
     // Clear field validation error instantly when user provides a value
     if (value && value.trim()) {
@@ -174,6 +181,8 @@ function NewArticleForm() {
   // Toggle Switch Handler
   const toggleOption = (key: keyof typeof options) => {
     setOptions(prev => ({ ...prev, [key]: !prev[key] }))
+    setIsDirty(true)
+    setSaved(false)
   }
 
   // Handle Blocks addition
@@ -181,11 +190,14 @@ function NewArticleForm() {
     const newId = `block-${Date.now()}`
     let defaultValue: any = ''
     if (type === 'pullquote') defaultValue = { quote: '', author: '' }
+    else if (type === 'list') defaultValue = { items: [''], rawText: '' }
     else if (type === 'image') defaultValue = { url: '', caption: '' }
     else if (type === 'at-glance') defaultValue = { title: 'At a glance', subtitle: '', rows: [{ label: '', value: '' }] }
     else if (type === 'faq') defaultValue = { title: 'Frequently asked questions', items: [{ question: '', answer: '' }] }
 
     setBlocks(prev => [...prev, { id: newId, type, value: defaultValue }])
+    setIsDirty(true)
+    setSaved(false)
   }
 
   // Update block value
@@ -193,12 +205,19 @@ function NewArticleForm() {
     setBlocks(prev => {
       const updated = prev.map(b => b.id === id ? { ...b, value: newValue } : b)
       setIsDirty(true)
+      setSaved(false)
       const hasContent = updated.some(b => {
         if (b.type === 'paragraph' || b.type === 'subheading') {
           return typeof b.value === 'string' && b.value.trim().length > 0 && b.value !== 'Start writing your news article here...'
         }
         if (b.type === 'pullquote') {
           return b.value && b.value.quote && b.value.quote.trim().length > 0
+        }
+        if (b.type === 'list') {
+          return b.value && (
+            (Array.isArray(b.value.items) && b.value.items.some((i: string) => i.trim().length > 0)) ||
+            (typeof b.value === 'string' && b.value.trim().length > 0)
+          )
         }
         return false
       })
@@ -217,6 +236,8 @@ function NewArticleForm() {
   // Delete a block
   function deleteBlock(id: string) {
     setBlocks(prev => prev.filter(b => b.id !== id))
+    setIsDirty(true)
+    setSaved(false)
   }
 
   // Shift block index up/down
@@ -227,6 +248,8 @@ function NewArticleForm() {
     const [removed] = newBlocks.splice(index, 1)
     newBlocks.splice(nextIndex, 0, removed)
     setBlocks(newBlocks)
+    setIsDirty(true)
+    setSaved(false)
   }
 
   // Validation function
@@ -445,6 +468,7 @@ function NewArticleForm() {
   }
 
   function handleTabClick(targetTab: TabType) {
+    setSaved(false)
     const steps: TabType[] = ['write', 'meta', 'visuals', 'seo']
     const currentIndex = steps.indexOf(activeTab)
     const targetIndex = steps.indexOf(targetTab)
@@ -531,54 +555,21 @@ function NewArticleForm() {
       })
 
       if (res.ok) {
+        const savedArticle = await res.json()
         setSaved(true)
         setIsDirty(false)
-        
-        if (!articleId) {
-          // Reset form fields only when creating a new article
-          setForm({
-            title: '',
-            slug: '',
-            category: '',
-            author: '',
-            newsType: 'featured',
-            date: '',
-            readTime: '',
-            status: '',
-            seoTitle: '',
-            seoMetaDescription: '',
-            keywords: '',
-            tags: '',
-            excerpt: '',
-            featuredImage: '',
-            imageAltText: '',
-            featuredVideoUrl: '',
-            cardLabel: '',
-          })
-          setOptions({
-            featuredArticle: false,
-            editorsPick: false,
-            breakingNews: false,
-            allowComments: true,
-          })
-          setBlocks([
-            { id: 'initial-1', type: 'paragraph', value: '' }
-          ])
-          setImagePreview(null)
-          if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-          }
-        }
+        setSaveError(null)
 
-        const bottomContainer = document.getElementById('form-actions-bottom')
-        if (bottomContainer) {
-          bottomContainer.scrollIntoView({ behavior: 'smooth' })
+        // Convert page seamlessly to EDIT mode if this was a new creation
+        if (!articleId && savedArticle?._id) {
+          loadedArticleIdRef.current = savedArticle._id
+          window.history.replaceState(null, '', `/admin/news/new?id=${savedArticle._id}`)
         }
         
-        // Hide success alert after 3 seconds without navigating away
+        // Hide success alert after 4 seconds
         setTimeout(() => {
           setSaved(false)
-        }, 3000)
+        }, 4000)
       } else {
         const errData = await res.json()
         setSaveError(errData.error || 'Failed to save article')
@@ -589,6 +580,7 @@ function NewArticleForm() {
   }
 
   function handleNext() {
+    setSaved(false)
     if (activeTab === 'write') {
       if (validateTab('write')) setActiveTab('meta')
     } else if (activeTab === 'meta') {
@@ -599,6 +591,7 @@ function NewArticleForm() {
   }
 
   function handleBack() {
+    setSaved(false)
     if (activeTab === 'seo') setActiveTab('visuals')
     else if (activeTab === 'visuals') setActiveTab('meta')
     else if (activeTab === 'meta') setActiveTab('write')
@@ -634,6 +627,8 @@ function NewArticleForm() {
           const objectUrl = URL.createObjectURL(file)
           setImagePreview(objectUrl)
           setForm(prev => ({ ...prev, featuredImage: fileUrl }))
+          setIsDirty(true)
+          setSaved(false)
           setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
         }
       } else {
@@ -651,6 +646,8 @@ function NewArticleForm() {
     if (existingImageWarning) {
       setImagePreview(existingImageWarning.url)
       setForm(prev => ({ ...prev, featuredImage: existingImageWarning.url }))
+      setIsDirty(true)
+      setSaved(false)
       setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
       setExistingImageWarning(null)
       setPendingUploadFile(null)
@@ -664,6 +661,8 @@ function NewArticleForm() {
       const objectUrl = URL.createObjectURL(pendingUploadFile)
       setImagePreview(objectUrl)
       setForm(prev => ({ ...prev, featuredImage: fileUrl }))
+      setIsDirty(true)
+      setSaved(false)
       setValidationErrors(prev => { const c = { ...prev }; delete c.featuredImage; return c })
       setExistingImageWarning(null)
     }
@@ -695,9 +694,14 @@ function NewArticleForm() {
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center gap-2 bg-white text-slate-700 font-bold p-2.5 px-5 border border-slate-200 rounded-xl text-[13px] cursor-pointer btn-3d-white"
+            disabled={!isDirty}
+            className={`flex items-center gap-2 font-bold p-2.5 px-5 rounded-xl text-[13px] border transition-all ${
+              isDirty
+                ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white border-transparent cursor-pointer btn-3d-indigo'
+                : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+            }`}
           >
-            💾 Save Draft
+            💾 {articleId ? 'Update Article' : 'Save Draft'}
           </button>
         </div>
       </div>
@@ -750,7 +754,7 @@ function NewArticleForm() {
       <form
         onSubmit={handleSave}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+          if (e.key === 'Enter') {
             e.preventDefault()
           }
         }}
@@ -795,10 +799,10 @@ function NewArticleForm() {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label htmlFor="art-slug" className="text-[13px] font-extrabold text-[#0f172a]">Slug (URL) *</label>
+                    <label htmlFor="art-slug" className="text-[13px] font-extrabold text-[#0f172a]">URL Slug *</label>
                     <span className="text-[10px] text-slate-400 font-semibold">{form.slug.length}/150</span>
                   </div>
-                  <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">This will be used in the article URL</div>
+                  <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Unique URL path identifier</div>
                   <div className="relative flex items-center">
                     <span className="absolute left-4 text-slate-400 text-[14px]">🔗</span>
                     <input
@@ -808,7 +812,7 @@ function NewArticleForm() {
                       maxLength={150}
                       value={form.slug}
                       onChange={handleChange}
-                      placeholder="slug-path-here"
+                      placeholder="article-url-slug"
                       className={`${fieldClass} pl-10 ${validationErrors.slug ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
                   </div>
@@ -817,22 +821,22 @@ function NewArticleForm() {
                       <span>⚠️</span> {validationErrors.slug}
                     </div>
                   )}
-                  <div className="text-[11px] text-[#94a3b8] mt-1.5 font-semibold">Example: breaking-news-headline-2025</div>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a]">Excerpt (Short Description) *</label>
+                    <label htmlFor="art-excerpt" className="text-[13px] font-extrabold text-[#0f172a]">Excerpt Description *</label>
                     <span className={`text-[10px] font-semibold ${form.excerpt.length > 300 ? 'text-red-500' : 'text-slate-400'}`}>{form.excerpt.length}/300</span>
                   </div>
-                  <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Brief summary for listings and SEO</div>
+                  <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">Brief overview summarizing article highlights</div>
                   <textarea
                     id="art-excerpt"
                     name="excerpt"
+                    required
                     value={form.excerpt}
                     onChange={handleChange}
                     maxLength={300}
-                    placeholder="Write a short summary of your article..."
+                    placeholder="Short description for preview cards..."
                     rows={3}
                     className={`${fieldClass} resize-none leading-relaxed ${validationErrors.excerpt ? 'border-red-500' : ''}`}
                   />
@@ -847,22 +851,29 @@ function NewArticleForm() {
 
               {/* Card - Content Block Editor */}
               <div className={`bg-white rounded-2xl p-6.5 border shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-4 ${validationErrors.content ? 'border-red-500' : 'border-slate-100'}`}>
-                <div className="text-[13px] font-extrabold text-[#0f172a] block">Content *</div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#6366f1] tracking-wide uppercase">
+                    <span>📄</span> ARTICLE CONTENT BLOCKS
+                  </div>
+                  <div className="text-[12px] font-semibold text-[#64748b]">
+                    {blocks.length} {blocks.length === 1 ? 'block' : 'blocks'} added
+                  </div>
+                </div>
+                
                 {validationErrors.content && (
-                  <div className="text-[12px] text-red-500 font-semibold -mt-2 mb-1 flex items-center gap-1">
+                  <div className="text-[12px] text-red-500 font-semibold -mt-2 mb-1 flex items-center gap-1 bg-red-50 p-2.5 rounded-lg border border-red-200">
                     <span>⚠️</span> {validationErrors.content}
                   </div>
                 )}
-                <div className="text-[11.5px] text-[#64748b] -mt-1.5 mb-2 font-medium">Write your article content</div>
 
                 <div className="flex flex-col gap-4">
                   {blocks.map((block, index) => (
                     <div key={block.id} className="bg-slate-100 rounded-xl p-4 border border-slate-300/70 relative group transition-all shadow-sm">
                       
                       {/* Control controls */}
-                      <div className="flex justify-between items-center mb-3">
+                      <div className="flex justify-between items-center mb-3 border-b border-slate-200/60 pb-2">
                         <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded bg-white text-[#6366f1] border border-slate-200 tracking-wider">
-                          {block.type.replace('-', ' ')}
+                          Block #{index + 1} — {block.type.replace('-', ' ')}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <button
@@ -916,8 +927,8 @@ function NewArticleForm() {
                           type="text"
                           value={block.value}
                           onChange={(e) => updateBlockValue(block.id, e.target.value)}
-                          placeholder="Enter subheading..."
-                          className="w-full border border-slate-200 bg-white text-[#0f172a] rounded-lg p-2.5 px-3.5 text-[13.5px] outline-none placeholder-slate-400 font-bold input-3d"
+                          placeholder="Subheading text..."
+                          className="w-full border border-slate-200 bg-white text-[#0f172a] rounded-lg p-2.5 px-3 text-[13.5px] font-bold outline-none placeholder-slate-400 input-3d"
                         />
                       )}
 
@@ -927,7 +938,7 @@ function NewArticleForm() {
                             value={block.value.quote}
                             rows={2}
                             onChange={(e) => updateBlockValue(block.id, { ...block.value, quote: e.target.value })}
-                            placeholder="“Enter the pullquote text...”"
+                            placeholder="Quote text..."
                             className="w-full border border-slate-200 bg-white text-[#6366f1] rounded-lg p-2.5 px-3.5 text-[13.5px] outline-none placeholder-slate-400 font-bold italic input-3d"
                           />
                           <input
@@ -1049,6 +1060,65 @@ function NewArticleForm() {
                         </div>
                       )}
 
+                      {block.type === 'list' && (
+                        <div className="bg-white rounded-lg p-3.5 flex flex-col gap-3 border border-slate-200">
+                          <div className="flex justify-between items-center text-[12.5px] font-bold text-slate-700">
+                            <span className="flex items-center gap-1.5 text-indigo-600 font-extrabold uppercase tracking-wide text-[11px]">
+                              <span>•</span> Bullet List Section
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <label className="text-[11px] text-slate-500 font-semibold">Container Style:</label>
+                              <select
+                                value={block.value?.style || 'default'}
+                                onChange={(e) => updateBlockValue(block.id, { ...block.value, style: e.target.value })}
+                                className="border border-slate-200 rounded-md p-1 px-2 text-[11px] bg-slate-50 font-bold outline-none cursor-pointer"
+                              >
+                                <option value="default">Standard List</option>
+                                <option value="light-box">Light Highlight Box</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500 mb-1 block">Intro / Heading Sentence (Optional)</label>
+                            <input
+                              type="text"
+                              value={block.value?.intro || ''}
+                              onChange={(e) => updateBlockValue(block.id, { ...block.value, intro: e.target.value })}
+                              placeholder="e.g. Institutional memory consists of lessons accumulated across generations:"
+                              className="w-full border border-slate-200 rounded-md p-2 px-3 text-[12.5px] bg-white outline-none input-3d"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500 mb-1 block">Bullet List Items (One per line)</label>
+                            <textarea
+                              rows={5}
+                              value={
+                                typeof block.value?.rawText === 'string'
+                                  ? block.value.rawText
+                                  : Array.isArray(block.value?.items)
+                                  ? block.value.items.join('\n')
+                                  : typeof block.value === 'string'
+                                  ? block.value
+                                  : ''
+                              }
+                              onChange={(e) => {
+                                const text = e.target.value
+                                const itemsArray = text.split('\n')
+                                updateBlockValue(block.id, {
+                                  ...block.value,
+                                  items: itemsArray,
+                                  rawText: text
+                                })
+                              }}
+                              placeholder="Which counterparties honoured their commitments&#10;Which structures endured political change&#10;Which concentrations became dangerous"
+                              className="w-full border border-slate-200 rounded-lg p-2.5 px-3 text-[13px] font-sans text-slate-800 bg-white outline-none leading-relaxed input-3d resize-y"
+                            />
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   ))}
                 </div>
@@ -1058,6 +1128,7 @@ function NewArticleForm() {
                     { type: 'paragraph', label: '+ Paragraph' },
                     { type: 'subheading', label: '+ Subheading' },
                     { type: 'pullquote', label: '+ Pullquote' },
+                    { type: 'list', label: '+ Bullet List' },
                     { type: 'image', label: '+ Image' },
                     { type: 'at-glance', label: '+ At a Glance' },
                     { type: 'faq', label: '+ FAQ' },
@@ -1106,25 +1177,19 @@ function NewArticleForm() {
                       </div>
                     )}
                   </div>
+
                   <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label htmlFor="art-read-time" className="text-[13px] font-extrabold text-[#0f172a]">Read Time (mins)</label>
-                      {form.readTime && <span className="text-[10px] text-slate-400 font-semibold">{form.readTime} min{Number(form.readTime) !== 1 ? 's' : ''}</span>}
-                    </div>
+                    <label htmlFor="art-readtime" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Read Time</label>
                     <input
-                      id="art-read-time"
-                      type="number"
+                      id="art-readtime"
                       name="readTime"
-                      min={1}
-                      max={60}
                       value={form.readTime}
                       onChange={handleChange}
-                      placeholder="e.g. 5"
+                      placeholder="e.g. 5 mins"
                       className={`${fieldClass} ${validationErrors.readTime ? 'border-red-500 focus:border-red-500' : ''}`}
                     />
-                    <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Enter a number between 1–60</div>
                     {validationErrors.readTime && (
-                      <div className="text-[12px] text-red-500 font-semibold mt-1 flex items-center gap-1">
+                      <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
                         <span>⚠️</span> {validationErrors.readTime}
                       </div>
                     )}
@@ -1133,21 +1198,19 @@ function NewArticleForm() {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label htmlFor="art-tags" className="text-[13px] font-extrabold text-[#0f172a]">Tags</label>
-                    <span className={`text-[10px] font-semibold ${form.tags.length > 500 ? 'text-red-500' : 'text-slate-400'}`}>{form.tags.length}/500</span>
+                    <label htmlFor="art-tags" className="text-[13px] font-extrabold text-[#0f172a]">Article Tags</label>
+                    <span className="text-[10px] text-slate-400 font-semibold">Comma separated</span>
                   </div>
                   <input
                     id="art-tags"
                     name="tags"
                     value={form.tags}
-                    maxLength={500}
                     onChange={handleChange}
-                    placeholder="e.g. Paid CEOs, Executive Pay, Salary Comparison"
+                    placeholder="e.g. Technology, Markets, Global"
                     className={`${fieldClass} ${validationErrors.tags ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
-                  <div className="text-[11px] text-[#94a3b8] mt-1 font-semibold">Separate with commas. Maximum 30 tags, 2-50 characters per tag (letters, numbers, spaces, hyphens).</div>
                   {validationErrors.tags && (
-                    <div className="text-[12px] text-red-500 font-semibold mt-1 flex items-center gap-1">
+                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
                       <span>⚠️</span> {validationErrors.tags}
                     </div>
                   )}
@@ -1161,25 +1224,23 @@ function NewArticleForm() {
             <div className="flex flex-col gap-6 animate-[admin-fade-in_0.25s_ease_both]">
               <div className="bg-white rounded-2xl p-6.5 border border-slate-100 shadow-[0_4px_20px_rgba(15,23,42,0.015)] flex flex-col gap-5">
                 <div className="flex items-center gap-2 text-[14px] font-extrabold text-[#6366f1] tracking-wide uppercase">
-                  <span>🖼️</span> Visual Assets
+                  <span>🖼️</span> Featured Image & Alt Text
                 </div>
                 
                 <div>
-                  <label htmlFor="art-image-url" className="text-[13px] font-extrabold text-[#0f172a] mb-1.5 block">Featured Image URL</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label htmlFor="art-featured-image" className="text-[13px] font-extrabold text-[#0f172a]">Featured Image URL / Path</label>
+                  </div>
                   <input
-                    id="art-image-url"
+                    id="art-featured-image"
                     name="featuredImage"
-                    value={form.featuredImage || ''}
+                    value={form.featuredImage}
                     onChange={handleChange}
-                    placeholder="e.g. /images/articles/news.jpg"
+                    placeholder="/images/example.jpg"
                     className={`${fieldClass} ${validationErrors.featuredImage ? 'border-red-500 focus:border-red-500' : ''}`}
                   />
-                  {validationErrors.featuredImage && (
-                    <div className="text-[12px] text-red-500 font-semibold mt-1.5 flex items-center gap-1">
-                      <span>⚠️</span> {validationErrors.featuredImage}
-                    </div>
-                  )}
                 </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label htmlFor="art-image-alt" className="text-[13px] font-extrabold text-[#0f172a]">Image Alt Text</label>
@@ -1642,7 +1703,7 @@ function NewArticleForm() {
           >
             {saved && (
               <div className="animate-[admin-scale-in_0.2s_ease_both] bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0] rounded-xl p-2.5 px-4 text-[13px] font-extrabold shadow-sm text-center">
-                ✓ News Article saved successfully
+                {articleId ? '✓ News Article updated successfully' : '✓ News Article published successfully'}
               </div>
             )}
             {saveError && (
@@ -1688,7 +1749,7 @@ function NewArticleForm() {
                       : 'bg-[#f1f5f9] text-[#94a3b8] border-[#e2e8f0] cursor-not-allowed opacity-60'
                   }`}
                 >
-                  Save & Publish
+                  {articleId ? 'Update Article' : 'Save & Publish'}
                 </button>
               )}
             </div>

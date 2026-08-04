@@ -187,7 +187,7 @@ export default function ArticleReader({
           </div>
 
           {/* Article Body Paragraphs */}
-          <article className="mt-8 font-editorial-body space-y-6 border-b border-zinc-200 pb-8">
+          <article className="mt-8 font-editorial-body space-y-3.5 border-b border-zinc-200 pb-8">
             {article.content.map((p, i) => (
               <p key={i} className={fontClasses[fontSize]}>
                 {p}
