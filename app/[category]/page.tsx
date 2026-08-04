@@ -54,27 +54,30 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     "breaking news"
   ];
 
+  const logoImage = "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+
   return {
+    metadataBase: new URL("https://www.magazinegazette.com"),
     title,
     description,
     keywords,
     alternates: {
-      canonical: `/${rawCategory}`,
+      canonical: `https://www.magazinegazette.com/${rawCategory}`,
     },
     openGraph: {
       title,
       description,
-      url: `/${rawCategory}`,
+      url: `https://www.magazinegazette.com/${rawCategory}`,
       siteName: 'Magazine Gazette',
       type: 'website',
       locale: 'en_US',
-      images: [{ url: '/images/magazinegazette-logo.jpg', alt: 'Magazine Gazette' }],
+      images: [{ url: logoImage, alt: 'Magazine Gazette Logo' }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/images/magazinegazette-logo.jpg'],
+      images: [logoImage],
     },
     robots: {
       index: true,

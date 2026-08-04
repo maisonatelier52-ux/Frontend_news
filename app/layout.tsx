@@ -21,21 +21,49 @@ const lora = Lora({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
+  const defaultTitle = "Magazine Gazette | US & World News, Analysis & Opinion";
+  const defaultDescription = "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.";
+  const logoImage = "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+
+  let title = defaultTitle;
+  let description = defaultDescription;
+
   try {
     await connectToDatabase();
     const settings = await SiteSettingsModel.findOne({ key: 'site_settings' });
     if (settings?.seo) {
-      return {
-        title: settings.seo.globalTitle || "Magazine Gazette | US & World News, Analysis & Opinion",
-        description: settings.seo.metaDescription || "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.",
-      };
+      if (settings.seo.globalTitle) title = settings.seo.globalTitle;
+      if (settings.seo.metaDescription) description = settings.seo.metaDescription;
     }
   } catch (e) {
     console.error("Failed to load metadata dynamically:", e);
   }
+
   return {
-    title: "Magazine Gazette | US & World News, Analysis & Opinion",
-    description: "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.",
+    metadataBase: new URL("https://www.magazinegazette.com"),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: "https://www.magazinegazette.com",
+      siteName: "Magazine Gazette",
+      type: "website",
+      images: [
+        {
+          url: logoImage,
+          width: 1200,
+          height: 630,
+          alt: "Magazine Gazette Logo",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [logoImage],
+    },
   };
 }
 

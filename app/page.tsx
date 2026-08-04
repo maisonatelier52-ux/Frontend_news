@@ -16,27 +16,30 @@ export async function generateMetadata(): Promise<Metadata> {
     const description = seo.metaDescription || "Read independent, in-depth journalism on breaking news, politics, finance, business, technology, world affairs, and lifestyle stories on Magazine Gazette.";
     const keywords = seo.keywords || ["news", "breaking news", "politics news", "finance news", "technology news", "world news", "magazine gazette"];
 
+    const logoImage = "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+
     return {
+      metadataBase: new URL("https://www.magazinegazette.com"),
       title,
       description,
       keywords,
       alternates: {
-        canonical: '/',
+        canonical: 'https://www.magazinegazette.com/',
       },
       openGraph: {
         title,
         description,
-        url: '/',
+        url: 'https://www.magazinegazette.com/',
         siteName: 'Magazine Gazette',
         type: 'website',
         locale: 'en_US',
-        images: [{ url: '/images/magazinegazette-logo.jpg', alt: 'Magazine Gazette' }],
+        images: [{ url: logoImage, alt: 'Magazine Gazette Logo' }],
       },
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: ['/images/magazinegazette-logo.jpg'],
+        images: [logoImage],
       },
       robots: {
         index: true,

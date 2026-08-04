@@ -30,24 +30,28 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
     ...(article.title ? article.title.split(" ").slice(0, 5) : [])
   ];
 
+  const rawImage = article.image || article.featuredImage;
+  const ogImage = rawImage && rawImage.trim() ? rawImage : "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+
   return {
+    metadataBase: new URL("https://www.magazinegazette.com"),
     title,
     description,
     keywords,
     alternates: {
-      canonical: `/article/${slug}`,
+      canonical: `https://www.magazinegazette.com/article/${slug}`,
     },
     openGraph: {
       title,
       description,
-      url: `/article/${slug}`,
+      url: `https://www.magazinegazette.com/article/${slug}`,
       siteName: 'Magazine Gazette',
       type: 'article',
       publishedTime: article.isoDate || article.date,
       authors: [article.author],
       images: [
         {
-          url: article.image,
+          url: ogImage,
           alt: article.imageAltText || article.title,
         }
       ],
@@ -57,7 +61,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
       card: 'summary_large_image',
       title,
       description,
-      images: [article.image],
+      images: [ogImage],
     },
     robots: {
       index: true,

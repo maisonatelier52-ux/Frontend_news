@@ -121,7 +121,7 @@ const DEFAULT_SETTINGS = {
   seo: {
     globalTitle: 'Magazine Gazette | US & World News, Analysis & Opinion',
     metaDescription: 'Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.',
-    openGraphImage: '/images/og-default.jpg',
+    openGraphImage: 'https://www.magazinegazette.com/images/magazinegazette-logo.jpg',
     twitterCard: 'summary_large_image',
     robotsText: 'User-agent: *\nDisallow: /admin\nAllow: /',
     sitemapEnabled: true,
