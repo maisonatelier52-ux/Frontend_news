@@ -10,6 +10,7 @@ interface NewsGridProps {
   searchQuery: string;
   showBookmarksOnly: boolean;
   sections?: any[];
+  excludeArticleIds?: string[];
 }
 
 export default function NewsGrid({
@@ -19,6 +20,7 @@ export default function NewsGrid({
   searchQuery,
   showBookmarksOnly,
   sections,
+  excludeArticleIds = [],
 }: NewsGridProps) {
 
   const isCustomView = searchQuery !== "" || showBookmarksOnly;
@@ -86,71 +88,122 @@ export default function NewsGrid({
   }
 
   // --- Front Page Curated Layout ---
-  // Slice articles by categories for sections (showing 3 per section)
+  const usedArticleIds = new Set<string>(excludeArticleIds);
+
   const heroSection = sections?.find((s: any) => s.id === 'first-hero');
   const heroStyle = heroSection?.designStyle || 'hero-split';
 
   // Customized categories
-  const usPoliticsCat = heroSection?.settings?.usPoliticsCategory || "US";
+  const usPoliticsCat = heroSection?.settings?.usPoliticsCategory || "Politics";
   const financeCat = heroSection?.settings?.financeCategory || "Finance";
   const techCat = heroSection?.settings?.techCategory || "Technology";
   const trendingCat = heroSection?.settings?.trendingCategory || "Trending";
   const worldCat = heroSection?.settings?.worldCategory || "World";
-  const artsCat = heroSection?.settings?.artsCategory || "Entertainment";
-  const marketingCat = heroSection?.settings?.marketingCategory || "Marketing";
-  const prnewsCat = heroSection?.settings?.prnewsCategory || "PR News";
+  const artsCat = heroSection?.settings?.artsCategory || "Lifestyle";
+  const marketingCat = heroSection?.settings?.marketingCategory || "Business";
+  const prnewsCat = heroSection?.settings?.prnewsCategory || "Investigation";
 
-  // Customized titles
-  const usTitle = heroSection?.settings?.usPoliticsTitle || "U.S. News & Politics";
-  const financeTitle = heroSection?.settings?.financeTitle || "Finance & Markets";
-  const techTitle = heroSection?.settings?.techTitle || "Technology & AI";
-  const trendingTitle = heroSection?.settings?.trendingTitle || "Trending Columns";
-  const worldTitle = heroSection?.settings?.worldTitle || "World Affairs";
-  const artsTitle = heroSection?.settings?.artsTitle || "Arts & Entertainment";
-  const marketingTitle = heroSection?.settings?.marketingTitle || "Marketing & Strategy";
-  const prnewsTitle = heroSection?.settings?.prnewsTitle || "Press Releases & News";
-
-  // Slice articles by categories for sections (showing 3 per section)
-  const getSectionArticles = (cat: string, count = 3) => {
-    if (cat === 'All') {
-      return articles.filter(a => !a.isLead).slice(0, count);
-    }
-    return articles.filter(a => a.category === cat && !a.isLead).slice(0, count);
+  // Category title formatter: give existing category name as subtitle
+  const formatSubTitle = (customVal: string | undefined, defaultTitle: string) => {
+    if (!customVal || customVal === "U.S. News & Politics" || customVal === "US") return defaultTitle;
+    if (customVal === "Finance & Markets") return "FINANCE";
+    if (customVal === "Technology & AI") return "TECHNOLOGY";
+    if (customVal === "World Affairs") return "WORLD";
+    if (customVal === "Arts & Entertainment") return "LIFESTYLE";
+    if (customVal === "Marketing & Strategy") return "BUSINESS";
+    if (customVal === "Press Releases & News") return "INVESTIGATION";
+    return customVal.toUpperCase();
   };
 
-  const usArticles = getSectionArticles(usPoliticsCat, 8);
-  const worldArticles = getSectionArticles(worldCat, 3);
-  const financeArticles = getSectionArticles(financeCat, 8);
-  const techArticles = getSectionArticles(techCat, 3);
-  const entertainmentArticles = getSectionArticles(artsCat, 3);
-  const marketingArticles = getSectionArticles(marketingCat, 3);
-  const prnewsArticles = getSectionArticles(prnewsCat, 3);
+  const usTitle = formatSubTitle(heroSection?.settings?.usPoliticsTitle, "POLITICS");
+  const financeTitle = formatSubTitle(heroSection?.settings?.financeTitle, "FINANCE");
+  const techTitle = formatSubTitle(heroSection?.settings?.techTitle, "TECHNOLOGY");
+  const trendingTitle = heroSection?.settings?.trendingTitle || "TRENDING COLUMNS";
+  const worldTitle = formatSubTitle(heroSection?.settings?.worldTitle, "WORLD");
+  const artsTitle = formatSubTitle(heroSection?.settings?.artsTitle, "LIFESTYLE");
+  const marketingTitle = formatSubTitle(heroSection?.settings?.marketingTitle, "BUSINESS");
+  const prnewsTitle = formatSubTitle(heroSection?.settings?.prnewsTitle, "INVESTIGATION");
 
-  // opinionArticles: select a few US or World news articles that are not the lead and not in the first 3
-  const opinionArticles = articles
-    .filter(a => (a.category === usPoliticsCat || a.category === worldCat) && !a.isLead)
-    .slice(3, 6);
+  // Helper to extract non-repeated articles for a category (with fallback to ensure sections are filled)
+  const getUnusedSectionArticles = (
+    primaryCat: string,
+    count = 3,
+    aliases: string[] = []
+  ) => {
+    const matchCat = (artCat: string) => {
+      const aC = (artCat || '').toLowerCase().trim();
+      const pC = (primaryCat || '').toLowerCase().trim();
+      if (aC === pC) return true;
+      return aliases.some(alias => aC === alias.toLowerCase().trim());
+    };
 
-  // Trending Panel: top 5 trending articles
-  const trendingArticles = (trendingCat && trendingCat !== 'Trending')
-    ? articles.filter(a => a.category === trendingCat && !a.isLead).slice(0, 5)
-    : articles.filter(a => a.isTrending).slice(0, 5);
+    let matching = articles.filter(a => !usedArticleIds.has(a.id) && matchCat(a.category));
+    
+    // If not enough matching articles, pad with any unused articles so the section is never empty
+    if (matching.length < count) {
+      const remainingUnused = articles.filter(
+        a => !usedArticleIds.has(a.id) && !matching.some(m => m.id === a.id)
+      );
+      matching = [...matching, ...remainingUnused];
+    }
+
+    const selected = matching.slice(0, count);
+    selected.forEach(a => usedArticleIds.add(a.id));
+    return selected;
+  };
+
+  // Section 1: Politics & U.S. News articles
+  const usArticles = getUnusedSectionArticles(usPoliticsCat, 8, ["US", "Politics", "U.S. News", "US News"]);
+  const financeArticles = getUnusedSectionArticles(financeCat, 8, ["Finance", "Business", "Markets"]);
+  const techArticles = getUnusedSectionArticles(techCat, 3, ["Technology", "Tech", "Science", "AI"]);
+  const worldArticles = getUnusedSectionArticles(worldCat, 3, ["World", "Global", "International"]);
+
+  // Fill Trending Columns with 1 news article taken from each category
+  const getTrendingArticles = (count = 5) => {
+    const trendingSelected: Article[] = [];
+    const unused = articles.filter(a => !usedArticleIds.has(a.id));
+
+    // Group unused articles by category
+    const categoryMap = new Map<string, Article[]>();
+    for (const art of unused) {
+      const catKey = art.category || 'General';
+      if (!categoryMap.has(catKey)) {
+        categoryMap.set(catKey, []);
+      }
+      categoryMap.get(catKey)!.push(art);
+    }
+
+    // Pick 1 article from each category
+    for (const [cat, catArticles] of categoryMap.entries()) {
+      if (trendingSelected.length >= count) break;
+      if (catArticles.length > 0) {
+        trendingSelected.push(catArticles[0]);
+      }
+    }
+
+    // If still need more to reach count, fill with remaining unused articles
+    if (trendingSelected.length < count) {
+      for (const art of unused) {
+        if (trendingSelected.length >= count) break;
+        if (!trendingSelected.some(a => a.id === art.id)) {
+          trendingSelected.push(art);
+        }
+      }
+    }
+
+    // Mark selected as used
+    trendingSelected.forEach(a => usedArticleIds.add(a.id));
+    return trendingSelected;
+  };
+
+  const trendingArticles = getTrendingArticles(5);
+
+  const entertainmentArticles = getUnusedSectionArticles(artsCat, 3, ["Lifestyle", "Entertainment", "Arts", "Culture"]);
+  const marketingArticles = getUnusedSectionArticles(marketingCat, 3, ["Business", "Marketing", "Strategy"]);
+  const prnewsArticles = getUnusedSectionArticles(prnewsCat, 3, ["Investigation", "PR News", "PRNews", "Opinion", "Press Releases"]);
 
   // Latest reports: list the rest of the articles that are not yet highlighted in above boxes
-  const highlightedIds = new Set([
-    ...usArticles.map(a => a.id),
-    ...worldArticles.map(a => a.id),
-    ...financeArticles.map(a => a.id),
-    ...techArticles.map(a => a.id),
-    ...entertainmentArticles.map(a => a.id),
-    ...marketingArticles.map(a => a.id),
-    ...prnewsArticles.map(a => a.id),
-    ...opinionArticles.map(a => a.id),
-    articles.find(a => a.isLead)?.id,
-    ...articles.filter(a => a.isBreaking).map(a => a.id),
-  ].filter(Boolean) as string[]);
-
-  const remainingArticles = articles.filter(a => !highlightedIds.has(a.id));
+  const remainingArticles = articles.filter(a => !usedArticleIds.has(a.id));
 
   const getSectionStyle = (sectionId: string, currentStyle: string) => {
     switch (heroStyle) {
@@ -488,8 +541,8 @@ export default function NewsGrid({
       return (
         <div className="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left side: U.S. News & Politics minimalist list (takes 7/12 cols) */}
-            <div className={`${sectionTitle === 'U.S. News & Politics' ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
+            {/* Left side: POLITICS minimalist list (takes 7/12 cols) */}
+            <div className={`${(sectionTitle === 'U.S. News & Politics' || sectionTitle === 'POLITICS') ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4`}>
               <div className="border-print-thick pt-1.5 flex justify-between items-center mb-6">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{sectionTitle}</h2>
               </div>
@@ -522,11 +575,11 @@ export default function NewsGrid({
               </div>
             </div>
 
-            {/* Right side: Finance & Markets text-only list (takes 5/12 cols) */}
-            {sectionTitle === 'U.S. News & Politics' && (
+            {/* Right side: Finance text-only list (takes 5/12 cols) */}
+            {(sectionTitle === 'U.S. News & Politics' || sectionTitle === 'POLITICS') && (
               <div className="lg:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-8 space-y-4">
                 <div className="border-print-thick pt-1.5 flex justify-between items-center mb-6">
-                  <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Finance & Markets</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">FINANCE</h2>
                 </div>
                 <div className="flex flex-col gap-4 border-t border-zinc-200 pt-3">
                   {financeArticles.slice(0, 3).map((article) => (
@@ -1231,7 +1284,7 @@ export default function NewsGrid({
         // 1. VISUAL CARDS: Big images grid for editorial-spotlight, featured-card
         if (heroStyle === 'editorial-spotlight' || heroStyle === 'featured-card') {
           return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-zinc-200 pb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-4">
               {[
                 { title: artsTitle, art: entertainmentArticles[0] },
                 { title: marketingTitle, art: marketingArticles[0] },
@@ -1252,7 +1305,7 @@ export default function NewsGrid({
                       <p className="text-xs text-zinc-505 line-clamp-2 mt-2 leading-relaxed font-sans">{col.art.excerpt}</p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-sans">
-                      <span>Staff Writer</span>
+                      <span>By <span className="text-zinc-600 font-semibold">{col.art.author}</span></span>
                       <span>{col.art.readTime}</span>
                     </div>
                   </div>
@@ -1270,7 +1323,7 @@ export default function NewsGrid({
             ...prnewsArticles.slice(0, 2).map(a => ({ ...a, category: prnewsTitle }))
           ];
           return (
-            <div className="border-b border-zinc-200 pb-8 space-y-4">
+            <div className="pb-4 space-y-4">
               <div className="border-print-thick pt-1.5 flex justify-between items-center">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">Culture & Spotlight Filmstrip</h2>
               </div>
@@ -1304,7 +1357,7 @@ export default function NewsGrid({
         // 3. TYPOGRAPHY BROADSHEET: classic-broadsheet, hero-minimal
         if (heroStyle === 'classic-broadsheet' || heroStyle === 'hero-minimal') {
           return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-zinc-200 pb-8 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-4 divide-y md:divide-y-0 md:divide-x divide-zinc-200">
               {[
                 { title: artsTitle, list: entertainmentArticles },
                 { title: marketingTitle, list: marketingArticles },
@@ -1338,29 +1391,29 @@ export default function NewsGrid({
 
         // 4. LIST HOVER LIFT (DEFAULT): hero-split, split-detail, hero-full
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 border-b border-zinc-200 pb-8">
-            {/* Entertainment */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-4">
+            {/* Column 1 */}
             <div className="space-y-4">
               <div className="border-print-thick pt-1.5">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{artsTitle}</h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {entertainmentArticles.map((article) => (
                   <div
                     key={article.id}
                     onClick={() => onSelectArticle(article.id)}
-                    className="group cursor-pointer flex gap-3 items-center py-1.5 border-b border-zinc-100 last:border-0 pb-2.5 last:pb-0 hover:bg-zinc-50/65 px-1.5 rounded transition-all duration-200 transform hover:-translate-y-0.5"
+                    className="group cursor-pointer flex gap-3 items-center justify-between p-3 bg-zinc-50/50 hover:bg-zinc-100/70 border border-zinc-200/70 rounded-sm transition-all duration-200 transform hover:-translate-y-0.5 min-h-[96px] w-full"
                   >
-                    <div className="flex-1">
-                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition line-clamp-2">
                         {article.title}
                       </h3>
-                      <div className="mt-1 text-[9px] text-zinc-400 flex justify-between font-sans">
-                        <span>Staff Writer</span>
+                      <div className="mt-2 text-[10px] text-zinc-500 flex justify-between items-center font-sans">
+                        <span>By <span className="text-zinc-600 font-semibold">{article.author}</span></span>
                         <span className="font-semibold text-zinc-700">{article.readTime}</span>
                       </div>
                     </div>
-                    <div className="w-16 h-12 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0">
+                    <div className="w-20 h-16 sm:w-24 sm:h-16 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0 border border-zinc-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={article.image} alt={article.title} className="w-full h-full object-cover brightness-95 absolute inset-0" />
                     </div>
@@ -1369,28 +1422,28 @@ export default function NewsGrid({
               </div>
             </div>
 
-            {/* Marketing */}
-            <div className="space-y-4 md:border-l md:border-zinc-200 md:pl-6">
+            {/* Column 2 */}
+            <div className="space-y-4">
               <div className="border-print-thick pt-1.5">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{marketingTitle}</h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {marketingArticles.map((article) => (
                   <div
                     key={article.id}
                     onClick={() => onSelectArticle(article.id)}
-                    className="group cursor-pointer flex gap-3 items-center py-1.5 border-b border-zinc-100 last:border-0 pb-2.5 last:pb-0 hover:bg-zinc-50/65 px-1.5 rounded transition-all duration-200 transform hover:-translate-y-0.5"
+                    className="group cursor-pointer flex gap-3 items-center justify-between p-3 bg-zinc-50/50 hover:bg-zinc-100/70 border border-zinc-200/70 rounded-sm transition-all duration-200 transform hover:-translate-y-0.5 min-h-[96px] w-full"
                   >
-                    <div className="flex-1">
-                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition line-clamp-2">
                         {article.title}
                       </h3>
-                      <div className="mt-1 text-[9px] text-zinc-400 flex justify-between font-sans">
-                        <span>Staff Writer</span>
+                      <div className="mt-2 text-[10px] text-zinc-500 flex justify-between items-center font-sans">
+                        <span>By <span className="text-zinc-600 font-semibold">{article.author}</span></span>
                         <span className="font-semibold text-zinc-700">{article.readTime}</span>
                       </div>
                     </div>
-                    <div className="w-16 h-12 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0">
+                    <div className="w-20 h-16 sm:w-24 sm:h-16 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0 border border-zinc-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={article.image} alt={article.title} className="w-full h-full object-cover brightness-95 absolute inset-0" />
                     </div>
@@ -1399,28 +1452,28 @@ export default function NewsGrid({
               </div>
             </div>
 
-            {/* PR News */}
-            <div className="space-y-4 md:border-l md:border-zinc-200 md:pl-6">
+            {/* Column 3 */}
+            <div className="space-y-4">
               <div className="border-print-thick pt-1.5">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-900">{prnewsTitle}</h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {prnewsArticles.map((article) => (
                   <div
                     key={article.id}
                     onClick={() => onSelectArticle(article.id)}
-                    className="group cursor-pointer flex gap-3 items-center py-1.5 border-b border-zinc-100 last:border-0 pb-2.5 last:pb-0 hover:bg-zinc-50/65 px-1.5 rounded transition-all duration-200 transform hover:-translate-y-0.5"
+                    className="group cursor-pointer flex gap-3 items-center justify-between p-3 bg-zinc-50/50 hover:bg-zinc-100/70 border border-zinc-200/70 rounded-sm transition-all duration-200 transform hover:-translate-y-0.5 min-h-[96px] w-full"
                   >
-                    <div className="flex-1">
-                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                      <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition line-clamp-2">
                         {article.title}
                       </h3>
-                      <div className="mt-1 text-[9px] text-zinc-400 flex justify-between font-sans">
-                        <span>Staff Writer</span>
+                      <div className="mt-2 text-[10px] text-zinc-500 flex justify-between items-center font-sans">
+                        <span>By <span className="text-zinc-600 font-semibold">{article.author}</span></span>
                         <span className="font-semibold text-zinc-700">{article.readTime}</span>
                       </div>
                     </div>
-                    <div className="w-16 h-12 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0">
+                    <div className="w-20 h-16 sm:w-24 sm:h-16 overflow-hidden rounded-sm bg-zinc-100 relative flex-shrink-0 border border-zinc-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={article.image} alt={article.title} className="w-full h-full object-cover brightness-95 absolute inset-0" />
                     </div>

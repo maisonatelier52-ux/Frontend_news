@@ -250,8 +250,8 @@ function NewArticleForm() {
         errors.title = "Article Headline is required."
       } else if (trimmedTitle.length < 10) {
         errors.title = "Article Headline must be at least 10 characters."
-      } else if (trimmedTitle.length > 100) {
-        errors.title = "Article Headline cannot exceed 100 characters."
+      } else if (trimmedTitle.length > 150) {
+        errors.title = "Article Headline cannot exceed 150 characters."
       } else if ((trimmedTitle.match(/[a-zA-Z]/g) || []).length < 3) {
         errors.title = "Article Headline must contain at least 3 letters."
       } else if (duplicateTitle) {
@@ -264,8 +264,8 @@ function NewArticleForm() {
       const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
       if (!trimmedSlug) {
         errors.slug = "URL slug is required."
-      } else if (trimmedSlug.length < 5 || trimmedSlug.length > 100) {
-        errors.slug = "URL slug must be between 5 and 100 characters."
+      } else if (trimmedSlug.length < 5 || trimmedSlug.length > 150) {
+        errors.slug = "URL slug must be between 5 and 150 characters."
       } else if (!slugRegex.test(trimmedSlug)) {
         errors.slug = "Slug must contain only lowercase letters, numbers, and single hyphens, with no leading/trailing/consecutive hyphens."
       } else if ((trimmedSlug.match(/[a-z]/g) || []).length < 3) {
@@ -790,7 +790,7 @@ function NewArticleForm() {
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label htmlFor="art-slug" className="text-[13px] font-extrabold text-[#0f172a]">Slug (URL) *</label>
-                    <span className="text-[10px] text-slate-400 font-semibold">{form.slug.length}/100</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">{form.slug.length}/150</span>
                   </div>
                   <div className="text-[11.5px] text-[#64748b] mb-2 font-medium">This will be used in the article URL</div>
                   <div className="relative flex items-center">
@@ -799,7 +799,7 @@ function NewArticleForm() {
                       id="art-slug"
                       name="slug"
                       required
-                      maxLength={100}
+                      maxLength={150}
                       value={form.slug}
                       onChange={handleChange}
                       placeholder="slug-path-here"

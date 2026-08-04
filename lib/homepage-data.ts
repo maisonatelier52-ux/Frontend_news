@@ -3,6 +3,9 @@ import { NewsModel } from '@/models/News';
 import { CategoryModel } from '@/models/Category';
 import { HomeLayoutModel } from '@/models/HomeLayout';
 import { AdvertisementModel } from '@/models/Advertisement';
+import { formatReadTime } from './formatters';
+
+export { formatReadTime };
 
 // Deterministic comments count based on id to prevent hydration mismatches
 function getDeterministicCommentsCount(id: string) {
@@ -74,7 +77,7 @@ export async function fetchHomeArticles() {
         author: art.author,
         authorTitle: 'Staff Reporter',
         date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        readTime: art.readTime || '5 mins',
+        readTime: formatReadTime(art.readTime),
         image: art.featuredImage || '/article-placeholder.jpg',
         isLead: art.options?.featuredArticle || false,
         isBreaking: art.options?.breakingNews || false,

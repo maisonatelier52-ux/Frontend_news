@@ -91,10 +91,10 @@ const DEFAULT_SETTINGS = {
       }
     ],
     socials: [
-      { id: 1, platform: 'Twitter/X', icon: '𝕏', url: 'https://twitter.com/newssite' },
-      { id: 2, platform: 'Facebook', icon: 'f', url: 'https://facebook.com/newssite' },
-      { id: 3, platform: 'Instagram', icon: '📸', url: 'https://instagram.com/newssite' },
-      { id: 4, platform: 'YouTube', icon: '▶', url: 'https://youtube.com/@newssite' }
+      { id: 1, platform: 'Reddit', icon: 'reddit', url: 'https://www.reddit.com/user/Magazinegazetter/' },
+      { id: 2, platform: 'Medium', icon: 'medium', url: 'https://medium.com/@magazinegazette367' },
+      { id: 3, platform: 'Substack', icon: 'substack', url: 'https://substack.com/@magazinegazettenews' },
+      { id: 4, platform: 'Instagram', icon: 'instagram', url: 'https://www.instagram.com/magazinegazette367/' }
     ],
     copyright: '© 2026 Magazine Gazette. All rights reserved.',
     address: 'An independent, employee-owned publication covering national policy, international affairs, global markets, technology, and arts.',

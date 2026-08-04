@@ -1,5 +1,6 @@
 "use client";
 
+import { formatReadTime } from "@/lib/formatters";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Article } from "../data/news";
@@ -208,7 +209,7 @@ export default function HomePageExperience({
               author: art.author,
               authorTitle: 'Staff Reporter',
               date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-              readTime: art.readTime || '5 mins',
+              readTime: formatReadTime(art.readTime),
               image: art.featuredImage || '/article-placeholder.jpg',
               isLead: art.options?.featuredArticle || false,
               isBreaking: art.options?.breakingNews || false,
@@ -334,6 +335,13 @@ export default function HomePageExperience({
     .filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
     .slice(0, 6) : [];
 
+  // Track all article IDs used in LeadStory to prevent duplicates on the homepage
+  const leadStoryUsedIds = [
+    ...(leadArticle ? [leadArticle.id] : []),
+    ...breakingArticles.map((a) => a.id),
+    ...leadSubArticles.map((a) => a.id),
+  ];
+
   // Selected article for reader modal
   const selectedArticle = articles.find((a) => a.id === selectedArticleId);
 
@@ -451,6 +459,7 @@ export default function HomePageExperience({
               searchQuery={searchQuery}
               showBookmarksOnly={showBookmarksOnly}
               sections={sections}
+              excludeArticleIds={leadStoryUsedIds}
             />
           </>
         ) : (
@@ -462,6 +471,7 @@ export default function HomePageExperience({
             searchQuery={searchQuery}
             showBookmarksOnly={showBookmarksOnly}
             sections={sections}
+            excludeArticleIds={leadStoryUsedIds}
           />
         )}
 

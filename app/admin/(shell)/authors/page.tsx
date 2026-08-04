@@ -279,8 +279,8 @@ export default function AuthorsPage() {
 
     if (!trimmedBio) {
       errors.bio = 'Author bio/biography is required.'
-    } else if (trimmedBio.length < 20 || trimmedBio.length > 300) {
-      errors.bio = 'Author bio must be between 20 and 300 characters.'
+    } else if (trimmedBio.length < 20 || trimmedBio.length > 1000) {
+      errors.bio = 'Author bio must be between 20 and 1000 characters.'
     } else if ((trimmedBio.match(/[a-zA-Z]/g) || []).length < 3) {
       errors.bio = 'Author bio must contain at least 3 letters.'
     } else if (!/[.!?]$/.test(trimmedBio)) {
@@ -788,9 +788,16 @@ export default function AuthorsPage() {
                     validationErrors.bio ? 'border-red-500 focus:border-red-600' : 'border-slate-200 focus:border-[#6366f1]'
                   } text-[#0f172a] placeholder-slate-400 rounded-xl p-3 text-[13px] outline-none resize-none input-3d transition-all`}
                 />
-                {validationErrors.bio && (
-                  <span className="text-[11px] text-red-500 font-semibold mt-1 block">⚠️ {validationErrors.bio}</span>
-                )}
+                <div className="flex justify-between items-center mt-1">
+                  {validationErrors.bio ? (
+                    <span className="text-[11px] text-red-500 font-semibold block">⚠️ {validationErrors.bio}</span>
+                  ) : (
+                    <span className="text-[10.5px] text-slate-400 font-medium">Author biography (20 to 1000 characters).</span>
+                  )}
+                  <span className={`text-[10.5px] font-mono ${bio.trim().length > 1000 ? 'text-red-500 font-bold' : 'text-slate-400'}`}>
+                    {bio.trim().length} / 1000
+                  </span>
+                </div>
               </div>
 
               {/* Row 6: Profile Image custom file upload */}

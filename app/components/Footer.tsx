@@ -28,6 +28,40 @@ interface FooterConfig {
   paddingY?: string;
   borderTopColor?: string;
   columns?: FooterColumn[];
+  socials?: any[];
+}
+
+function getSocialIcon(platform: string) {
+  const p = platform.toLowerCase();
+  if (p.includes('reddit')) {
+    return (
+      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+        <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-4.566 3.48a.333.333 0 0 0-.236.568c.708.707 1.84.957 2.052.957.21 0 1.344-.25 2.052-.957a.333.333 0 0 0-.471-.471c-.488.488-1.3.695-1.581.695-.282 0-1.094-.207-1.581-.695a.33.33 0 0 0-.235-.097z"/>
+      </svg>
+    );
+  }
+  if (p.includes('medium')) {
+    return (
+      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+        <path d="M13.54 12a6.8 6.8 0 0 1-6.77 6.82A6.8 6.8 0 0 1 0 12a6.8 6.8 0 0 1 6.77-6.82A6.8 6.8 0 0 1 13.54 12zM20.96 12c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42c1.87 0 3.38 2.88 3.38 6.42M24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/>
+      </svg>
+    );
+  }
+  if (p.includes('substack')) {
+    return (
+      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+        <path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/>
+      </svg>
+    );
+  }
+  if (p.includes('instagram')) {
+    return (
+      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+      </svg>
+    );
+  }
+  return <span className="font-bold text-xs">{platform.charAt(0)}</span>;
 }
 
 export default function Footer() {
@@ -70,6 +104,17 @@ export default function Footer() {
   if (!copyright.includes('Magazine Gazette')) {
     copyright = `${copyright} Magazine Gazette. All rights reserved.`;
   }
+
+  const defaultSocials = [
+    { id: 1, platform: 'Reddit', url: 'https://www.reddit.com/user/Magazinegazetter/' },
+    { id: 2, platform: 'Medium', url: 'https://medium.com/@magazinegazette367' },
+    { id: 3, platform: 'Substack', url: 'https://substack.com/@magazinegazettenews' },
+    { id: 4, platform: 'Instagram', url: 'https://www.instagram.com/magazinegazette367/' }
+  ];
+
+  const socialLinks = (config?.socials && config.socials.length > 0 && !config.socials.some((s: any) => s.url?.includes('newssite')))
+    ? config.socials
+    : defaultSocials;
   
   // Custom styling settings
   const bgColor = config?.bgColor || '#09090b';
@@ -198,6 +243,24 @@ export default function Footer() {
       >
         <div style={{ color: textColorSecondary }}>
           {copyright}
+        </div>
+
+        {/* Social Icons Bar (Right side end, opposite to all rights reserved) */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {socialLinks.map((s: any) => (
+            <a
+              key={s.id || s.platform}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={s.platform}
+              aria-label={s.platform}
+              style={{ color: textColorSecondary }}
+              className="hover:opacity-100 opacity-70 transition-all duration-200 hover:scale-110 p-1 flex items-center justify-center"
+            >
+              {getSocialIcon(s.platform)}
+            </a>
+          ))}
         </div>
       </div>
     </footer>
