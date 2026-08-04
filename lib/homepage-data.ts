@@ -3,6 +3,7 @@ import { NewsModel } from '@/models/News';
 import { CategoryModel } from '@/models/Category';
 import { HomeLayoutModel } from '@/models/HomeLayout';
 import { AdvertisementModel } from '@/models/Advertisement';
+import { DetailLayoutModel } from '@/models/DetailLayout';
 import { formatReadTime } from './formatters';
 
 export { formatReadTime };
@@ -102,5 +103,64 @@ export async function fetchActiveAds() {
   } catch (error) {
     console.error('Failed to fetch active ads from DB:', error);
     return [];
+  }
+}
+
+export async function fetchArticleBySlug(slug: string) {
+  try {
+    await connectToDatabase();
+    const art = await NewsModel.findOne({ slug, status: 'published' }).lean();
+    if (art) {
+      const paragraphs = art.blocks
+        ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
+        : [art.excerpt || ''];
+      const id = art._id.toString();
+      return JSON.parse(JSON.stringify({
+        id,
+        slug: art.slug || slug,
+        title: art.title,
+        excerpt: art.excerpt || '',
+        content: paragraphs,
+        blocks: art.blocks || [{ id: 'b-0', type: 'paragraph', value: art.excerpt || '' }],
+        category: art.category,
+        author: art.author,
+        authorTitle: 'Staff Reporter',
+        date: new Date(art.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        isoDate: new Date(art.date).toISOString(),
+        readTime: formatReadTime(art.readTime),
+        image: art.featuredImage || '/article-placeholder.jpg',
+        imageAltText: art.imageAltText || art.title,
+      }));
+    }
+  } catch (e) {
+    console.error("Failed to fetch article by slug from DB:", e);
+  }
+  return null;
+}
+
+export async function fetchDetailLayout() {
+  const defaultDetailLayout = {
+    designStyle: 'classic-sidebar',
+    colorTheme: 'crimson',
+    fontSizeDefault: 'base',
+    showShareBar: true,
+    shareBarPosition: 'bottom',
+    authorCardStyle: 'signature',
+    showComments: true,
+    trendingStoriesTitle: '',
+    discussionTitle: '',
+    sharePerspectiveTitle: ''
+  };
+
+  try {
+    await connectToDatabase();
+    let layout = await DetailLayoutModel.findOne().lean();
+    if (!layout) {
+      layout = await DetailLayoutModel.create(defaultDetailLayout);
+    }
+    return JSON.parse(JSON.stringify(layout));
+  } catch (error) {
+    console.error('Failed to fetch detail layout from DB:', error);
+    return defaultDetailLayout;
   }
 }

@@ -91,8 +91,10 @@ export default function OriginalCategoryLayout({
               <h2 className="font-editorial-title text-2xl sm:text-3.5xl font-extrabold text-zinc-900 leading-tight tracking-tight group-hover:text-zinc-700 transition">
                 {heroArticle.title}
               </h2>
-              <p className="mt-3 text-sm text-zinc-650 leading-relaxed font-sans line-clamp-[13]">
-                {heroArticle.excerpt}
+              <p className="mt-3 text-sm text-zinc-650 leading-relaxed font-sans line-clamp-[12]">
+                {(Array.isArray(heroArticle.content) && heroArticle.content.length > 0)
+                  ? heroArticle.content.join(" ")
+                  : heroArticle.excerpt}
               </p>
             </div>
             <div className="mt-6 border-t border-zinc-100 pt-3 flex items-center justify-between text-[11px] text-zinc-400 font-sans">

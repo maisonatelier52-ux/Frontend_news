@@ -437,8 +437,6 @@ function NewArticleForm() {
         const errorEl = document.querySelector('.border-red-500, .text-red-500')
         if (errorEl) {
           errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          const inputEl = errorEl.closest('div')?.querySelector('input, textarea, select') as HTMLElement
-          if (inputEl) inputEl.focus()
         }
       }, 100)
     }
@@ -536,38 +534,40 @@ function NewArticleForm() {
         setSaved(true)
         setIsDirty(false)
         
-        // Reset form fields
-        setForm({
-          title: '',
-          slug: '',
-          category: '',
-          author: '',
-          newsType: 'featured',
-          date: '',
-          readTime: '',
-          status: '',
-          seoTitle: '',
-          seoMetaDescription: '',
-          keywords: '',
-          tags: '',
-          excerpt: '',
-          featuredImage: '',
-          imageAltText: '',
-          featuredVideoUrl: '',
-          cardLabel: '',
-        })
-        setOptions({
-          featuredArticle: false,
-          editorsPick: false,
-          breakingNews: false,
-          allowComments: true,
-        })
-        setBlocks([
-          { id: 'initial-1', type: 'paragraph', value: '' }
-        ])
-        setImagePreview(null)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ''
+        if (!articleId) {
+          // Reset form fields only when creating a new article
+          setForm({
+            title: '',
+            slug: '',
+            category: '',
+            author: '',
+            newsType: 'featured',
+            date: '',
+            readTime: '',
+            status: '',
+            seoTitle: '',
+            seoMetaDescription: '',
+            keywords: '',
+            tags: '',
+            excerpt: '',
+            featuredImage: '',
+            imageAltText: '',
+            featuredVideoUrl: '',
+            cardLabel: '',
+          })
+          setOptions({
+            featuredArticle: false,
+            editorsPick: false,
+            breakingNews: false,
+            allowComments: true,
+          })
+          setBlocks([
+            { id: 'initial-1', type: 'paragraph', value: '' }
+          ])
+          setImagePreview(null)
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
         }
 
         const bottomContainer = document.getElementById('form-actions-bottom')
@@ -575,12 +575,10 @@ function NewArticleForm() {
           bottomContainer.scrollIntoView({ behavior: 'smooth' })
         }
         
-        // Redirect to admin news articles page after a short delay
+        // Hide success alert after 3 seconds without navigating away
         setTimeout(() => {
           setSaved(false)
-          router.push('/admin/news')
-          router.refresh()
-        }, 1500)
+        }, 3000)
       } else {
         const errData = await res.json()
         setSaveError(errData.error || 'Failed to save article')
@@ -749,7 +747,15 @@ function NewArticleForm() {
         ))}
       </div>
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start">
+      <form
+        onSubmit={handleSave}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+            e.preventDefault()
+          }
+        }}
+        className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-start"
+      >
         
         {/* LEFT COLUMN: Main tab card contents (7 cols) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
