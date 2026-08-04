@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { fetchArticleBySlug, fetchHomeArticles, fetchDetailLayout, fetchActiveAds } from "@/lib/homepage-data";
 import DetailPageExperience from "@/app/components/DetailPageExperience";
+import { getBaseUrl, getFullImageUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
     };
   }
 
+  const baseUrl = getBaseUrl();
   const title = article.seoTitle && article.seoTitle.trim()
     ? article.seoTitle.trim()
     : `${article.title} | Magazine Gazette`;
@@ -44,24 +46,25 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
   }
 
   const rawImage = article.image || article.featuredImage;
-  const ogImage = rawImage && rawImage.trim() ? rawImage : "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+  const ogImage = getFullImageUrl(rawImage);
+  const articleUrl = `${baseUrl}/article/${slug}`;
 
   return {
-    metadataBase: new URL("https://www.magazinegazette.com"),
+    metadataBase: new URL(baseUrl),
     title,
     description,
     keywords,
     alternates: {
-      canonical: `https://www.magazinegazette.com/article/${slug}`,
+      canonical: articleUrl,
     },
     openGraph: {
       title,
       description,
-      url: `https://www.magazinegazette.com/article/${slug}`,
+      url: articleUrl,
       siteName: 'Magazine Gazette',
       type: 'article',
       publishedTime: article.isoDate || article.date,
-      authors: [article.author],
+      authors: [typeof article.author === 'object' ? article.author?.name : (article.author || 'Magazine Gazette Staff')],
       images: [
         {
           url: ogImage,

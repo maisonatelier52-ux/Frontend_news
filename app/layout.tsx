@@ -20,10 +20,13 @@ const lora = Lora({
   subsets: ["latin"],
 });
 
+import { getBaseUrl, getFullImageUrl } from "@/lib/site-url";
+
 export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = getBaseUrl();
   const defaultTitle = "Magazine Gazette | US & World News, Analysis & Opinion";
   const defaultDescription = "Independent, in-depth journalism covering politics, business, technology, science, culture, and sports.";
-  const logoImage = "https://www.magazinegazette.com/images/magazinegazette-logo.jpg";
+  const logoImage = getFullImageUrl("/images/magazinegazette-logo.jpg");
 
   let title = defaultTitle;
   let description = defaultDescription;
@@ -40,13 +43,13 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    metadataBase: new URL("https://www.magazinegazette.com"),
+    metadataBase: new URL(baseUrl),
     title,
     description,
     openGraph: {
       title,
       description,
-      url: "https://www.magazinegazette.com",
+      url: baseUrl,
       siteName: "Magazine Gazette",
       type: "website",
       images: [
