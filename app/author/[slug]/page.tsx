@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import StaticPageLayout from '@/app/components/StaticPageLayout';
 import Link from 'next/link';
+import { getArticleUrl } from "@/lib/site-url";
 
 interface SocialLinks {
   twitter?: string;
@@ -252,7 +253,7 @@ export default function AuthorProfilePage() {
             {author.articles.map((article) => (
               <Link
                 key={article._id}
-                href={`/article/${article.slug}`}
+                href={getArticleUrl(article)}
                 className="flex gap-4 bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-md transition-all group"
               >
                 {/* Article thumbnail */}

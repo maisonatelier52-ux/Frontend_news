@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { connectToDatabase } from '@/lib/db';
 import { NewsModel } from '@/models/News';
 import { CategoryModel } from '@/models/Category';
+import { getArticleUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connectToDatabase();
 
     const categories = await CategoryModel.find({ isVisible: true });
-    const articles = await NewsModel.find({ status: 'published' }, 'slug updatedAt');
+    const articles = await NewsModel.find({ status: 'published' }, 'slug category updatedAt');
 
     const sitemapEntries: MetadataRoute.Sitemap = [
       {
@@ -34,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     articles.forEach(art => {
       sitemapEntries.push({
-        url: `${baseUrl}/article/${art.slug}`,
+        url: `${baseUrl}${getArticleUrl(art)}`,
         lastModified: art.updatedAt || new Date(),
         changeFrequency: 'monthly',
         priority: 0.6,

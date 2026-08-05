@@ -131,12 +131,22 @@ export async function GET() {
 
     const articlesList = await NewsModel.find({}, 'title slug category date excerpt status featuredImage blocks readTime');
 
+    const articleSlugs = new Set(articlesList.map(a => a.slug));
+
     // Create a map of actual views from visitor logs for articles
     const articleViewsMap = new Map<string, number>();
     contentAggregation.forEach(c => {
-      if (c._id && c._id.startsWith('/article/')) {
-        const slug = c._id.replace('/article/', '');
-        articleViewsMap.set(slug, c.count);
+      if (c._id) {
+        const parts = c._id.split('/').filter(Boolean);
+        if (parts.length === 2) {
+          const possibleSlug = parts[1];
+          if (articleSlugs.has(possibleSlug)) {
+            articleViewsMap.set(possibleSlug, (articleViewsMap.get(possibleSlug) || 0) + c.count);
+          }
+        } else if (c._id.startsWith('/article/')) {
+          const slug = c._id.replace('/article/', '');
+          articleViewsMap.set(slug, (articleViewsMap.get(slug) || 0) + c.count);
+        }
       }
     });
 

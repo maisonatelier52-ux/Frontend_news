@@ -3,6 +3,7 @@
 import { formatReadTime } from "@/lib/formatters";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getArticleUrl } from "@/lib/site-url";
 import { Article } from "../data/news";
 import Header, { HeaderLayoutSection } from "./Header";
 import LeadStory from "./LeadStory";
@@ -243,7 +244,7 @@ export default function HomePageExperience({
   const handleSelectArticle = (id: string) => {
     const article = articles.find((a) => a.id === id);
     if (article) {
-      router.push(`/article/${article.slug}`);
+      router.push(getArticleUrl(article));
     }
   };
 

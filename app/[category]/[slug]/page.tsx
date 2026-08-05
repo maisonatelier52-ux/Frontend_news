@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { fetchArticleBySlug, fetchHomeArticles, fetchDetailLayout, fetchActiveAds } from "@/lib/homepage-data";
 import DetailPageExperience from "@/app/components/DetailPageExperience";
-import { getBaseUrl, getFullImageUrl } from "@/lib/site-url";
+import { getBaseUrl, getFullImageUrl, getArticleUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
 interface ArticleDetailPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ category: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: ArticleDetailPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { category, slug } = await params;
   const article = await fetchArticleBySlug(slug);
 
   if (!article) {
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
 
   const rawImage = article.image || article.featuredImage;
   const ogImage = getFullImageUrl(rawImage);
-  const articleUrl = `${baseUrl}/article/${slug}`;
+  const articleUrl = `${baseUrl}${getArticleUrl(article)}`;
 
   return {
     metadataBase: new URL(baseUrl),
@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: ArticleDetailPageProps): Prom
 }
 
 export default async function ArticleDetailPage({ params }: ArticleDetailPageProps) {
-  const { slug } = await params;
+  const { category, slug } = await params;
 
   // Fetch article, trending articles, layout, and ads in parallel on the server
   const [article, allArticles, layout] = await Promise.all([
@@ -117,7 +117,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     "@type": "NewsArticle",
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://magazinegazette.com/article/${slug}`
+      "@id": `https://magazinegazette.com${getArticleUrl(article)}`
     },
     "headline": article.title,
     "description": article.excerpt,
@@ -161,7 +161,7 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         "@type": "ListItem",
         "position": 3,
         "name": article.title,
-        "item": `https://magazinegazette.com/article/${slug}`
+        "item": `https://magazinegazette.com${getArticleUrl(article)}`
       }
     ]
   };

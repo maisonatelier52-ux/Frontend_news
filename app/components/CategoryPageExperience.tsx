@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { getArticleUrl } from "@/lib/site-url";
 import Header from "./Header";
 import ArticleReader from "./ArticleReader";
 import type { Article } from "../data/news";
@@ -80,7 +81,7 @@ export default function CategoryPageExperience({
     if (!isPreview && selectedArticleId) {
       const article = articles.find((a) => a.id === selectedArticleId) || trendingArticles.find((a) => a.id === selectedArticleId);
       if (article) {
-        router.push(`/article/${article.slug}`);
+        router.push(getArticleUrl(article));
       }
       setSelectedArticleId(null);
     }

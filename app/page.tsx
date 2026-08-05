@@ -3,6 +3,7 @@ import HomePageExperience from "./components/HomePageExperience";
 import { fetchHomeArticles, fetchHomeLayout, fetchActiveAds } from "@/lib/homepage-data";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettingsModel } from "@/models/SiteSettings";
+import { getArticleUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export default async function Home() {
         "@type": "NewsArticle",
         "headline": art.title,
         "description": art.excerpt,
-        "url": `https://magazinegazette.com/article/${art.slug}`,
+        "url": `https://magazinegazette.com${getArticleUrl(art)}`,
         "image": art.image,
         "datePublished": art.date,
         "author": {

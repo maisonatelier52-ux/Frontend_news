@@ -29,3 +29,8 @@ export function getFullImageUrl(imagePath?: string): string {
   
   return `${baseUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 }
+
+export function getArticleUrl(article: any): string {
+  const categorySlug = (article?.category || 'article').toString().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return `/${categorySlug}/${article?.slug || ''}`;
+}

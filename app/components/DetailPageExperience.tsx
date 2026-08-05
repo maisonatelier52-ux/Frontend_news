@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getArticleUrl } from "@/lib/site-url";
 import Header from "./Header";
 import Footer from "./Footer";
 
@@ -987,7 +988,7 @@ export default function DetailPageExperience({
                     {displayTrendingArticles.map((trend, index) => (
                       <Link
                         key={trend._id || trend.id || index}
-                        href={trend.slug ? `/article/${trend.slug}` : "#"}
+                        href={trend.slug ? getArticleUrl(trend) : "#"}
                         className="flex items-start gap-4 group cursor-pointer"
                       >
                         <span className={`font-serif text-2xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none mt-0.5`}>
@@ -1065,8 +1066,8 @@ export default function DetailPageExperience({
                   {displayTrendingArticles.map((trend, index) => (
                     <Link
                       key={trend._id || trend.id || index}
-                      href={trend.slug ? `/article/${trend.slug}` : "#"}
-                      className="flex items-start gap-5 group cursor-pointer border-b border-zinc-200 py-6 first:pt-2 last:border-b-0"
+                      href={trend.slug ? getArticleUrl(trend) : "#"}
+                      className="flex items-start gap-3 group cursor-pointer border-b border-zinc-200 py-6 first:pt-2 last:border-b-0"
                     >
                       <span className={`font-serif text-3xl font-bold text-zinc-300 group-hover:text-red-600 transition-colors duration-300 leading-none select-none shrink-0 w-8 text-center mt-0.5`}>
                         {String(index + 1).padStart(2, '0')}
@@ -1137,7 +1138,7 @@ export default function DetailPageExperience({
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {displayTrendingArticles.slice(0, 4).map((art, index) => (
-              <Link key={art._id || art.id || index} href={`/article/${art.slug}`} className="group flex flex-col gap-3 cursor-pointer">
+              <Link key={art._id || art.id || index} href={getArticleUrl(art)} className="group flex flex-col gap-3 cursor-pointer">
                 <div className="w-full aspect-[4/3] overflow-hidden rounded bg-zinc-100">
                   <img 
                     src={art.image || art.featuredImage || '/article-placeholder.jpg'} 
@@ -1309,10 +1310,10 @@ export default function DetailPageExperience({
                   Recent Coverage
                 </h4>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                  {authorArticles.map((art) => (
+                  {authorArticles.map((art, index) => (
                     <Link
-                      key={art._id || art.id || art.slug}
-                      href={art.slug ? `/article/${art.slug}` : "#"}
+                      key={art._id || art.id || index}
+                      href={art.slug ? getArticleUrl(art) : "#"}
                       onClick={() => setShowAuthorPanel(false)}
                       className="p-3 bg-zinc-50 border border-zinc-205/60 hover:border-zinc-400 rounded-sm cursor-pointer transition flex justify-between gap-3 items-center group text-left block"
                     >

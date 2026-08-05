@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { NewsModel } from '@/models/News';
+import { getArticleUrl } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,8 @@ export async function GET() {
     const rssItems = articles.map(art => `
     <item>
       <title><![CDATA[${art.title}]]></title>
-      <link>${baseUrl}/article/${art.slug}</link>
-      <guid>${baseUrl}/article/${art.slug}</guid>
+      <link>${baseUrl}${getArticleUrl(art)}</link>
+      <guid>${baseUrl}${getArticleUrl(art)}</guid>
       <pubDate>${new Date(art.date).toUTCString()}</pubDate>
       <description><![CDATA[${art.excerpt || ''}]]></description>
     </item>`).join('');

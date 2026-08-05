@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { getArticleUrl } from "@/lib/site-url";
 import { NEWS_ARTICLES } from "../data/news";
 
 export interface TickerArticle {
@@ -29,7 +30,7 @@ export function StockTicker() {
             {[...breakingNews, ...breakingNews, ...breakingNews].map((article, idx) => (
               <Link
                 key={idx}
-                href={`/article/${article.slug}`}
+                href={getArticleUrl(article)}
                 className="flex items-center gap-2 group cursor-pointer hover:underline"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
@@ -291,7 +292,7 @@ export function DynamicBreakingNewsTicker({
             {[...tickerItems, ...tickerItems, ...tickerItems].map((item, idx) => (
               <Link
                 key={idx}
-                href={item.slug ? `/article/${item.slug}` : '#'}
+                href={item.slug ? getArticleUrl(item) : '#'}
                 className="flex items-center gap-2 group/item cursor-pointer hover:underline shrink-0"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
