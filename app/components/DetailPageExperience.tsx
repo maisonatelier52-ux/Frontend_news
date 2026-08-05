@@ -836,7 +836,7 @@ export default function DetailPageExperience({
                 <div className={`absolute top-0 left-0 right-0 h-1 ${accentBgClass}`} />
                 
                 {/* Top Row: Avatar, Name, Label, and Badge */}
-                <div className="flex items-center justify-between w-full gap-3 sm:gap-4">
+                <div className="flex flex-col items-start sm:flex-row sm:items-center justify-between w-full gap-3 sm:gap-4">
                   <div className="flex items-center gap-3">
                     {/* Avatar */}
                     <div className="relative shrink-0">

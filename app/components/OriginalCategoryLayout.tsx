@@ -69,7 +69,7 @@ export default function OriginalCategoryLayout({
       {/* ── Hero Feature Story ────────────────────────────────────────── */}
       {heroArticle && (
         <div
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-10 pb-10 border-b border-zinc-200"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 cursor-pointer group mb-8 pb-8 border-b border-zinc-200"
           onClick={() => onArticleClick(heroArticle.id)}
         >
           {/* Left: large image (7/12) */}
@@ -115,7 +115,7 @@ export default function OriginalCategoryLayout({
 
       {/* ── Spotlight Digest Row ─────────────────────────────────────── */}
       {isVisibleSpotlight && spotlightArticles.length > 0 && (
-        <div className="mb-10 border-t border-b border-zinc-200/70 py-8">
+        <div className="mb-8 border-b border-zinc-200/70 pb-8">
           <div className="mb-5">
             <h3 className="text-xs font-bold uppercase tracking-widest flex items-center gap-1 font-sans text-red-700">
               &bull; {spotlightDigestLabel?.trim() || `${decodedCategory.toUpperCase()} SPOTLIGHT DIGEST`}
@@ -155,7 +155,7 @@ export default function OriginalCategoryLayout({
 
       {/* ── Article List + Sidebar ───────────────────────────────────── */}
       {leftListArticles.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start border-t border-zinc-200 pt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-start pt-0">
           {/* Main list */}
           <div className={isVisibleSidebar ? "lg:col-span-8" : "lg:col-span-12"}>
             <div className="space-y-0">
