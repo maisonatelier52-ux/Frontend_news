@@ -16,7 +16,7 @@ interface OwnershipFundingConfig {
   sections?: PolicySection[];
 }
 
-function parseMarkdown(text: string) {
+function parseMarkdown(text: string): React.ReactNode {
   if (!text) return '';
   const parts = text.split(/\*\*([^*]+)\*\*/g);
   return parts.map((part, i) => {
@@ -30,7 +30,7 @@ function parseMarkdown(text: string) {
       }
       return <strong key={i} className="font-bold text-slate-900">{part}</strong>;
     }
-    return part;
+    return <React.Fragment key={i}>{part}</React.Fragment>;
   });
 }
 

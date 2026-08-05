@@ -1259,12 +1259,12 @@ export default function NewsGrid({
                 onClick={() => onSelectArticle(article.id)}
                 className="group cursor-pointer flex gap-4 items-start pt-3 first:pt-0"
               >
-                <div className="font-mono text-3xl font-black text-zinc-200 group-hover:text-zinc-400 transition leading-none">
+                <div className="font-mono text-2xl sm:text-[26px] font-black text-zinc-200 group-hover:text-zinc-400 transition leading-none mt-0.5">
                   0{idx + 1}
                 </div>
                 <div>
                   <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{article.category}</span>
-                  <h3 className="font-editorial-title text-sm font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition mt-0.5">
+                  <h3 className="font-editorial-title text-[13px] font-bold text-zinc-900 leading-snug group-hover:text-zinc-650 transition mt-0.5">
                     {article.title}
                   </h3>
                   <div className="flex items-center justify-between text-[10px] text-zinc-400 font-sans mt-1">

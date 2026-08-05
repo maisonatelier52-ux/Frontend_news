@@ -65,6 +65,19 @@ export default function DetailPageExperience({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [ads, setAds] = useState<any[]>([]);
   const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(progress);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   React.useEffect(() => {
     setCurrentUrl(window.location.href);
@@ -303,40 +316,18 @@ export default function DetailPageExperience({
 
   const renderBlock = (block: any, index: number) => {
     const fontClasses: Record<FontSize, string> = {
-      sm: "text-xs sm:text-sm leading-[1.6] text-zinc-800 font-serif",
-      base: "text-sm sm:text-base leading-[1.6] text-zinc-800 font-serif",
-      lg: "text-base sm:text-lg leading-[1.6] text-zinc-900 font-serif",
-      xl: "text-lg sm:text-xl leading-[1.6] text-zinc-900 font-serif",
+      sm: "text-[13px] sm:text-[14px] leading-[1.5] text-zinc-800 font-['Helvetica','Arial',sans-serif]",
+      base: "text-[14px] sm:text-[15px] leading-[1.5] text-zinc-800 font-['Helvetica','Arial',sans-serif]",
+      lg: "text-[15px] sm:text-[16px] leading-[1.5] text-zinc-900 font-['Helvetica','Arial',sans-serif]",
+      xl: "text-[16px] sm:text-[17px] leading-[1.5] text-zinc-900 font-['Helvetica','Arial',sans-serif]",
     };
     const fontSize = (layout.fontSizeDefault as FontSize) || "base";
 
     switch (block.type) {
       case "paragraph": {
         const text = block.value || "";
-        if (index === 0) {
-          const firstLetter = text.charAt(0);
-          const rest = text.slice(1);
-          if (designStyle === "minimal-focus") {
-            return (
-              <p key={block.id || index} className={fontClasses[fontSize]}>
-                <span className="float-left text-5xl md:text-6xl font-black font-serif mr-3 mt-1.5 text-zinc-900 border border-zinc-900 px-3 py-1 bg-zinc-55 shadow-2xs leading-[0.85] select-none">
-                  {firstLetter}
-                </span>
-                {rest}
-              </p>
-            );
-          }
-          return (
-            <p key={block.id || index} className={fontClasses[fontSize]}>
-              <span className="float-left text-5xl md:text-6xl font-bold font-serif mr-2 mt-1.5 text-zinc-900 leading-[0.8] select-none">
-                {firstLetter}
-              </span>
-              {rest}
-            </p>
-          );
-        }
         return (
-          <p key={block.id || index} className={fontClasses[fontSize]}>
+          <p key={block.id || index} className={`${fontClasses[fontSize]} mb-[0.65rem]`}>
             {text}
           </p>
         );
@@ -345,14 +336,18 @@ export default function DetailPageExperience({
       case "subheading":
       case "header":
         return (
-          <h2 key={block.id || index} className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900 pt-3 pb-2">
-            {block.value}
-          </h2>
+          <div key={block.id || index} className="relative mt-10 mb-6 flex items-center w-full">
+            <h2 className="font-editorial-title text-[22px] sm:text-[28px] font-bold text-zinc-900 relative z-10 pr-6 pl-4 border-l-4 border-red-600">
+              {/* Background highlight covering */}
+              <span className="absolute left-0 bottom-1 w-full h-[35%] bg-red-100 -z-10"></span>
+              {block.value}
+            </h2>
+          </div>
         );
 
       case "pullquote":
         return (
-          <blockquote key={block.id || index} className="border-l-4 border-zinc-900 pl-6 py-2 my-8 font-serif italic text-zinc-800 text-lg sm:text-xl max-w-xl mx-auto">
+          <blockquote key={block.id || index} className="border-l-4 border-zinc-900 pl-6 py-2 my-8 font-['Helvetica','Arial',sans-serif] italic text-zinc-800 text-[17px] sm:text-[18.5px] max-w-xl mx-auto">
             <p className="leading-relaxed">“{block.value.quote || block.value}”</p>
             {block.value.author && (
               <cite className="block text-xs font-bold text-zinc-500 font-sans uppercase tracking-widest mt-2.5 not-italic">
@@ -392,15 +387,17 @@ export default function DetailPageExperience({
         const listContent = (
           <div className="space-y-3">
             {introText && (
-              <p className="font-serif text-base sm:text-lg text-zinc-900 leading-relaxed font-semibold">
+              <p className="font-['Helvetica','Arial',sans-serif] text-[14px] sm:text-[15px] text-zinc-900 leading-relaxed font-semibold">
                 {introText}
               </p>
             )}
             {cleanItems.length > 0 && (
-              <ul className="space-y-1.5 pl-6 list-disc font-serif text-sm sm:text-base text-zinc-800 leading-relaxed">
+              <ul className="relative space-y-4 mt-2 font-['Helvetica','Arial',sans-serif] text-[13.5px] sm:text-[14.5px] text-zinc-800 leading-relaxed">
+                <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-zinc-200 z-0"></div>
                 {cleanItems.map((item: string, i: number) => (
-                  <li key={i} className="pl-1">
-                    {item}
+                  <li key={i} className="relative pl-6 group cursor-default">
+                    <span className="absolute left-[4px] top-2.5 w-2 h-2 bg-zinc-400 rounded-full transition-colors duration-300 group-hover:bg-red-600 z-10 ring-4 ring-white"></span>
+                    <span className="group-hover:text-zinc-950 transition-colors duration-300">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -588,111 +585,101 @@ export default function DetailPageExperience({
                     <div className="h-[1px] flex-grow bg-zinc-250" />
                   </div>
                 ) : (
-                  <div className="flex items-center select-none text-left">
-                    <span className={`text-[10px] ${accentColorClass} font-extrabold uppercase tracking-widest border border-zinc-200 px-3 py-1 rounded-[4px] bg-zinc-50`}>
+                  <div className="flex flex-col items-start select-none text-left mb-6">
+                    <span className="text-[12px] font-bold uppercase tracking-widest text-red-600">
                       {article.category}
                     </span>
+                    <div className="h-[2px] w-10 bg-red-600 mt-2"></div>
                   </div>
                 )}
 
                 {/* Headline */}
-                <div className={designStyle === "minimal-focus" ? "pt-2 text-center" : "pt-0.5 text-left"}>
-                  <h1 className={designStyle === "minimal-focus" ? "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-[1.08] tracking-tight px-2" : "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-black text-zinc-900 leading-[1.08] tracking-tight"}>
+                <div className={designStyle === "minimal-focus" ? "pt-2 text-center" : "text-left mb-6"}>
+                  <h1 className={designStyle === "minimal-focus" ? "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 leading-[1.1] tracking-tight px-2" : "font-serif text-3xl sm:text-4xl md:text-[3rem] font-bold text-black leading-[1.15] tracking-tight"}>
                     {article.title}
                   </h1>
                 </div>
 
+                {designStyle !== "minimal-focus" && (
+                  <div className="h-[2px] bg-red-600 mb-6 transition-all duration-75" style={{ width: `${Math.max(5, scrollProgress)}%` }}></div>
+                )}
+
                 {/* Excerpt / Subtitle */}
                 {designStyle === "minimal-focus" ? (
-                  <p className="text-center text-zinc-555 text-sm sm:text-base leading-snug italic font-serif max-w-2xl mx-auto border-none pl-0 pt-2">
+                  <p className="text-center text-zinc-600 text-[15px] sm:text-[17px] leading-relaxed italic font-serif max-w-2xl mx-auto pl-0 pt-2">
                     {article.excerpt}
                   </p>
                 ) : (
-                  <p className="text-zinc-555 text-sm sm:text-base leading-snug italic font-serif border-l-2 border-zinc-300 pl-4 py-1 text-left">
-                    {article.excerpt}
-                  </p>
+                  <div className="mb-1 mt-4 pt-2 relative">
+                    <h2 className="text-zinc-700 text-[15px] sm:text-[16.5px] leading-[1.6] font-['Helvetica','Arial',sans-serif] italic text-left tracking-tight">
+                      {article.excerpt}
+                    </h2>
+                    <div className="w-full text-right mt-4 text-[11px] text-zinc-500 font-sans tracking-wide">
+                      {article.date} &nbsp;|&nbsp; {article.readTime || "5 min read"}
+                    </div>
+                  </div>
                 )}
 
                 {/* Print style Info Bar */}
                 {designStyle === "minimal-focus" ? (
-                  <div className="flex flex-wrap justify-center items-center gap-4 border-y border-zinc-250 py-3 text-xs text-zinc-500 font-medium select-none">
+                  <div className="flex flex-wrap justify-center items-center gap-4 border-y border-zinc-200 py-3 text-[13px] text-zinc-600 font-sans select-none mt-4">
                     <div>
                       By{" "}
                       <button
                         onClick={() => setShowAuthorPanel(true)}
-                        className={`font-bold text-zinc-800 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
+                        className={`font-bold text-zinc-900 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
                       >
                         {authorDetails.name}
                       </button>
-                      <span className="text-zinc-400"> • {authorDetails.role}</span>
                     </div>
-                    <span className="text-zinc-300 select-none">•</span>
-                    <div>Published {article.date}</div>
-                    <span className="text-zinc-300 select-none">•</span>
+                    <span className="text-zinc-300 select-none"> </span>
+                    <div>{article.date}</div>
+                    <span className="text-zinc-300 select-none"> </span>
                     <div>{article.readTime}</div>
                   </div>
                 ) : (
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 justify-between items-start sm:items-center border-y border-zinc-200 py-3.5 text-xs text-zinc-550 select-none">
-                    <div className="font-medium text-left">
-                      By{" "}
-                      <button
-                        onClick={() => setShowAuthorPanel(true)}
-                        className={`font-bold text-zinc-800 ${accentHoverTextClass} underline underline-offset-2 transition cursor-pointer`}
-                        title="View Author Profile"
-                      >
-                        {authorDetails.name}
-                      </button>
-                      <span className="text-zinc-400"> • {authorDetails.role}</span>
-                    </div>
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                      <div className="flex items-center gap-1.5 font-sans">
-                        <span>Published {article.date}</span>
-                        <span className="text-zinc-300">•</span>
-                        <span>{article.readTime}</span>
+                  <div className="flex flex-col mb-6 select-none">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 py-5 border-t border-zinc-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 shrink-0">
+                          {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <span className="text-[13px] font-bold text-black">
+                            By <button onClick={() => setShowAuthorPanel(true)} className="text-red-600 hover:underline">{authorDetails.name}</button>
+                          </span>
+                          <span className="text-[11px] text-zinc-500 mt-0.5">{authorDetails.role}</span>
+                        </div>
                       </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        {/* Bookmark Button */}
-                        <button
-                          onClick={handleToggleBookmark}
-                          className="text-zinc-500 hover:text-black transition cursor-pointer"
-                          title={bookmarkedIds.includes(article.id) ? "Remove Bookmark" : "Bookmark Article"}
-                        >
-                          <svg className="w-4.5 h-4.5" fill={bookmarkedIds.includes(article.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        </button>
-
-                        {/* Share Link */}
-                        <button
-                          onClick={handleShare}
-                          className="text-zinc-500 hover:text-black transition cursor-pointer relative"
-                          title="Copy Article Link"
-                        >
-                          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 10.742l4.636-2.318m0 0a3 3 0 10-4.243-4.243m4.243 4.243L13.32 12.35m0 0l4.636 2.318m0 0a3 3 0 11-4.243 4.243m4.243-4.243L13.32 12.35M6 16a3 3 0 100-6 3 3 0 000 6z" />
-                          </svg>
-                          {showShareNotification && (
-                            <span className="absolute bottom-7 right-0 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md">
-                              Link copied!
-                            </span>
-                          )}
-                        </button>
+                      
+                      <div className="flex-1 flex justify-end gap-2 pr-2">
+                        {/* Empty space or additional actions can go here */}
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Main Featured Photo */}
-                <div className="relative aspect-[16/10] bg-zinc-50 rounded-xs overflow-hidden border border-zinc-200 shadow-xs">
+                <div className="relative aspect-[4/3] sm:aspect-[4/3] lg:aspect-[3/2] bg-zinc-900 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] mt-8 group isolate">
                   <img
                     src={article.image}
                     alt={article.imageAltText || article.title}
-                    className="w-full h-full object-cover filter brightness-95"
+                    className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
                   />
-                </div>
-                <div className="text-[10px] text-zinc-400 font-mono text-right italic select-none">
-                  {article.imageAltText || article.title || "Photo Credits: Unsplash Editorial Archives."}
+                  
+                  {/* Glass Reflection & Vignette */}
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10 mix-blend-overlay z-10" />
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/40 via-transparent to-transparent z-10" />
+                  <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/20 rounded-2xl z-10" />
+                  
+                  {/* Frosted Glass Credits Overlay */}
+                  <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 pointer-events-none">
+                    <div className="backdrop-blur-md bg-black/20 border border-white/20 shadow-lg py-1.5 px-3.5 rounded-full">
+                       <span className="text-[10px] sm:text-[11px] text-white/90 font-sans tracking-wide drop-shadow-sm">
+                         {article.imageAltText || article.title || "Photo Credits: Unsplash Editorial"}
+                       </span>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -735,26 +722,33 @@ export default function DetailPageExperience({
             )}
 
             {/* Article Content */}
-            <article className="mt-8 font-editorial-body space-y-3.5 pb-2 text-left">
+            <article className="mt-8 font-editorial-body space-y-2.5 pb-2 text-left">
               {(article.blocks || [{ type: "paragraph", value: article.excerpt }]).map((block: any, idx: number) => renderBlock(block, idx))}
             </article>
 
+            {/* End of Article Marker */}
+            <div className="flex justify-center items-center mt-8 mb-12 opacity-30 select-none">
+              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45"></div>
+              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45 mx-3"></div>
+              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45"></div>
+            </div>
+
             {/* Standard Bottom Share options */}
             {layout.showShareBar && layout.shareBarPosition === "bottom" && (
-              <div className="py-3.5 border-b border-zinc-200 select-none">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">
+              <div className="py-4 border-y border-zinc-100 my-4 select-none">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[11px] font-sans font-bold text-zinc-900 uppercase tracking-[0.2em]">
                       Share this story
                     </span>
-                    <div className="h-[1px] w-8 bg-zinc-200" />
+                    <div className="h-[1px] w-16 bg-zinc-200" />
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-3">
                     {/* WhatsApp */}
                     <a
                       href={`https://api.whatsapp.com/send?text=${encodeURIComponent(article.title)}%20${encodeURIComponent(currentUrl)}`}
                       target="_blank" rel="noopener noreferrer"
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-green-600 hover:border-green-600 transition flex items-center justify-center w-[34px] h-[34px]`}
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share on WhatsApp"
                     >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
@@ -764,7 +758,7 @@ export default function DetailPageExperience({
                     <a
                       href={`https://reddit.com/submit?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(article.title)}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-orange-600 hover:border-orange-600 transition flex items-center justify-center w-[34px] h-[34px]"
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share on Reddit"
                     >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 11.779c0-1.459-1.192-2.645-2.657-2.645-.715 0-1.363.275-1.84.731-1.81-1.191-4.259-1.949-6.971-2.046l1.483-4.669 4.016.941-.006.058c0 1.193.975 2.163 2.174 2.163 1.198 0 2.172-.97 2.172-2.163s-.975-2.164-2.172-2.164c-.92 0-1.704.574-2.021 1.379l-4.329-1.015c-.189-.046-.381.063-.44.249l-1.654 5.207c-2.838.034-5.409.798-7.3 2.025-.474-.438-1.103-.712-1.799-.712-1.465 0-2.656 1.187-2.656 2.646 0 .97.533 1.811 1.317 2.271-.052.282-.086.567-.086.857 0 3.911 4.808 7.093 10.719 7.093s10.72-3.182 10.72-7.093c0-.274-.029-.544-.075-.81.832-.447 1.405-1.312 1.405-2.318zm-17.224 1.816c0-.868.71-1.575 1.582-1.575.872 0 1.581.707 1.581 1.575s-.709 1.574-1.581 1.574-1.582-.706-1.582-1.574zm9.061 4.669c-.797.793-2.048 1.179-3.824 1.179l-.013-.003-.013.003c-1.777 0-3.028-.386-3.824-1.179-.145-.144-.145-.379 0-.523.145-.145.381-.145.526 0 .65.647 1.729.961 3.298.961l.013.003.013-.003c1.569 0 2.648-.315 3.298-.962.145-.145.381-.144.526 0 .145.145.145.379 0 .524zm-.189-3.095c-.872 0-1.581-.706-1.581-1.574 0-.868.709-1.575 1.581-1.575s1.581.707 1.581 1.575-.709 1.574-1.581 1.574z"/></svg>
@@ -772,9 +766,9 @@ export default function DetailPageExperience({
 
                     {/* LinkedIn */}
                     <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`}
+                      href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(article.title)}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-700 hover:border-blue-700 transition flex items-center justify-center w-[34px] h-[34px]"
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share on LinkedIn"
                     >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -783,7 +777,7 @@ export default function DetailPageExperience({
                     {/* Email */}
                     <a
                       href={`mailto:?subject=${encodeURIComponent(article.title)}&body=${encodeURIComponent("Check out this article: " + currentUrl)}`}
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-zinc-950 hover:border-zinc-950 transition flex items-center justify-center w-[34px] h-[34px]"
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share via Email"
                     >
                       <svg className="w-4 h-4 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -793,7 +787,7 @@ export default function DetailPageExperience({
                     <a
                       href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-blue-600 hover:border-blue-600 transition flex items-center justify-center w-[34px] h-[34px]"
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share on Facebook"
                     >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
@@ -803,7 +797,7 @@ export default function DetailPageExperience({
                     <a
                       href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(article.title)}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="p-2 rounded-full border border-zinc-200 text-zinc-655 hover:text-black hover:border-black transition flex items-center justify-center w-[34px] h-[34px]"
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 flex items-center justify-center"
                       title="Share on X"
                     >
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -812,14 +806,14 @@ export default function DetailPageExperience({
                     {/* Copy Link Button */}
                     <button
                       onClick={handleShare}
-                      className={`p-2 rounded-full border border-zinc-200 text-zinc-655 ${accentHoverTextClass} ${accentHoverBorderClass} transition cursor-pointer relative flex items-center justify-center w-[34px] h-[34px]`}
+                      className="w-10 h-10 rounded-full bg-zinc-50 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-all duration-300 relative flex items-center justify-center"
                       title="Copy Article Link"
                     >
                       <svg className="w-4 h-4 fill-none stroke-current" strokeWidth={2} viewBox="0 0 24 24">
                         <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                       </svg>
                       {showShareNotification && (
-                        <span className="absolute bottom-11 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-2.5 rounded whitespace-nowrap shadow-md z-20">
+                        <span className="absolute bottom-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-semibold py-1 px-3 rounded shadow-xl z-20 pointer-events-none">
                           Copied!
                         </span>
                       )}
@@ -996,14 +990,14 @@ export default function DetailPageExperience({
                         href={trend.slug ? `/article/${trend.slug}` : "#"}
                         className="flex items-start gap-4 group cursor-pointer"
                       >
-                        <span className={`font-serif text-3xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none`}>
+                        <span className={`font-serif text-2xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none mt-0.5`}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
                         <div className="space-y-1">
                           <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">
                             {trend.category}
                           </span>
-                          <h5 className={`text-xs sm:text-sm font-bold text-zinc-900 leading-snug font-serif group-hover:${accentColorClass} transition duration-300`}>
+                          <h5 className={`text-[11px] sm:text-[13px] font-bold text-zinc-900 leading-snug font-serif group-hover:${accentColorClass} transition duration-300`}>
                             {trend.title}
                           </h5>
                         </div>
@@ -1061,29 +1055,32 @@ export default function DetailPageExperience({
             `}>
               {/* Trending Stories */}
               <div className="space-y-6">
-                <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider border-b-2 border-zinc-900 pb-2 text-left">
-                  {resolvedTrendingTitle}
-                </h4>
-                <div className="space-y-5 text-left">
+                <div className="flex flex-col items-start border-b border-zinc-200 pb-0">
+                  <h4 className="text-[14px] font-bold text-black uppercase tracking-widest text-left mb-2">
+                    {resolvedTrendingTitle}
+                  </h4>
+                  <div className="h-[2px] w-12 bg-black -mb-[1px]"></div>
+                </div>
+                <div className="text-left flex flex-col">
                   {displayTrendingArticles.map((trend, index) => (
                     <Link
                       key={trend._id || trend.id || index}
                       href={trend.slug ? `/article/${trend.slug}` : "#"}
-                      className="flex items-start gap-4 group cursor-pointer"
+                      className="flex items-start gap-5 group cursor-pointer border-b border-zinc-200 py-6 first:pt-2 last:border-b-0"
                     >
-                      <span className={`font-serif text-3xl font-normal text-zinc-300 group-hover:${accentColorClass} transition duration-300 leading-none select-none`}>
+                      <span className={`font-serif text-3xl font-bold text-zinc-300 group-hover:text-red-600 transition-colors duration-300 leading-none select-none shrink-0 w-8 text-center mt-0.5`}>
                         {String(index + 1).padStart(2, '0')}
                       </span>
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">
-                          {trend.category}
-                        </span>
-                        <h5 className={`text-xs sm:text-sm font-medium text-zinc-800 leading-snug font-serif group-hover:${accentColorClass} transition duration-300`}>
+                      <div>
+                        <h5 className={`text-[13.5px] font-semibold text-zinc-800 leading-snug group-hover:underline`}>
                           {trend.title}
                         </h5>
                       </div>
                     </Link>
                   ))}
+                  <Link href="/" className="mt-4 border-2 border-red-100 bg-white text-red-600 hover:bg-red-50 text-[11px] font-bold uppercase tracking-widest text-center py-3.5 transition block w-full">
+                    View More Stories
+                  </Link>
                 </div>
               </div>
 

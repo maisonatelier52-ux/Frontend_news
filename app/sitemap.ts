@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.magazinegazette.com';
-  
+
   try {
     await connectToDatabase();
-    
+
     const categories = await CategoryModel.find({ isVisible: true });
     const articles = await NewsModel.find({ status: 'published' }, 'slug updatedAt');
 
