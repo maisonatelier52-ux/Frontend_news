@@ -359,7 +359,7 @@ export default function Header({
     const navBorder = stringSetting(sec.settings, 'navBorder', 'thin');
     const navBorderColor = stringSetting(sec.settings, 'navBorderColor', '#e4e4e7');
     
-    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center';
+    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-start md:justify-end' : 'justify-start md:justify-center';
 
     let borderStyleCss = {};
     if (navBorder === 'thin') {
@@ -415,7 +415,7 @@ export default function Header({
           </nav>
 
           {searchPlacement !== 'hidden' && (
-            <div className={`relative flex items-center w-full max-w-[200px] md:w-44 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+            <div className={`relative hidden lg:flex items-center w-full max-w-[200px] lg:w-44 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
               <form onSubmit={handleSearchSubmit} className="w-full relative flex items-center">
                 <input
                   type="text"

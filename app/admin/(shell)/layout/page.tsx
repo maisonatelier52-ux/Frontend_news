@@ -1534,7 +1534,7 @@ export default function HomeLayoutConfigPage() {
     const navBorder = sec.settings?.navBorder || 'thin'
     const navBorderColor = sec.settings?.navBorderColor || '#e4e4e7'
 
-    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-end' : 'justify-center'
+    const alignClass = alignment === 'left' ? 'justify-start' : alignment === 'right' ? 'justify-start md:justify-end' : 'justify-start md:justify-center'
 
     let borderStyleCss = {}
     if (navBorder === 'thin') {
@@ -1572,7 +1572,7 @@ export default function HomeLayoutConfigPage() {
           </nav>
 
           {searchPlacement !== 'hidden' && (
-            <div className={`relative flex items-center w-full max-w-[160px] md:w-40 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
+            <div className={`relative hidden lg:flex items-center w-full max-w-[160px] lg:w-40 shrink-0 ${searchPlacement === 'left' ? 'order-first' : 'order-last'}`}>
               <input
                 type="text"
                 readOnly

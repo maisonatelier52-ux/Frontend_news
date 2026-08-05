@@ -193,29 +193,112 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Dynamic Columns */}
-        {columns.map((col, idx) => {
+        {/* Categories Block (Col 0 & Col 1 grouped) */}
+        {columns[0] && columns[0].isVisible !== false && (
+          <div className="lg:col-span-4 flex flex-col">
+            <h5 
+              style={{ color: textColorSecondary }}
+              className="text-[10px] font-extrabold uppercase tracking-widest mb-4 font-sans"
+            >
+              {columns[0].heading || 'Categories'}
+            </h5>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 text-[13px] font-medium">
+              <div className="space-y-3 flex flex-col">
+                {columns[0].links.map((link) => {
+                  if (link.isVisible === false) return null;
+                  return (
+                    <Link 
+                      key={link.id} 
+                      href={link.url || '#'} 
+                      style={{ color: textColorPrimary }}
+                      className="hover:opacity-80 transition-opacity duration-150"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+              {columns[1] && columns[1].isVisible !== false && (
+                <div className="space-y-3 flex flex-col">
+                  {columns[1].links.map((link) => {
+                    if (link.isVisible === false) return null;
+                    return (
+                      <Link 
+                        key={link.id} 
+                        href={link.url || '#'} 
+                        style={{ color: textColorPrimary }}
+                        className="hover:opacity-80 transition-opacity duration-150"
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Other Sections Block (Col 2 & Col 3 grouped) */}
+        {columns[2] && columns[2].isVisible !== false && (
+          <div className="lg:col-span-5 flex flex-col">
+            <h5 
+              style={{ color: textColorSecondary }}
+              className="text-[10px] font-extrabold uppercase tracking-widest mb-4 font-sans"
+            >
+              {columns[2].heading || 'Other Sections'}
+            </h5>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 text-[13px] font-medium">
+              <div className="space-y-3 flex flex-col">
+                {columns[2].links.map((link) => {
+                  if (link.isVisible === false) return null;
+                  return (
+                    <Link 
+                      key={link.id} 
+                      href={link.url || '#'} 
+                      style={{ color: textColorPrimary }}
+                      className="hover:opacity-80 transition-opacity duration-150"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+              {columns[3] && columns[3].isVisible !== false && (
+                <div className="space-y-3 flex flex-col">
+                  {columns[3].links.map((link) => {
+                    if (link.isVisible === false) return null;
+                    return (
+                      <Link 
+                        key={link.id} 
+                        href={link.url || '#'} 
+                        style={{ color: textColorPrimary }}
+                        className="hover:opacity-80 transition-opacity duration-150"
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback for any extra columns (> 4) */}
+        {columns.slice(4).map((col) => {
           if (col.isVisible === false) return null;
-          const spanClass = idx === 3 ? "lg:col-span-3" : "lg:col-span-2";
-          const headingText = col.heading || "";
-          
           return (
-            <div key={col.id} className={spanClass}>
-              {headingText ? (
+            <div key={col.id} className="lg:col-span-2">
+              {col.heading && (
                 <h5 
                   style={{ color: textColorSecondary }}
                   className="text-[10px] font-extrabold uppercase tracking-widest mb-4 font-sans"
                 >
-                  {headingText}
-                </h5>
-              ) : (
-                <h5 className="text-[10px] uppercase text-transparent mb-4 font-sans select-none hidden lg:block">
-                  &nbsp;
+                  {col.heading}
                 </h5>
               )}
-              <div 
-                className="space-y-3 flex flex-col text-[13px] font-medium"
-              >
+              <div className="space-y-3 flex flex-col text-[13px] font-medium">
                 {col.links.map((link) => {
                   if (link.isVisible === false) return null;
                   return (

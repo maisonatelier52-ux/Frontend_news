@@ -480,7 +480,7 @@ export default function LeadStory({
 
   /** Right column: Breaking Updates with image thumbnail per article */
   const renderRightWithImages = (articles: Article[], limit = 3) => (
-    <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+    <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
       <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">
         Breaking Updates
       </div>
@@ -522,7 +522,7 @@ export default function LeadStory({
 
   /** Right column: standard text-only */
   const renderRightStandard = (articles: Article[]) => (
-    <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-5 justify-between">
+    <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-5 justify-between">
       <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">
         Breaking Updates
       </div>
@@ -593,7 +593,7 @@ export default function LeadStory({
               </div>
             </div>
             {/* Right: Breaking Updates — text only, 5 articles, no images */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               <div className="flex flex-col gap-0">
                 {secondaryArticles.slice(0, 5).map((article, idx) => (
@@ -625,7 +625,7 @@ export default function LeadStory({
             <div className="lg:col-span-8 flex flex-col justify-start">
               {renderLeadRow()}
               <div className="border-t border-zinc-200 mt-4 pt-3" />
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
                 {subArticles.slice(0, 2).map((article) => (
                   <div key={article.id} onClick={() => onSelectArticle(article.id)}
                     className="group cursor-pointer flex flex-col justify-start py-1 hover:bg-zinc-50/50 px-2 rounded transition-colors duration-150">
@@ -638,7 +638,7 @@ export default function LeadStory({
               </div>
             </div>
             {/* Right: Breaking Updates — text only, 4 articles, no images */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               <div className="flex flex-col gap-0">
                 {secondaryArticles.slice(0, 4).map((article, idx) => (
@@ -698,7 +698,7 @@ export default function LeadStory({
               </div>
             </div>
             {/* Right: extra news (5 total), NO author/date/time */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               <div className="flex flex-col gap-4">
                 {secondaryArticles.slice(0, 5).map((article, idx) => (
@@ -727,7 +727,7 @@ export default function LeadStory({
               {renderLeadRow()}
               <div className="border-t border-zinc-200 mt-4 pt-3" />
               {/* Only 2 sub-articles, bigger headline, 4-line description */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mt-3">
                 {subArticles.slice(0, 2).map((article) => (
                   <div key={article.id} onClick={() => onSelectArticle(article.id)}
                     className="group cursor-pointer flex flex-col justify-start py-1 hover:bg-zinc-50/50 px-2 rounded transition-colors duration-150">
@@ -742,7 +742,7 @@ export default function LeadStory({
               </div>
             </div>
             {/* Right: Breaking Updates — 1 article only, taller image, 5-line description */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               {secondaryArticles.slice(0, 1).map((article) => (
                 <div
@@ -789,7 +789,7 @@ export default function LeadStory({
             <div className="lg:col-span-8 flex flex-col justify-start">
               {renderLeadRow()}
               <div className="border-t border-zinc-200 mt-4 pt-3" />
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
                 {subArticles.slice(0, 4).map((article) => (
                   <div key={article.id} onClick={() => onSelectArticle(article.id)}
                     className="group cursor-pointer flex flex-col justify-start py-1 hover:bg-zinc-50/50 px-2 rounded transition-colors duration-150">
@@ -819,7 +819,7 @@ export default function LeadStory({
               {renderLeadRow()}
               <div className="border-t border-zinc-200 mt-5 pt-4" />
               {/* Headline-only sub-articles grid (4 items) */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-5 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mt-3">
                 {subArticles.slice(0, 4).map((article) => (
                   <div
                     key={article.id}
@@ -837,7 +837,7 @@ export default function LeadStory({
               </div>
             </div>
             {/* Right side: Breaking Updates — 5 items text-only, no images */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-4">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-4">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               <div className="flex flex-col gap-0">
                 {secondaryArticles.slice(0, 5).map((article, idx) => (
@@ -872,7 +872,7 @@ export default function LeadStory({
             </div>
             
             {/* Right: Breaking Updates — 2 articles. First is text-only, second is below with image + 5 lines description */}
-            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-5">
+            <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-5">
               <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">Breaking Updates</div>
               
               {/* First article: text-only */}
@@ -972,7 +972,7 @@ export default function LeadStory({
             <div className="border-t border-zinc-200 mt-4 pt-3" />
 
             {/* Balanced design: 4 news headlines in a 2x2 row-column design (2 left, 2 right) */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 mt-3">
               {subArticles.slice(0, 4).map((article) => (
                 <div
                   key={article.id}
@@ -1002,7 +1002,7 @@ export default function LeadStory({
           </div>
 
           {/* Right Side: Column of Secondary/Trending news (Takes 4/12 cols, divided by a vertical line) */}
-          <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 flex flex-col gap-5 justify-between">
+          <div className="lg:col-span-4 lg:border-l lg:border-zinc-200 lg:pl-6 px-2 lg:px-0 flex flex-col gap-5 justify-between">
             <div className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest border-b border-zinc-200 pb-1 mb-1">
               Breaking Updates
             </div>
