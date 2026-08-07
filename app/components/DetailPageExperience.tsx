@@ -639,8 +639,8 @@ export default function DetailPageExperience({
                     <div>{article.readTime}</div>
                   </div>
                 ) : (
-                  <div className="flex flex-col mb-6 select-none">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 py-5 border-t border-zinc-200">
+                  <div className="flex flex-col mb-0 sm:mb-6 select-none">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-3 pb-0 sm:py-5 border-t border-zinc-200">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 shrink-0">
                           {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
@@ -661,7 +661,7 @@ export default function DetailPageExperience({
                 )}
 
                 {/* Main Featured Photo */}
-                <div className="relative aspect-[4/3] sm:aspect-[4/3] lg:aspect-[3/2] bg-zinc-900 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] mt-8 group isolate">
+                <div className="relative aspect-[4/3] sm:aspect-[4/3] lg:aspect-[3/2] bg-zinc-900 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] mt-0 sm:mt-8 group isolate">
                   <img
                     src={article.image}
                     alt={article.imageAltText || article.title}
@@ -674,9 +674,9 @@ export default function DetailPageExperience({
                   <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/20 rounded-2xl z-10" />
                   
                   {/* Frosted Glass Credits Overlay */}
-                  <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 pointer-events-none">
-                    <div className="backdrop-blur-md bg-black/20 border border-white/20 shadow-lg py-1.5 px-3.5 rounded-full">
-                       <span className="text-[10px] sm:text-[11px] text-white/90 font-sans tracking-wide drop-shadow-sm">
+                  <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20 pointer-events-none max-w-[85%] sm:max-w-none">
+                    <div className="backdrop-blur-md bg-black/30 border border-white/20 shadow-lg py-0.5 px-2 sm:py-1.5 sm:px-3.5 rounded-md sm:rounded-full">
+                       <span className="text-[7px] leading-tight sm:leading-normal sm:text-[11px] text-white/90 font-sans tracking-wide drop-shadow-sm line-clamp-2 sm:line-clamp-none">
                          {article.imageAltText || article.title || "Photo Credits: Unsplash Editorial"}
                        </span>
                     </div>
@@ -1079,7 +1079,7 @@ export default function DetailPageExperience({
                       </div>
                     </Link>
                   ))}
-                  <Link href="/" className="mt-4 border-2 border-red-100 bg-white text-red-600 hover:bg-red-50 text-[11px] font-bold uppercase tracking-widest text-center py-3.5 transition block w-full">
+                  <Link href={`/${encodeURIComponent(article.category.toLowerCase())}`} className="mt-4 border-2 border-red-100 bg-white text-red-600 hover:bg-red-50 text-[11px] font-bold uppercase tracking-widest text-center py-3.5 transition block w-full">
                     View More Stories
                   </Link>
                 </div>

@@ -82,7 +82,7 @@ export default async function RootLayout({
     if (settings && settings.theme) {
       const theme = settings.theme;
       const typography = theme.typography || {};
-      
+
       const getFontFamily = (font: string) => {
         if (font === 'Lora') return 'var(--font-lora), Georgia, serif';
         if (font === 'Geist') return 'var(--font-geist-sans), ui-sans-serif, system-ui';
@@ -162,6 +162,7 @@ export default async function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
     >
+      <meta name="google-site-verification" content="klX7f41wve989en-klVooKQV43w1S3OPTrTW79cJhqc" />
       <head>
         {themeStyles && (
           <style dangerouslySetInnerHTML={{ __html: themeStyles }} />

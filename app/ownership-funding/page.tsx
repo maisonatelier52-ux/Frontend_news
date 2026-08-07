@@ -60,7 +60,7 @@ export default function OwnershipFundingPage() {
   const title = config?.title || 'Ownership & Funding';
   const subtitle = config?.subtitle || 'Editorial Independence through Transparent Revenue';
   const leadParagraph = config?.leadParagraph || 'At **Magazine Gazette**, we believe transparency about our owners and financial resources is critical to establishing trust with our readers.';
-  
+
   const sections = config?.sections || [
     {
       heading: 'Ownership Structure',
@@ -100,7 +100,7 @@ export default function OwnershipFundingPage() {
       {sections.map((sec, idx) => (
         <div key={idx} className="space-y-4">
           <h2 className="text-xl font-bold text-slate-900 mt-8 mb-3">{sec.heading}</h2>
-          
+
           <p className="text-[15px] text-slate-655 leading-relaxed whitespace-pre-line">
             {parseMarkdown(sec.content)}
           </p>

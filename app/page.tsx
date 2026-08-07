@@ -116,6 +116,7 @@ export default async function Home() {
 
   return (
     <>
+
       {/* SEO JSON-LD Structured Data Scripts */}
       <script
         type="application/ld+json"
