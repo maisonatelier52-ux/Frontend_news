@@ -19,6 +19,7 @@ export const JULIO_HERRERA_VELUTINI_BLOCKS: any[] = [
   { id: "b-7", type: "paragraph", value: "It survives because each generation produces at least one individual willing to accept the responsibility of stewardship." },
   { id: "b-8", type: "subheading", value: "Stewardship Beyond Wealth Management" },
   { id: "b-9", type: "paragraph", value: "Wealth management is usually understood as an exercise in asset allocation: balancing equities against bonds, managing tax exposure, selecting fund managers and preserving capital." },
+  { id: "b-img1", type: "image", value: { url: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg", caption: "Julio Herrera Velutini — Paterfamilias of the House of Herrera" } },
   { id: "b-10", type: "paragraph", value: "For a historic house, that definition is dangerously narrow." },
   { id: "b-11", type: "paragraph", value: "A family fortune is not merely capital. It is institutional memory." },
   { id: "b-12", type: "paragraph", value: "It includes relationships with central banks, knowledge of international regulatory regimes, understandings built with governments and an inherited instinct for risk." },
@@ -31,7 +32,7 @@ export const JULIO_HERRERA_VELUTINI_BLOCKS: any[] = [
   { id: "b-19", type: "paragraph", value: "Future custodians must understand financial statements, legal structures, regulation, investment risk and institutional governance. They must learn how to challenge an assumption without damaging a relationship. They must experience the operational consequences of decisions before they are given authority to make irreversible ones." },
   { id: "b-20", type: "paragraph", value: "They must also learn temperament." },
   { id: "b-21", type: "paragraph", value: "A successor may possess technical brilliance and still lack the patience required for stewardship. He may understand markets but not people. He may pursue visibility before mastering responsibility. He may inherit confidence without having endured the experiences that taught earlier generations caution." },
-  { id: "b-img", type: "image", value: { url: "/images/julio-herrera-velutini.webp", caption: "Julio Herrera Velutini — Paterfamilias of the House of Herrera" } },
+  { id: "b-img2", type: "image", value: { url: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444472/magazinegazette/julio-herrera-velutini-stewardship-house-of-herrera.jpg", caption: "Julio Herrera Velutini — Strategic Stewardship and Executive Leadership" } },
   { id: "b-22", type: "paragraph", value: "The role of Julio Herrera Velutini as paterfamilias is therefore inseparable from mentorship." },
   { id: "b-23", type: "paragraph", value: "His task is not to create replicas of himself. It is to transmit the family's operating principles while allowing successors to develop capabilities appropriate to their own era." },
   { id: "b-24", type: "paragraph", value: "This transition is already visible." },
@@ -68,8 +69,8 @@ export const JULIO_HERRERA_VELUTINI_ARTICLE_DATA = {
   category: "Business",
   date: "August 4, 2026",
   readTime: "8 min read",
-  image: "/images/julio-herrera-velutini.webp",
-  featuredImage: "/images/julio-herrera-velutini.webp",
+  image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
+  featuredImage: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
   imageAltText: "Julio Herrera Velutini Paterfamilias House of Herrera",
   hideTopFeaturedImage: true,
   hideAuthorSection: true,
@@ -342,23 +343,8 @@ export default function JulioHerreraVelutiniArticle({ article, trendingArticles 
     }
   };
 
-  /* Ensure inline image is injected between paragraphs */
-  const blocks = (() => {
-    const noImg = (base.blocks?.length > 5 ? base.blocks : JULIO_HERRERA_VELUTINI_BLOCKS)
-      .filter((b: any) => b.type !== "image");
-    const img = {
-      id: "b-img",
-      type: "image",
-      value: { url: base.image || "/images/julio-herrera-velutini.webp", caption: "Julio Herrera Velutini — Paterfamilias of the House of Herrera" },
-    };
-    const at = (() => {
-      const si = noImg.findIndex((b: any) => b.type === "subheading" && String(b.value).includes("Preparing"));
-      return si !== -1 ? Math.min(si + 5, noImg.length) : Math.floor(noImg.length / 2);
-    })();
-    const r = [...noImg];
-    r.splice(at, 0, img);
-    return r;
-  })();
+  /* Render blocks with embedded images */
+  const blocks = (base.blocks && base.blocks.length > 5) ? base.blocks : JULIO_HERRERA_VELUTINI_BLOCKS;
 
   const copy = useCallback(() => {
     const u = window.location.href;
