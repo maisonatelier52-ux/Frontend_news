@@ -314,13 +314,13 @@ export default function DetailPageExperience({
       setIsSubmittingComment(false);
     }
   };
-
   const renderBlock = (block: any, index: number) => {
+    // Elegant editorial font config — Lora for readable body text
     const fontClasses: Record<FontSize, string> = {
-      sm: "text-[13px] sm:text-[14px] leading-[1.5] text-zinc-800 font-['Helvetica','Arial',sans-serif]",
-      base: "text-[14px] sm:text-[15px] leading-[1.5] text-zinc-800 font-['Helvetica','Arial',sans-serif]",
-      lg: "text-[15px] sm:text-[16px] leading-[1.5] text-zinc-900 font-['Helvetica','Arial',sans-serif]",
-      xl: "text-[16px] sm:text-[17px] leading-[1.5] text-zinc-900 font-['Helvetica','Arial',sans-serif]",
+      sm:   "text-[14px]   sm:text-[14.5px] leading-[1.82] text-zinc-700 font-serif tracking-[0.005em]",
+      base: "text-[14.5px] sm:text-[15px]   leading-[1.82] text-zinc-700 font-serif tracking-[0.005em]",
+      lg:   "text-[15px]   sm:text-[15.5px] leading-[1.82] text-zinc-800 font-serif tracking-[0.005em]",
+      xl:   "text-[16px]   sm:text-[16.5px] leading-[1.82] text-zinc-800 font-serif tracking-[0.005em]",
     };
     const fontSize = (layout.fontSizeDefault as FontSize) || "base";
 
@@ -328,7 +328,7 @@ export default function DetailPageExperience({
       case "paragraph": {
         const text = block.value || "";
         return (
-          <p key={block.id || index} className={`${fontClasses[fontSize]} mb-[0.65rem]`}>
+          <p key={block.id || index} className={`${fontClasses[fontSize]} mb-5`}>
             {text}
           </p>
         );
@@ -337,10 +337,11 @@ export default function DetailPageExperience({
       case "subheading":
       case "header":
         return (
-          <div key={block.id || index} className="relative mt-10 mb-6 flex items-center w-full">
-            <h2 className="font-editorial-title text-[22px] sm:text-[28px] font-bold text-zinc-900 relative z-10 pr-6 pl-4 border-l-4 border-red-600">
-              {/* Background highlight covering */}
-              <span className="absolute left-0 bottom-1 w-full h-[35%] bg-red-100 -z-10"></span>
+          <div key={block.id || index} className="mt-12 mb-5">
+            <h2
+              style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
+              className="text-[19px] sm:text-[22px] font-semibold text-zinc-900 leading-[1.3] tracking-[-0.01em] border-b border-zinc-200 pb-3"
+            >
               {block.value}
             </h2>
           </div>
@@ -348,10 +349,18 @@ export default function DetailPageExperience({
 
       case "pullquote":
         return (
-          <blockquote key={block.id || index} className="border-l-4 border-zinc-900 pl-6 py-2 my-8 font-['Helvetica','Arial',sans-serif] italic text-zinc-800 text-[17px] sm:text-[18.5px] max-w-xl mx-auto">
-            <p className="leading-relaxed">“{block.value.quote || block.value}”</p>
+          <blockquote
+            key={block.id || index}
+            className="relative my-10 pl-6 border-l-2 border-zinc-300"
+          >
+            <p
+              style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
+              className="text-[17px] sm:text-[18px] italic text-zinc-600 leading-[1.7] tracking-[0.01em]"
+            >
+              &ldquo;{block.value.quote || block.value}&rdquo;
+            </p>
             {block.value.author && (
-              <cite className="block text-xs font-bold text-zinc-500 font-sans uppercase tracking-widest mt-2.5 not-italic">
+              <cite className="block text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-[0.15em] mt-3 not-italic">
                 — {block.value.author}
               </cite>
             )}
@@ -386,19 +395,18 @@ export default function DetailPageExperience({
         if (cleanItems.length === 0 && !introText) return null;
 
         const listContent = (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {introText && (
-              <p className="font-['Helvetica','Arial',sans-serif] text-[14px] sm:text-[15px] text-zinc-900 leading-relaxed font-semibold">
+              <p className="text-[14px] sm:text-[14.5px] text-zinc-800 leading-relaxed font-serif font-medium mb-4">
                 {introText}
               </p>
             )}
             {cleanItems.length > 0 && (
-              <ul className="relative space-y-4 mt-2 font-['Helvetica','Arial',sans-serif] text-[13.5px] sm:text-[14.5px] text-zinc-800 leading-relaxed">
-                <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-zinc-200 z-0"></div>
+              <ul className="space-y-3">
                 {cleanItems.map((item: string, i: number) => (
-                  <li key={i} className="relative pl-6 group cursor-default">
-                    <span className="absolute left-[4px] top-2.5 w-2 h-2 bg-zinc-400 rounded-full transition-colors duration-300 group-hover:bg-red-600 z-10 ring-4 ring-white"></span>
-                    <span className="group-hover:text-zinc-950 transition-colors duration-300">{item}</span>
+                  <li key={i} className="flex items-start gap-3 text-[13.5px] sm:text-[14px] text-zinc-700 font-serif leading-relaxed">
+                    <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -408,32 +416,36 @@ export default function DetailPageExperience({
 
         if (isLightBox) {
           return (
-            <div key={block.id || index} className="my-8 bg-slate-50 border border-slate-200/80 rounded-xl p-6 sm:p-7 shadow-xs">
+            <div key={block.id || index} className="my-8 bg-stone-50 border border-stone-200 rounded-lg p-6 sm:p-7">
               {listContent}
             </div>
           );
         }
 
         return (
-          <div key={block.id || index} className="my-6">
+          <div key={block.id || index} className="my-7 pl-1">
             {listContent}
           </div>
         );
       }
 
-      case "image":
+      case "image": {
+        const url = typeof block.value === 'string' ? block.value : (block.value?.url || block.url || "");
+        const caption = typeof block.value === 'object' ? (block.value?.caption || block.caption || "") : (block.caption || "");
+        if (!url) return null;
         return (
-          <figure key={block.id || index} className="my-8 space-y-2">
-            <div className="relative aspect-[16/10] bg-zinc-50 rounded-sm overflow-hidden border border-zinc-200 shadow-xs">
-              <img src={block.value.url || block.url} alt={block.value.caption || block.caption || "Image"} className="w-full h-full object-cover" />
+          <figure key={block.id || index} className="my-10 space-y-2.5">
+            <div className="relative overflow-hidden rounded-sm aspect-[16/10] bg-zinc-100">
+              <img src={url} alt={caption || "Article Image"} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]" />
             </div>
-            {(block.value.caption || block.caption) && (
-              <figcaption className="text-[11px] text-zinc-500 text-center font-sans leading-relaxed italic">
-                {block.value.caption || block.caption}
+            {caption && (
+              <figcaption className="text-[11px] text-zinc-400 text-center font-sans leading-relaxed tracking-wide">
+                {caption}
               </figcaption>
             )}
           </figure>
         );
+      }
 
       case "at-glance":
         return (
@@ -578,7 +590,7 @@ export default function DetailPageExperience({
             {/* Standard detail headers (hidden in magazine cover style) */}
             {designStyle !== "magazine-hero" && (
               <>
-                {/* Category tag */}
+                {/* ── CATEGORY LABEL ── */}
                 {designStyle === "minimal-focus" ? (
                   <div className="flex items-center justify-center gap-4 text-xs font-bold uppercase tracking-widest text-zinc-405 select-none pt-0.5">
                     <div className="h-[1px] flex-grow bg-zinc-250" />
@@ -586,43 +598,53 @@ export default function DetailPageExperience({
                     <div className="h-[1px] flex-grow bg-zinc-250" />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-start select-none text-left mb-6">
-                    <span className="text-[12px] font-bold uppercase tracking-widest text-red-600">
+                  <div className="flex items-center gap-2.5 select-none mb-5">
+                    <span className="text-[10.5px] font-sans font-bold uppercase tracking-[0.18em] text-zinc-400">
                       {article.category}
                     </span>
-                    <div className="h-[2px] w-10 bg-red-600 mt-2"></div>
+                    <span className="w-5 h-px bg-zinc-300" />
+                    <span className="text-[10.5px] font-sans text-zinc-400 tracking-wide">
+                      {article.date}
+                    </span>
+                    <span className="ml-auto text-[10.5px] font-sans text-zinc-400">
+                      {article.readTime || "8 min read"}
+                    </span>
                   </div>
                 )}
 
-                {/* Headline */}
+                {/* ── HEADLINE ── */}
                 <div className={designStyle === "minimal-focus" ? "pt-2 text-center" : "text-left mb-6"}>
-                  <h1 className={designStyle === "minimal-focus" ? "font-editorial-title text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 leading-[1.1] tracking-tight px-2" : "font-serif text-3xl sm:text-4xl md:text-[3rem] font-bold text-black leading-[1.15] tracking-tight"}>
+                  <h1
+                    style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
+                    className={designStyle === "minimal-focus"
+                      ? "text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-950 leading-[1.1] tracking-tight px-2"
+                      : "text-[2rem] sm:text-[2.4rem] md:text-[2.75rem] font-bold text-zinc-950 leading-[1.18] tracking-[-0.02em]"
+                    }
+                  >
                     {article.title}
                   </h1>
                 </div>
 
+                {/* ── THIN RULE ── */}
                 {designStyle !== "minimal-focus" && (
-                  <div className="h-[2px] bg-red-600 mb-6 transition-all duration-75" style={{ width: `${Math.max(5, scrollProgress)}%` }}></div>
+                  <div className="border-t border-zinc-200 mb-6" />
                 )}
 
-                {/* Excerpt / Subtitle */}
+                {/* ── EXCERPT (minimal-focus only) ── */}
                 {designStyle === "minimal-focus" ? (
                   <p className="text-center text-zinc-600 text-[15px] sm:text-[17px] leading-relaxed italic font-serif max-w-2xl mx-auto pl-0 pt-2">
                     {article.excerpt}
                   </p>
                 ) : (
-                  <div className="mb-1 mt-4 pt-2 relative">
-                    <h2 className="text-zinc-700 text-[15px] sm:text-[16.5px] leading-[1.6] font-['Helvetica','Arial',sans-serif] italic text-left tracking-tight">
+                  article.excerpt ? (
+                    <p className="text-zinc-500 text-[14px] sm:text-[15px] leading-[1.65] font-serif italic mb-6">
                       {article.excerpt}
-                    </h2>
-                    <div className="w-full text-right mt-4 text-[11px] text-zinc-500 font-sans tracking-wide">
-                      {article.date} &nbsp;|&nbsp; {article.readTime || "5 min read"}
-                    </div>
-                  </div>
+                    </p>
+                  ) : null
                 )}
 
-                {/* Print style Info Bar */}
-                {designStyle === "minimal-focus" ? (
+                {/* ── META BAR (minimal-focus) ── */}
+                {designStyle === "minimal-focus" && (
                   <div className="flex flex-wrap justify-center items-center gap-4 border-y border-zinc-200 py-3 text-[13px] text-zinc-600 font-sans select-none mt-4">
                     <div>
                       By{" "}
@@ -638,50 +660,42 @@ export default function DetailPageExperience({
                     <span className="text-zinc-300 select-none"> </span>
                     <div>{article.readTime}</div>
                   </div>
-                ) : (
-                  <div className="flex flex-col mb-0 sm:mb-6 select-none">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-3 pb-0 sm:py-5 border-t border-zinc-200">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 shrink-0">
-                          {authorDetails.image ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" /> : authorDetails.name.charAt(0)}
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-[13px] font-bold text-black">
-                            By <button onClick={() => setShowAuthorPanel(true)} className="text-red-600 hover:underline">{authorDetails.name}</button>
-                          </span>
-                          <span className="text-[11px] text-zinc-500 mt-0.5">{authorDetails.role}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 flex justify-end gap-2 pr-2">
-                        {/* Empty space or additional actions can go here */}
-                      </div>
+                )}
+
+                {/* ── AUTHOR ROW (non-minimal, non-hidden) ── */}
+                {designStyle !== "minimal-focus" && !article.hideAuthorSection && (
+                  <div className="flex items-center gap-3 mb-6 select-none">
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 shrink-0 text-sm">
+                      {authorDetails.image
+                        ? <img src={authorDetails.image} alt={authorDetails.name} className="w-full h-full object-cover" />
+                        : authorDetails.name.charAt(0)}
+                    </div>
+                    <div>
+                      <button onClick={() => setShowAuthorPanel(true)} className="text-[12.5px] font-sans font-semibold text-zinc-800 hover:text-red-600 transition">
+                        {authorDetails.name}
+                      </button>
+                      <p className="text-[11px] font-sans text-zinc-400">{authorDetails.role}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Main Featured Photo */}
-                <div className="relative aspect-[4/3] sm:aspect-[4/3] lg:aspect-[3/2] bg-zinc-900 rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] mt-0 sm:mt-8 group isolate">
-                  <img
-                    src={article.image}
-                    alt={article.imageAltText || article.title}
-                    className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.04]"
-                  />
-                  
-                  {/* Glass Reflection & Vignette */}
-                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-black/20 via-transparent to-white/10 mix-blend-overlay z-10" />
-                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/40 via-transparent to-transparent z-10" />
-                  <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/20 rounded-2xl z-10" />
-                  
-                  {/* Frosted Glass Credits Overlay */}
-                  <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20 pointer-events-none max-w-[85%] sm:max-w-none">
-                    <div className="backdrop-blur-md bg-black/30 border border-white/20 shadow-lg py-0.5 px-2 sm:py-1.5 sm:px-3.5 rounded-md sm:rounded-full">
-                       <span className="text-[7px] leading-tight sm:leading-normal sm:text-[11px] text-white/90 font-sans tracking-wide drop-shadow-sm line-clamp-2 sm:line-clamp-none">
-                         {article.imageAltText || article.title || "Photo Credits: Unsplash Editorial"}
-                       </span>
-                    </div>
+                {/* ── FEATURED PHOTO (if not hidden) ── */}
+                {!article.hideTopFeaturedImage && (
+                  <div className="relative overflow-hidden rounded-sm aspect-[4/3] sm:aspect-[3/2] bg-zinc-100 group">
+                    <img
+                      src={article.image}
+                      alt={article.imageAltText || article.title}
+                      className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-[1.03]"
+                    />
+                    {(article.imageAltText || article.title) && (
+                      <div className="absolute bottom-0 left-0 right-0 px-4 py-2.5 bg-gradient-to-t from-black/50 to-transparent">
+                        <span className="text-[10.5px] text-white/80 font-sans tracking-wide">
+                          {article.imageAltText || article.title}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </>
             )}
 
@@ -723,15 +737,19 @@ export default function DetailPageExperience({
             )}
 
             {/* Article Content */}
-            <article className="mt-8 font-editorial-body space-y-2.5 pb-2 text-left">
+            <article className="mt-6 pb-2 text-left">
               {(article.blocks || [{ type: "paragraph", value: article.excerpt }]).map((block: any, idx: number) => renderBlock(block, idx))}
             </article>
 
             {/* End of Article Marker */}
-            <div className="flex justify-center items-center mt-8 mb-12 opacity-30 select-none">
-              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45"></div>
-              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45 mx-3"></div>
-              <div className="w-1.5 h-1.5 bg-zinc-900 rotate-45"></div>
+            <div className="flex items-center gap-4 my-12 select-none">
+              <div className="flex-1 h-px bg-zinc-200" />
+              <div className="flex gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+              </div>
+              <div className="flex-1 h-px bg-zinc-200" />
             </div>
 
             {/* Standard Bottom Share options */}

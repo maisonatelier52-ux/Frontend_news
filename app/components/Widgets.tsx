@@ -31,7 +31,8 @@ export function StockTicker() {
               <Link
                 key={idx}
                 href={getArticleUrl(article)}
-                className="flex items-center gap-2 group cursor-pointer hover:underline"
+                className="inline-flex items-center gap-2 group cursor-pointer no-underline whitespace-nowrap shrink-0"
+                style={{ color: '#f4f4f5', textDecoration: 'none' }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
                 <span className="font-semibold text-zinc-100 group-hover:text-red-400 transition">
@@ -293,11 +294,12 @@ export function DynamicBreakingNewsTicker({
               <Link
                 key={idx}
                 href={item.slug ? getArticleUrl(item) : '#'}
-                className="flex items-center gap-2 group/item cursor-pointer hover:underline shrink-0"
+                className="inline-flex items-center gap-2 group/item cursor-pointer no-underline whitespace-nowrap shrink-0"
+                style={{ color: textColor, textDecoration: 'none' }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
                 <span
-                  className="font-semibold transition-colors group-hover/item:text-red-500"
+                  className="font-semibold transition-colors group-hover/item:text-red-300"
                   style={{ color: textColor === '#ffffff' ? '#f4f4f5' : textColor }}
                 >
                   {item.title}
@@ -311,8 +313,8 @@ export function DynamicBreakingNewsTicker({
 
     return (
       <div 
-        className={`flex-1 font-medium truncate select-text ${animClass}`}
-        style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}
+        className={`flex-1 font-medium truncate whitespace-nowrap overflow-hidden text-ellipsis select-text ${animClass}`}
+        style={{ color: textColor, '--ticker-duration': `${speed}s` } as React.CSSProperties}
       >
         {alertText}
       </div>

@@ -93,8 +93,13 @@ export async function fetchHomeArticles() {
 
     return JSON.parse(JSON.stringify(mapped));
   } catch (error) {
-    console.error('Failed to fetch home articles from DB:', error);
-    return [];
+    console.error('Failed to fetch home articles from DB, falling back to static articles:', error);
+    try {
+      const { NEWS_ARTICLES } = await import('@/app/data/news');
+      return JSON.parse(JSON.stringify(NEWS_ARTICLES));
+    } catch {
+      return [];
+    }
   }
 }
 

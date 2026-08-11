@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lora } from "next/font/google";
+import { Geist, Geist_Mono, Lora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettingsModel } from "@/models/SiteSettings";
@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 
 const lora = Lora({
   variable: "--font-lora",
+  subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
 });
 
@@ -120,13 +125,18 @@ export default async function RootLayout({
         const className = selectorMap[key];
         if (!className || !value) return '';
 
+        const cssRules: string[] = [];
+        if (value.font) cssRules.push(`font-family: ${getFontFamily(value.font)} !important;`);
+        if (value.size) cssRules.push(`font-size: ${value.size} !important;`);
+        if (value.weight) cssRules.push(`font-weight: ${value.weight} !important;`);
+        if (value.spacing) cssRules.push(`letter-spacing: ${value.spacing} !important;`);
+        if (value.height) cssRules.push(`line-height: ${value.height} !important;`);
+
+        if (cssRules.length === 0) return '';
+
         return `
           ${className} {
-            font-family: ${getFontFamily(value.font)} !important;
-            font-size: ${value.size} !important;
-            font-weight: ${value.weight} !important;
-            letter-spacing: ${value.spacing} !important;
-            line-height: ${value.height} !important;
+            ${cssRules.join('\n            ')}
           }
         `;
       }).join('\n');
@@ -160,7 +170,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} ${playfair.variable} h-full antialiased`}
     >
       <meta name="google-site-verification" content="klX7f41wve989en-klVooKQV43w1S3OPTrTW79cJhqc" />
       <head>

@@ -9,6 +9,8 @@ interface ArticleDetailPageProps {
   params: Promise<{ category: string; slug: string }>;
 }
 
+import JulioHerreraVelutiniArticle from "@/app/components/JulioHerreraVelutiniArticle";
+
 export async function generateMetadata({ params }: ArticleDetailPageProps): Promise<Metadata> {
   const { category, slug } = await params;
   const article = await fetchArticleBySlug(slug);
@@ -178,6 +180,8 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
     ? trendingArticlesFiltered.slice(0, 8) 
     : allArticles.filter((a: any) => a.slug !== article.slug).slice(0, 8);
 
+  const isJulioArticle = slug === "julio-herrera-velutini-paterfamilias-house-of-herrera";
+
   return (
     <>
       {/* SEO JSON-LD Structured Data Scripts */}
@@ -190,11 +194,19 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <DetailPageExperience
-        layout={layout}
-        article={article}
-        trendingArticles={finalTrendingArticles}
-      />
+      {isJulioArticle ? (
+        <JulioHerreraVelutiniArticle
+          layout={layout}
+          article={article}
+          trendingArticles={finalTrendingArticles}
+        />
+      ) : (
+        <DetailPageExperience
+          layout={layout}
+          article={article}
+          trendingArticles={finalTrendingArticles}
+        />
+      )}
     </>
   );
 }
