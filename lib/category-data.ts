@@ -2,6 +2,23 @@ import { connectToDatabase } from './db';
 import { NewsModel } from '@/models/News';
 import { CategoryLayoutModel } from '@/models/CategoryLayout';
 import { formatReadTime } from './formatters';
+import { NEWS_ARTICLES } from '@/app/data/news';
+
+// In-memory cache for ultra-fast category loading (60s TTL)
+const cache: Record<string, { data: any; timestamp: number }> = {};
+const CACHE_TTL_MS = 60 * 1000;
+
+function getCached<T>(key: string): T | null {
+  const item = cache[key];
+  if (item && Date.now() - item.timestamp < CACHE_TTL_MS) {
+    return item.data as T;
+  }
+  return null;
+}
+
+function setCached(key: string, data: any) {
+  cache[key] = { data, timestamp: Date.now() };
+}
 
 // Deterministic comments count based on id to prevent hydration mismatches
 function getDeterministicCommentsCount(id: string) {
@@ -14,6 +31,10 @@ function getDeterministicCommentsCount(id: string) {
 }
 
 export async function fetchCategoryLayout() {
+  const cacheKey = 'category_layout_global';
+  const cached = getCached<any>(cacheKey);
+  if (cached) return cached;
+
   const defaultCategoryLayout = {
     categoryId: 'global',
     designStyle: 'original',
@@ -26,13 +47,10 @@ export async function fetchCategoryLayout() {
 
   try {
     await connectToDatabase();
-    let layout = await CategoryLayoutModel.findOne().lean();
-    
-    if (!layout) {
-      layout = await CategoryLayoutModel.create(defaultCategoryLayout);
-    }
-
-    return JSON.parse(JSON.stringify(layout));
+    const layout = await CategoryLayoutModel.findOne().lean();
+    const result = layout ? JSON.parse(JSON.stringify(layout)) : defaultCategoryLayout;
+    setCached(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Failed to fetch category layout from DB:', error);
     return defaultCategoryLayout;
@@ -40,14 +58,32 @@ export async function fetchCategoryLayout() {
 }
 
 export async function fetchCategoryArticles(categoryName: string) {
+  const cacheKey = `category_articles_${categoryName.toLowerCase()}`;
+  const cached = getCached<any[]>(cacheKey);
+  if (cached) return cached;
+
+  const getStaticFallback = () => {
+    const staticMatches = NEWS_ARTICLES.filter(
+      (a) => a.category.toLowerCase() === categoryName.toLowerCase()
+    );
+    if (staticMatches.length > 0) return staticMatches;
+    return NEWS_ARTICLES.slice(0, 12);
+  };
+
   try {
     await connectToDatabase();
     const query = {
       status: 'published',
-      category: categoryName
+      category: { $regex: new RegExp(`^${categoryName}$`, 'i') }
     };
 
     const data = await NewsModel.find(query).sort({ date: -1 }).lean();
+
+    if (!data || data.length === 0) {
+      const fallback = getStaticFallback();
+      setCached(cacheKey, fallback);
+      return fallback;
+    }
 
     const mapped = data.map((art: any) => {
       const paragraphs = art.blocks
@@ -75,14 +111,26 @@ export async function fetchCategoryArticles(categoryName: string) {
       };
     });
 
-    return JSON.parse(JSON.stringify(mapped));
+    const result = JSON.parse(JSON.stringify(mapped));
+    setCached(cacheKey, result);
+    return result;
   } catch (error) {
-    console.error('Failed to fetch category articles from DB:', error);
-    return [];
+    console.error('Failed to fetch category articles from DB, falling back to static:', error);
+    const fallback = getStaticFallback();
+    setCached(cacheKey, fallback);
+    return fallback;
   }
 }
 
 export async function fetchTrendingArticles(categoryName: string) {
+  const cacheKey = `trending_articles_${categoryName.toLowerCase()}`;
+  const cached = getCached<any[]>(cacheKey);
+  if (cached) return cached;
+
+  const staticTrending = NEWS_ARTICLES.filter(
+    (a) => a.category.toLowerCase() !== categoryName.toLowerCase()
+  ).slice(0, 7);
+
   try {
     await connectToDatabase();
     const query = {
@@ -90,8 +138,12 @@ export async function fetchTrendingArticles(categoryName: string) {
       category: { $ne: categoryName }
     };
 
-    // Fetch latest published articles from other categories to populate the trending list
     const data = await NewsModel.find(query).sort({ date: -1 }).limit(7).lean();
+
+    if (!data || data.length === 0) {
+      setCached(cacheKey, staticTrending);
+      return staticTrending;
+    }
 
     const mapped = data.map((art: any) => {
       const paragraphs = art.blocks
@@ -119,9 +171,12 @@ export async function fetchTrendingArticles(categoryName: string) {
       };
     });
 
-    return JSON.parse(JSON.stringify(mapped));
+    const result = JSON.parse(JSON.stringify(mapped));
+    setCached(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Failed to fetch trending articles from DB:', error);
-    return [];
+    setCached(cacheKey, staticTrending);
+    return staticTrending;
   }
 }

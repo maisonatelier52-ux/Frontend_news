@@ -299,20 +299,21 @@ function Block({ block, isLede, seenTerms }: { block: any; isLede: boolean; seen
     const caption = typeof block.value === "object" ? block.value?.caption || "" : "";
     if (!url) return null;
     return (
-      <div ref={ref} style={anim} className="my-6 -mx-4 sm:mx-0">
+      <div ref={ref} style={anim} className="my-6 sm:my-8 w-full">
         <figure>
-          <div className="relative w-full aspect-[3/2] overflow-hidden bg-zinc-100 rounded-sm">
+          <div className="w-full overflow-hidden bg-zinc-100 rounded-sm border border-zinc-200/60 shadow-xs">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={url}
               alt={caption || "Article image"}
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[550px] object-cover object-top sm:object-center block"
               style={{ transition: "transform 0.8s ease" }}
-              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.02)")}
+              onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.01)")}
               onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
             />
           </div>
           {caption && (
-            <p className="text-[11px] font-sans text-zinc-500 tracking-[0.03em] mt-2 text-center italic">
+            <p className="text-[11px] font-sans text-zinc-500 tracking-[0.03em] mt-2 text-center italic px-2">
               {caption}
             </p>
           )}
