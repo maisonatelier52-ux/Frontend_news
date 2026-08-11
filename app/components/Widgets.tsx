@@ -61,10 +61,14 @@ export function DynamicBreakingNewsTicker({
 } = {}) {
   const [settings, setSettings] = useState<Record<string, any> | null>(settingsOverride || null)
   const [limit, setLimit] = useState<number>(limitOverride || 5)
+  const defaultTickerItems: TickerArticle[] = NEWS_ARTICLES.slice(0, 4).map((a) => ({
+    title: a.title,
+    slug: a.slug || a.id,
+  }));
   const [breakingArticles, setBreakingArticles] = useState<TickerArticle[]>(
-    breakingArticleTitlesOverride?.map(t => ({ title: t, slug: '#' })) || []
-  )
-  const [loaded, setLoaded] = useState(false)
+    breakingArticleTitlesOverride?.map(t => ({ title: t, slug: '#' })) || defaultTickerItems
+  );
+  const [loaded, setLoaded] = useState(true);
 
   useEffect(() => {
     if (settingsOverride || breakingArticleTitlesOverride || limitOverride !== undefined) {
@@ -129,12 +133,12 @@ export function DynamicBreakingNewsTicker({
   const customText   = settings?.customText    || ''
   const scrollSpeed  = settings?.scrollSpeed
 
-  // Fall back to static articles if none from DB
-  const fallback: TickerArticle[] = NEWS_ARTICLES.filter(a => a.isBreaking || a.isLead || a.isTrending).map(a => ({
+  // Fall back to latest 4 static news articles
+  const fallback: TickerArticle[] = NEWS_ARTICLES.slice(0, 4).map(a => ({
     title: a.title,
     slug: a.slug
   }))
-  const tickerItems = (breakingArticles.length > 0 ? breakingArticles : fallback).slice(0, limit)
+  const tickerItems = (breakingArticles.length > 0 ? breakingArticles : fallback).slice(0, 4)
   const alertText   = customText || tickerItems.map(item => item.title).join('   •   ')
 
   // Resolve border thickness, defaulting to 0 if 'none', 1 if 'thin', 3 if 'thick'.

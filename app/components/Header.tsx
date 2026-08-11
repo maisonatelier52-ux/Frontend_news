@@ -60,7 +60,18 @@ export default function Header({
   breakingArticleTitlesOverride,
 }: HeaderProps) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
-  const [categories, setCategories] = useState<string[]>(["All"]);
+  const DEFAULT_CATEGORIES = [
+    "All",
+    "Business",
+    "World",
+    "Finance",
+    "Technology",
+    "Politics",
+    "Lifestyle",
+    "Opinion",
+    "Investigation",
+  ];
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>([]);
   const [headerAds, setHeaderAds] = useState<any[]>([]);
   const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
@@ -87,15 +98,6 @@ export default function Header({
   useEffect(() => {
     async function loadData() {
       try {
-        const catRes = await fetch("/api/categories");
-        if (catRes.ok) {
-          const data = (await catRes.json()) as CategoryApiItem[];
-          const visibleCats = data
-            .filter((c) => c.isVisible !== false)
-            .map((c) => c.name);
-          setCategories(["All", ...visibleCats]);
-        }
-
         try {
           const adsRes = await fetch("/api/advertisements");
           if (adsRes.ok) {

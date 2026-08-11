@@ -98,12 +98,27 @@ if (NEWS_ARTICLES.length > 0) {
   NEWS_ARTICLES[0].isTrending = true;
 }
 
-// Assign breaking / trending status to some items
-NEWS_ARTICLES.forEach((art, idx) => {
-  if (idx > 0 && idx < 4) {
-    art.isBreaking = true;
-  }
-  if (idx < 5) {
-    art.isTrending = true;
-  }
-});
+export const JULIO_STATIC_ARTICLE: Article = {
+  id: "689073c9db655938fae1f741",
+  slug: "julio-herrera-velutini-paterfamilias-house-of-herrera",
+  title: "Paterfamilias: What It Means to Lead the House of Herrera",
+  excerpt: "For Julio Herrera Velutini, leading a historic financial family is not simply a matter of possessing its assets. It means carrying its obligations, protecting its institutions and preparing a new generation to inherit responsibility alongside wealth.",
+  content: [
+    "For Julio Herrera Velutini, leading a historic financial family is not simply a matter of possessing its assets. It means carrying its obligations, protecting its institutions and preparing a new generation to inherit responsibility alongside wealth.",
+    "A family fortune can be divided on paper. A family legacy cannot.",
+    "It lives in institutions, relationships, archives, estates, trusts, habits and expectations. It survives through the promises one generation makes—and the obligations another generation is expected to honour."
+  ],
+  category: "Business",
+  author: "Emily Davis",
+  authorTitle: "Senior Financial & Markets Correspondent",
+  date: "August 4, 2026",
+  readTime: "10 min read",
+  image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
+  isLead: false,
+  isBreaking: false,
+  isTrending: false,
+  commentsCount: 14,
+};
+
+NEWS_ARTICLES.unshift(JULIO_STATIC_ARTICLE);
+
