@@ -204,7 +204,7 @@ export default function HomePageExperience({
               id: art._id,
               slug: art.slug || art.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || art._id,
               title: art.title,
-              excerpt: art.excerpt || '',
+              excerpt: art.excerpt || (paragraphs.length > 0 ? paragraphs[0] : ''),
               content: paragraphs.length > 0 ? paragraphs : [art.excerpt || ''],
               category: art.category,
               author: art.author,
@@ -314,25 +314,39 @@ export default function HomePageExperience({
     return true;
   });
 
+  // Exclude Julio Herrera Velutini article from Hero Section (LeadStory)
+  const isJulioArticle = (a: any) => {
+    const s = (a.slug || "").toLowerCase();
+    const t = (a.title || "").toLowerCase();
+    const id = (a.id || "").toString();
+    return (
+      id === "689073c9db655938fae1f741" ||
+      s.includes("julio-herrera") ||
+      t.includes("paterfamilias") ||
+      t.includes("house of herrera")
+    );
+  };
+  const heroArticles = articles.filter((a) => !isJulioArticle(a));
+
   // Highlight Articles for home view
-  const leadArticle = articles.find((a) => a.isLead) || articles[0];
-  const breakingArticleTitles = articles
+  const leadArticle = heroArticles.find((a) => a.isLead) || heroArticles[0] || articles[0];
+  const breakingArticleTitles = heroArticles
     .filter((article) => article.isBreaking)
     .map((article) => article.title);
 
   // Secondary / Breaking news list for the Lead component
   // First pull all genuinely breaking articles, then pad with other recent articles to reach 6
   const strictBreaking = leadArticle
-    ? articles.filter((a) => a.isBreaking && a.id !== leadArticle.id)
+    ? heroArticles.filter((a) => a.isBreaking && a.id !== leadArticle.id)
     : [];
   const fillerArticles = leadArticle
-    ? articles.filter((a) => !a.isBreaking && a.id !== leadArticle.id)
+    ? heroArticles.filter((a) => !a.isBreaking && a.id !== leadArticle.id)
     : [];
   // Combine: breaking first, then fillers to reach up to 6
   const breakingArticles = [...strictBreaking, ...fillerArticles].slice(0, 6);
 
   // Sub-articles for the bottom of the lead story left-column
-  const leadSubArticles = leadArticle ? articles
+  const leadSubArticles = leadArticle ? heroArticles
     .filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
     .slice(0, 6) : [];
 

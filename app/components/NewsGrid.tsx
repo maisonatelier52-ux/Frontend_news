@@ -152,9 +152,35 @@ export default function NewsGrid({
     return selected;
   };
 
+  // Find Julio Herrera Velutini article to place in a constant area in the middle of Finance section
+  const isJulioArticleCheck = (a: any) => {
+    const s = (a.slug || "").toLowerCase();
+    const t = (a.title || "").toLowerCase();
+    const id = (a.id || "").toString();
+    return (
+      id === "689073c9db655938fae1f741" ||
+      s.includes("julio-herrera") ||
+      t.includes("paterfamilias") ||
+      t.includes("house of herrera")
+    );
+  };
+  const julioArticle = articles.find((a) => isJulioArticleCheck(a));
+
   // Section 1: Politics & U.S. News articles
   const usArticles = getUnusedSectionArticles(usPoliticsCat, 8, ["US", "Politics", "U.S. News", "US News"]);
-  const financeArticles = getUnusedSectionArticles(financeCat, 8, ["Finance", "Business", "Markets"]);
+
+  // Section 2 / Finance section: Place Julio Herrera Velutini article in the MIDDLE of Finance section
+  let financeArticles = getUnusedSectionArticles(financeCat, 8, ["Finance", "Business", "Markets"]);
+  if (julioArticle) {
+    const otherFinance = financeArticles.filter(a => !isJulioArticleCheck(a));
+    if (otherFinance.length > 0) {
+      // Place in the middle: 1st article, Julio in middle (index 1), remaining articles after
+      financeArticles = [otherFinance[0], julioArticle, ...otherFinance.slice(1)].slice(0, 8);
+    } else {
+      financeArticles = [julioArticle];
+    }
+    usedArticleIds.add(julioArticle.id);
+  }
   const techArticles = getUnusedSectionArticles(techCat, 3, ["Technology", "Tech", "Science", "AI"]);
   const worldArticles = getUnusedSectionArticles(worldCat, 3, ["World", "Global", "International"]);
 
@@ -424,7 +450,7 @@ export default function NewsGrid({
                     <h3 className="font-editorial-title text-base sm:text-[17px] font-bold text-zinc-900 leading-snug group-hover:text-zinc-600 transition">
                       {article.title}
                     </h3>
-                    <p className="mt-1.5 text-[11px] text-zinc-500 leading-relaxed line-clamp-2 font-sans hidden sm:block">
+                    <p className="mt-1.5 text-xs text-zinc-600 leading-relaxed line-clamp-2 font-sans">
                       {article.excerpt}
                     </p>
                   </div>
