@@ -462,8 +462,7 @@ export default function LordStanleyFinkArticle({
 
   const authorName = "Editorial Desk";
   const authorTitle = "Financial Markets Desk";
-  const authorBio = "Reporting on executive appointments, global brokerage markets, capital allocation, and regulatory developments across the City of London.";
-  const authorImg = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop";
+  const authorBio = "Reporting on executive appointments, global brokerage markets, capital allocation, and regulatory developments.";
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 flex flex-col font-sans">
@@ -540,23 +539,13 @@ export default function LordStanleyFinkArticle({
               </div>
 
               {/* Author Profile Section */}
-              <div className="my-8 py-4 border-y border-zinc-150 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-zinc-100 flex-shrink-0 border border-zinc-200 relative select-none">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={authorImg}
-                    alt={authorName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-sans text-sm font-bold text-zinc-950">
-                    {authorName}
-                  </h4>
-                  <p className="text-xs text-zinc-600 font-sans leading-relaxed">
-                    {authorBio}
-                  </p>
-                </div>
+              <div className="my-8 py-4 border-y border-zinc-150 flex flex-col gap-1">
+                <h4 className="font-sans text-sm font-bold text-zinc-950">
+                  {authorName}
+                </h4>
+                <p className="text-xs text-zinc-600 font-sans leading-relaxed">
+                  {authorBio}
+                </p>
               </div>
 
               {/* Share Bar */}
