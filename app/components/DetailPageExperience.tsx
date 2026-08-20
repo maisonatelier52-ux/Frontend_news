@@ -250,7 +250,21 @@ export default function DetailPageExperience({
       trend.title?.trim().toLowerCase() !== article.title?.trim().toLowerCase()
   );
 
-  const displayTrendingArticles = filteredTrendingArticles.length > 0 ? filteredTrendingArticles : (trendingArticles || []);
+  const availableArticles = filteredTrendingArticles.length > 0 ? filteredTrendingArticles : (trendingArticles || []);
+
+  // Top 6 distinct articles for sidebar Trending Stories
+  const displayTrendingArticles = availableArticles.slice(0, 6);
+  const trendingIds = new Set(
+    displayTrendingArticles.map((a: any) => a.slug || a._id || a.id || a.title)
+  );
+
+  // Distinct articles for bottom "More News" section (no overlapping articles with Trending)
+  const distinctMoreNews = availableArticles.filter(
+    (a: any) => !trendingIds.has(a.slug || a._id || a.id || a.title)
+  );
+  const moreNewsList = distinctMoreNews.length > 0 
+    ? distinctMoreNews.slice(0, 4) 
+    : availableArticles.slice(6, 10);
 
   const handleToggleBookmark = () => {
     if (bookmarkedIds.includes(article.id)) {
@@ -328,7 +342,7 @@ export default function DetailPageExperience({
       case "paragraph": {
         const text = block.value || "";
         return (
-          <p key={block.id || index} className={`${fontClasses[fontSize]} mb-5`}>
+          <p key={block.id || index} className={`${fontClasses[fontSize]} mb-3.5`}>
             {text}
           </p>
         );
@@ -337,10 +351,10 @@ export default function DetailPageExperience({
       case "subheading":
       case "header":
         return (
-          <div key={block.id || index} className="mt-12 mb-5">
+          <div key={block.id || index} className="mt-7 mb-3.5">
             <h2
               style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
-              className="text-[19px] sm:text-[22px] font-semibold text-zinc-900 leading-[1.3] tracking-[-0.01em] border-b border-zinc-200 pb-3"
+              className="text-[19px] sm:text-[22px] font-semibold text-zinc-900 leading-[1.3] tracking-[-0.01em] border-b border-zinc-200 pb-2"
             >
               {block.value}
             </h2>
@@ -351,7 +365,7 @@ export default function DetailPageExperience({
         return (
           <blockquote
             key={block.id || index}
-            className="relative my-10 pl-6 border-l-2 border-zinc-300"
+            className="relative my-6 pl-5 sm:pl-6 border-l-2 border-zinc-300"
           >
             <p
               style={{ fontFamily: "var(--font-playfair, 'Playfair Display', Georgia, serif)" }}
@@ -360,7 +374,7 @@ export default function DetailPageExperience({
               &ldquo;{block.value.quote || block.value}&rdquo;
             </p>
             {block.value.author && (
-              <cite className="block text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-[0.15em] mt-3 not-italic">
+              <cite className="block text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-[0.15em] mt-2 not-italic">
                 — {block.value.author}
               </cite>
             )}
@@ -397,12 +411,12 @@ export default function DetailPageExperience({
         const listContent = (
           <div className="space-y-2">
             {introText && (
-              <p className="text-[14px] sm:text-[14.5px] text-zinc-800 leading-relaxed font-serif font-medium mb-4">
+              <p className="text-[14px] sm:text-[14.5px] text-zinc-800 leading-relaxed font-serif font-medium mb-3">
                 {introText}
               </p>
             )}
             {cleanItems.length > 0 && (
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {cleanItems.map((item: string, i: number) => (
                   <li key={i} className="flex items-start gap-3 text-[13.5px] sm:text-[14px] text-zinc-700 font-serif leading-relaxed">
                     <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-zinc-400 shrink-0" />
@@ -416,14 +430,14 @@ export default function DetailPageExperience({
 
         if (isLightBox) {
           return (
-            <div key={block.id || index} className="my-8 bg-stone-50 border border-stone-200 rounded-lg p-6 sm:p-7">
+            <div key={block.id || index} className="my-5 bg-stone-50 border border-stone-200 rounded-lg p-5 sm:p-6">
               {listContent}
             </div>
           );
         }
 
         return (
-          <div key={block.id || index} className="my-7 pl-1">
+          <div key={block.id || index} className="my-5 pl-1">
             {listContent}
           </div>
         );
@@ -434,7 +448,7 @@ export default function DetailPageExperience({
         const caption = typeof block.value === 'object' ? (block.value?.caption || block.caption || "") : (block.caption || "");
         if (!url) return null;
         return (
-          <figure key={block.id || index} className="my-10 space-y-2.5">
+          <figure key={block.id || index} className="my-6 space-y-2">
             <div className="relative overflow-hidden rounded-sm aspect-[16/10] bg-zinc-100">
               <img src={url} alt={caption || "Article Image"} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]" />
             </div>
@@ -449,8 +463,8 @@ export default function DetailPageExperience({
 
       case "at-glance":
         return (
-          <div key={block.id || index} className={`my-8 bg-zinc-50 rounded-sm p-6 max-w-xl mx-auto space-y-4 shadow-3xs ${designStyle === "minimal-focus" ? "border-2 border-dashed border-zinc-300 bg-stone-50/60" : "border border-zinc-200"}`}>
-            <div className="border-b border-zinc-200 pb-3">
+          <div key={block.id || index} className={`my-5 bg-zinc-50 rounded-sm p-5 sm:p-6 max-w-xl mx-auto space-y-3.5 shadow-3xs ${designStyle === "minimal-focus" ? "border-2 border-dashed border-zinc-300 bg-stone-50/60" : "border border-zinc-200"}`}>
+            <div className="border-b border-zinc-200 pb-2.5">
               <h4 className="font-editorial-title text-base font-extrabold text-zinc-900 tracking-tight">
                 {block.value.title || "At a Glance"}
               </h4>
@@ -462,7 +476,7 @@ export default function DetailPageExperience({
             </div>
             <div className="divide-y divide-zinc-200/60 text-xs">
               {block.value.rows?.map((row: any, rIndex: number) => (
-                <div key={rIndex} className="py-2.5 flex justify-between items-start gap-4">
+                <div key={rIndex} className="py-2 flex justify-between items-start gap-4">
                   <span className="font-bold text-zinc-800 font-sans shrink-0 uppercase tracking-wider text-[9px]">
                     {row.label}
                   </span>
@@ -477,8 +491,8 @@ export default function DetailPageExperience({
 
       case "faq":
         return (
-          <div key={block.id || index} className={`my-8 bg-white rounded-sm p-6 space-y-5 shadow-3xs ${designStyle === "minimal-focus" ? "border-2 border-dashed border-zinc-300" : "border border-zinc-250"}`}>
-            <h4 className="font-editorial-title text-base font-extrabold text-zinc-900 border-b border-zinc-200 pb-2.5 tracking-tight">
+          <div key={block.id || index} className={`my-5 bg-white rounded-sm p-5 sm:p-6 space-y-4 shadow-3xs ${designStyle === "minimal-focus" ? "border-2 border-dashed border-zinc-300" : "border border-zinc-250"}`}>
+            <h4 className="font-editorial-title text-base font-extrabold text-zinc-900 border-b border-zinc-200 pb-2 tracking-tight">
               {block.value.title || "Frequently Asked Questions"}
             </h4>
             <div className="space-y-4">
@@ -1155,7 +1169,7 @@ export default function DetailPageExperience({
             More News
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {displayTrendingArticles.slice(0, 4).map((art, index) => (
+            {moreNewsList.map((art, index) => (
               <Link key={art._id || art.id || index} href={getArticleUrl(art)} className="group flex flex-col gap-3 cursor-pointer">
                 <div className="w-full aspect-[4/3] overflow-hidden rounded bg-zinc-100">
                   <img 

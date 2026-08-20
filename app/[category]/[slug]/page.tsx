@@ -10,6 +10,7 @@ interface ArticleDetailPageProps {
 }
 
 import JulioHerreraVelutiniArticle from "@/app/components/JulioHerreraVelutiniArticle";
+import LordStanleyFinkArticle from "@/app/components/LordStanleyFinkArticle";
 
 export async function generateMetadata({ params }: ArticleDetailPageProps): Promise<Metadata> {
   const { category, slug } = await params;
@@ -177,10 +178,13 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
   );
 
   const finalTrendingArticles = trendingArticlesFiltered.length > 0 
-    ? trendingArticlesFiltered.slice(0, 8) 
-    : allArticles.filter((a: any) => a.slug !== article.slug).slice(0, 8);
+    ? trendingArticlesFiltered 
+    : allArticles.filter((a: any) => a.slug !== article.slug);
 
   const isJulioArticle = slug === "julio-herrera-velutini-paterfamilias-house-of-herrera";
+  const isLordStanleyArticle =
+    slug === "lord-stanley-fink-chairman-britannia-global-markets" ||
+    slug === "lord-stanley-fink-takes-chair-seat-at-britannia";
 
   return (
     <>
@@ -196,6 +200,12 @@ export default async function ArticleDetailPage({ params }: ArticleDetailPagePro
 
       {isJulioArticle ? (
         <JulioHerreraVelutiniArticle
+          layout={layout}
+          article={article}
+          trendingArticles={finalTrendingArticles}
+        />
+      ) : isLordStanleyArticle ? (
+        <LordStanleyFinkArticle
           layout={layout}
           article={article}
           trendingArticles={finalTrendingArticles}

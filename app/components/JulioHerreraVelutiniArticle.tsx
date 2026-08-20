@@ -170,7 +170,7 @@ export const JULIO_HERRERA_VELUTINI_ARTICLE_DATA = {
   category: "Business",
   author: "Emily Davis",
   authorTitle: "Senior Financial & Markets Correspondent",
-  date: "August 4, 2026",
+  date: "August 20, 2026",
   readTime: "10 min read",
   image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
   featuredImage: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
@@ -257,7 +257,7 @@ function Block({ block, isLede, seenTerms }: { block: any; isLede: boolean; seen
   /* SUBHEADING */
   if (block.type === "subheading" || block.type === "header") {
     return (
-      <div ref={ref} style={anim} className="mt-10 mb-4">
+      <div ref={ref} style={anim} className="mt-7 mb-3">
         <div className="border-l-[2.5px] border-zinc-900 pl-3.5 py-0.5">
           <h2
             style={pf}
@@ -381,6 +381,18 @@ export default function JulioHerreraVelutiniArticle({ article, trendingArticles 
     blocks: JULIO_HERRERA_VELUTINI_BLOCKS,
   };
 
+  // Distinct sets for Trending sidebar (limit 6) and More News section (no overlapping articles)
+  const trendingList = trendingArticles.slice(0, 6);
+  const trendingIds = new Set(
+    trendingList.map((a: any) => a.slug || a._id || a.id || a.title)
+  );
+  const distinctMoreNews = trendingArticles.filter(
+    (a: any) => !trendingIds.has(a.slug || a._id || a.id || a.title)
+  );
+  const moreNewsList = distinctMoreNews.length > 0
+    ? distinctMoreNews.slice(0, 4)
+    : trendingArticles.slice(6, 10);
+
   // Load comments
   useEffect(() => {
     async function loadComments() {
@@ -484,9 +496,8 @@ export default function JulioHerreraVelutiniArticle({ article, trendingArticles 
 
       <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* ══ UNIFIED GRID (Meta line & Trending start at exact same line) ════════════════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-14 xl:gap-x-20 pt-6 sm:pt-8 pb-16">
-
+        {/* ══ UNIFIED GRID (Article Column + Vertical Divider + Sticky Trending Sidebar) ════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-10 xl:gap-x-14 pt-6 sm:pt-8 pb-16">
           {/* ── Article column ─────────────────────────────────────── */}
           <main className="lg:col-span-8 xl:col-span-7">
 
@@ -673,17 +684,17 @@ export default function JulioHerreraVelutiniArticle({ article, trendingArticles 
             </div>
           </main>
 
-          {/* ── Sidebar (Aligned & tight sticky top-6) ────────────────────────────────────────── */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-5">
+          {/* ── Sidebar (Aligned & thin separation line) ─────────────────────────── */}
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-5 lg:border-l lg:border-zinc-200 lg:pl-10 xl:pl-12">
             <div className="sticky top-6">
               {/* Trending */}
-              {trendingArticles.length > 0 && (
+              {trendingList.length > 0 && (
                 <div>
                   <p className="text-[11px] font-sans font-semibold uppercase tracking-[0.18em] text-zinc-600 mb-5 select-none">
                     Trending
                   </p>
                   <div className="space-y-px">
-                    {trendingArticles.slice(0, 6).map((a: any, i: number) => (
+                    {trendingList.map((a: any, i: number) => (
                       <a
                         key={a._id || a.slug || i}
                         href={`/${(a.category || "news").toLowerCase()}/${a.slug}`}
@@ -714,14 +725,14 @@ export default function JulioHerreraVelutiniArticle({ article, trendingArticles 
       </div>
 
       {/* More News Section */}
-      {trendingArticles.length > 0 && (
+      {moreNewsList.length > 0 && (
         <div className="w-full border-t border-zinc-200 py-10 bg-zinc-50/50">
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 select-none">
             <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-wide mb-6">
               More News
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {trendingArticles.slice(0, 4).map((art, index) => (
+              {moreNewsList.map((art: any, index: number) => (
                 <Link key={art._id || art.id || index} href={getArticleUrl(art)} className="group flex flex-col gap-3 cursor-pointer">
                   <div className="w-full aspect-[4/3] overflow-hidden rounded-sm bg-zinc-100">
                     <img

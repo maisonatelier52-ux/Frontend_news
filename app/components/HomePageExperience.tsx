@@ -314,41 +314,70 @@ export default function HomePageExperience({
     return true;
   });
 
-  // Exclude Julio Herrera Velutini article from Hero Section (LeadStory)
+  // Helper to identify Lord Stanley Fink article
+  const isLordStanleyArticle = (a: any) => {
+    const s = (a.slug || "").toLowerCase();
+    const t = (a.title || "").toLowerCase();
+    const id = (a.id || "").toString();
+    return (
+      id === "6a869e4960319e5ae33d238a" ||
+      id === "6a869fc060319e5ae33d23c2" ||
+      s.includes("lord-stanley") ||
+      t.includes("lord stanley") ||
+      t.includes("britannia global markets")
+    );
+  };
+
+  // Helper to identify Julio Herrera Velutini article
   const isJulioArticle = (a: any) => {
     const s = (a.slug || "").toLowerCase();
     const t = (a.title || "").toLowerCase();
     const id = (a.id || "").toString();
     return (
       id === "689073c9db655938fae1f741" ||
+      id === "6a71ab299169ff0fb9a08f87" ||
       s.includes("julio-herrera") ||
       t.includes("paterfamilias") ||
       t.includes("house of herrera")
     );
   };
-  const heroArticles = articles.filter((a) => !isJulioArticle(a));
 
-  // Highlight Articles for home view
-  const leadArticle = heroArticles.find((a) => a.isLead) || heroArticles[0] || articles[0];
-  const breakingArticleTitles = heroArticles
+  const isExcludedFromLeadImage = (a: any) => isJulioArticle(a) || isLordStanleyArticle(a);
+
+  const nonLeadImageArticles = articles.filter((a) => !isExcludedFromLeadImage(a));
+  const lordStanleyArticle = articles.find((a) => isLordStanleyArticle(a));
+  const julioArticle = articles.find((a) => isJulioArticle(a));
+
+  // Lead article with image in Hero Section (e.g. 25 States Sue Over Trump's New Tariffs...)
+  const leadArticle = nonLeadImageArticles.find((a) => a.isLead) || nonLeadImageArticles[0] || articles[0];
+  const breakingArticleTitles = articles
     .filter((article) => article.isBreaking)
     .map((article) => article.title);
 
-  // Secondary / Breaking news list for the Lead component
-  // First pull all genuinely breaking articles, then pad with other recent articles to reach 6
+  // Secondary / Breaking news list for the Right Column of Lead component
   const strictBreaking = leadArticle
-    ? heroArticles.filter((a) => a.isBreaking && a.id !== leadArticle.id)
+    ? nonLeadImageArticles.filter((a) => a.isBreaking && a.id !== leadArticle.id)
     : [];
   const fillerArticles = leadArticle
-    ? heroArticles.filter((a) => !a.isBreaking && a.id !== leadArticle.id)
+    ? nonLeadImageArticles.filter((a) => !a.isBreaking && a.id !== leadArticle.id)
     : [];
   // Combine: breaking first, then fillers to reach up to 6
   const breakingArticles = [...strictBreaking, ...fillerArticles].slice(0, 6);
 
-  // Sub-articles for the bottom of the lead story left-column
-  const leadSubArticles = leadArticle ? heroArticles
-    .filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
-    .slice(0, 6) : [];
+  // Sub-articles for the bottom text grid of the lead story (Hero Section, but NO image)
+  const otherSubArticles = leadArticle
+    ? nonLeadImageArticles.filter((a) => a.id !== leadArticle.id && !breakingArticles.some((b) => b.id === a.id))
+    : [];
+
+  const heroSubList: any[] = [];
+  if (lordStanleyArticle) heroSubList.push(lordStanleyArticle);
+  if (julioArticle) heroSubList.push(julioArticle);
+
+  const remainingForSub = otherSubArticles.filter(
+    (a) => !heroSubList.some((h) => h.id === a.id || h.slug === a.slug)
+  );
+
+  const leadSubArticles = [...heroSubList, ...remainingForSub].slice(0, 6);
 
   // Track all article IDs used in LeadStory to prevent duplicates on the homepage
   const leadStoryUsedIds = [

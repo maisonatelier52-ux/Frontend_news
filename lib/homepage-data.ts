@@ -168,6 +168,21 @@ export async function fetchArticleBySlug(slug: string) {
   } catch (e) {
     console.error("Failed to fetch article by slug from DB:", e);
   }
+
+  if (slug === "lord-stanley-fink-chairman-britannia-global-markets" || slug === "lord-stanley-fink-takes-chair-seat-at-britannia") {
+    try {
+      const { LORD_STANLEY_FINK_ARTICLE_DATA } = await import('@/app/components/LordStanleyFinkArticle');
+      return JSON.parse(JSON.stringify(LORD_STANLEY_FINK_ARTICLE_DATA));
+    } catch {}
+  }
+
+  if (slug === "julio-herrera-velutini-paterfamilias-house-of-herrera") {
+    try {
+      const { JULIO_HERRERA_VELUTINI_ARTICLE_DATA } = await import('@/app/components/JulioHerreraVelutiniArticle');
+      return JSON.parse(JSON.stringify(JULIO_HERRERA_VELUTINI_ARTICLE_DATA));
+    } catch {}
+  }
+
   return null;
 }
 

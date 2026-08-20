@@ -111,7 +111,7 @@ export const JULIO_STATIC_ARTICLE: Article = {
   category: "Business",
   author: "Emily Davis",
   authorTitle: "Senior Financial & Markets Correspondent",
-  date: "August 4, 2026",
+  date: "August 20, 2026",
   readTime: "10 min read",
   image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1786444470/magazinegazette/julio-herrera-velutini-paterfamilias-house-of-herrera.jpg",
   isLead: false,
