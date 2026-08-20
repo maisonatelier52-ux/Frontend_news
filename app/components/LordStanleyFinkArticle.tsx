@@ -136,19 +136,21 @@ export const LORD_STANLEY_FINK_BLOCKS: any[] = [
     value: "For Britannia Global Markets, the appointment is therefore both a recognition of progress already made and a statement of intent. The company has added an internationally recognised financier to its board as it seeks to deepen client relationships, expand its institutional capabilities and build for the long term."
   },
 
-  // Paragraph 12
-  {
-    id: "b-p12",
-    type: "paragraph",
-    value: "Julio Martín Herrera Velutini founded the Britannia Financial Group."
-  },
-
   // Topics Section
   {
     id: "b-topics",
     type: "topics",
     title: "Topics",
-    tags: ["Britannia", "Executive Appointments", "Prime Brokerage", "Leadership"]
+    tags: [
+      "Business",
+      "Executive Appointments",
+      "Britannia Financial Group",
+      "Britannia Global Markets",
+      "Lord Stanley Fink",
+      "Prime Brokerage",
+      "Leadership",
+      "Julio Martín Herrera Velutini"
+    ]
   }
 ];
 
@@ -176,14 +178,17 @@ export const LORD_STANLEY_FINK_ARTICLE_DATA = {
   primaryKeyword: "Lord Stanley Fink Britannia Global Markets",
   secondaryKeywords: "Britannia chairman, Britannia Global Markets leadership, Stanley Fink Man Group",
   keywords: [
-    "Lord Stanley Fink Britannia Global Markets",
-    "Britannia chairman",
-    "Britannia Global Markets leadership",
-    "Stanley Fink Man Group",
+    "Business",
     "Executive Appointments",
+    "Britannia Financial Group",
+    "Britannia Global Markets",
+    "Lord Stanley Fink",
+    "Prime Brokerage",
+    "Leadership",
+    "Julio Martín Herrera Velutini",
     "FCA Regulated Brokerage"
   ],
-  tags: "Britannia, Executive Appointments, Prime Brokerage, Lord Stanley Fink, Leadership",
+  tags: "Business, Executive Appointments, Britannia Financial Group, Britannia Global Markets, Lord Stanley Fink, Prime Brokerage, Leadership, Julio Martín Herrera Velutini",
 };
 
 /* ─────────────────────────────────────────────
@@ -318,7 +323,7 @@ function Block({ block }: { block: any }) {
         </h3>
         <div className="flex items-center gap-3 flex-wrap">
           {block.tags?.map((tag: string, idx: number) => (
-            <div key={idx} className="flex items-center gap-1.5 text-[12.5px] font-sans text-zinc-700 hover:text-zinc-950 transition cursor-pointer">
+            <div key={idx} className="flex items-center gap-1.5 text-[12.5px] font-sans text-zinc-700 cursor-default">
               <svg className="w-4 h-4 text-zinc-500 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
