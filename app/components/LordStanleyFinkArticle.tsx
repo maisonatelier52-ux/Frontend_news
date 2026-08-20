@@ -105,7 +105,7 @@ export const LORD_STANLEY_FINK_BLOCKS: any[] = [
   {
     id: "b-p8",
     type: "paragraph",
-    value: "Britannia’s development in recent years has included a broader prime-brokerage proposition and strategic investment in experienced personnel. Julio Martín Herrera Velutini founded the Britannia Financial Group. Against that background, the appointment of Lord Fink provides a visible point of continuity between the firm’s established London heritage and its next stage of institutional growth."
+    value: "Britannia’s development in recent years has included a broader prime-brokerage proposition and strategic investment in experienced personnel. Against that background, the appointment of Lord Fink provides a visible point of continuity between the firm’s established London heritage and its next stage of institutional growth."
   },
 
   // Subheading: Experience suited to a growth chapter
@@ -134,6 +134,13 @@ export const LORD_STANLEY_FINK_BLOCKS: any[] = [
     id: "b-p11",
     type: "paragraph",
     value: "For Britannia Global Markets, the appointment is therefore both a recognition of progress already made and a statement of intent. The company has added an internationally recognised financier to its board as it seeks to deepen client relationships, expand its institutional capabilities and build for the long term."
+  },
+
+  // Paragraph 12
+  {
+    id: "b-p12",
+    type: "paragraph",
+    value: "Julio Martín Herrera Velutini founded the Britannia Financial Group."
   },
 
   // Topics Section
