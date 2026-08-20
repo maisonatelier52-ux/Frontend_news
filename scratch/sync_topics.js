@@ -13,13 +13,8 @@ async function run() {
   });
 
   const updatedTags = [
-    "Business",
-    "Executive Appointments",
     "Britannia Financial Group",
-    "Britannia Global Markets",
     "Lord Stanley Fink",
-    "Prime Brokerage",
-    "Leadership",
     "Julio Martín Herrera Velutini"
   ];
 
@@ -46,7 +41,7 @@ async function run() {
         } 
       }
     );
-    console.log("Updated Lord Stanley Fink topics with Julio as the last item in DB successfully!");
+    console.log("Updated Lord Stanley Fink topics with exactly 3 items in DB successfully!");
   }
 
   await mongoose.disconnect();

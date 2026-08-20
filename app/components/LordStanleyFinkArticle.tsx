@@ -142,13 +142,8 @@ export const LORD_STANLEY_FINK_BLOCKS: any[] = [
     type: "topics",
     title: "Topics",
     tags: [
-      "Business",
-      "Executive Appointments",
       "Britannia Financial Group",
-      "Britannia Global Markets",
       "Lord Stanley Fink",
-      "Prime Brokerage",
-      "Leadership",
       "Julio Martín Herrera Velutini"
     ]
   }
@@ -178,17 +173,13 @@ export const LORD_STANLEY_FINK_ARTICLE_DATA = {
   primaryKeyword: "Lord Stanley Fink Britannia Global Markets",
   secondaryKeywords: "Britannia chairman, Britannia Global Markets leadership, Stanley Fink Man Group",
   keywords: [
-    "Business",
-    "Executive Appointments",
     "Britannia Financial Group",
-    "Britannia Global Markets",
     "Lord Stanley Fink",
-    "Prime Brokerage",
-    "Leadership",
     "Julio Martín Herrera Velutini",
-    "FCA Regulated Brokerage"
+    "Britannia Global Markets",
+    "Executive Appointments"
   ],
-  tags: "Business, Executive Appointments, Britannia Financial Group, Britannia Global Markets, Lord Stanley Fink, Prime Brokerage, Leadership, Julio Martín Herrera Velutini",
+  tags: "Britannia Financial Group, Lord Stanley Fink, Julio Martín Herrera Velutini",
 };
 
 /* ─────────────────────────────────────────────
