@@ -78,7 +78,7 @@ export default function NewsletterSubscription({
       <div className="max-w-7xl mx-auto border-t border-zinc-200 pt-10">
         <div className="max-w-2xl mx-auto text-center space-y-4">
           <h3 className="font-editorial-title text-xl sm:text-2xl font-bold text-zinc-900">
-            Subscribe to Magazine Gazette
+            Subscribe to Our Newsletter
           </h3>
           <p className="text-xs text-zinc-505 text-zinc-500 max-w-md mx-auto leading-relaxed">
             Join 20,000+ readers who rely on our daily newsletter for the latest breaking news, expert analysis, and exclusive stories delivered straight to your inbox.
