@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lora, Playfair_Display } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { connectToDatabase } from "@/lib/db";
 import { SiteSettingsModel } from "@/models/SiteSettings";
@@ -180,19 +179,6 @@ export default async function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-zinc-200">
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=AW-18383246967"
-          strategy="afterInteractive"
-        />
-        <Script id="google-tag-gtag" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-
-            gtag('config', 'AW-18383246967');
-          `}
-        </Script>
         <VisitorTracker />
         {children}
       </body>

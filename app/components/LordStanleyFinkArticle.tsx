@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import Header from "./Header";
 import Footer from "./Footer";
 import { getArticleUrl } from "@/lib/site-url";
@@ -462,6 +463,24 @@ export default function LordStanleyFinkArticle({
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 flex flex-col font-sans">
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=AW-18429441939"
+        strategy="afterInteractive"
+      />
+      <Script
+        id="google-tag-gtag-fink"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'AW-18429441939');
+          `,
+        }}
+      />
+
       {/* ── Site Header ─────────────────────────────────────────────── */}
       <Header
         activeCategory={base.category}
