@@ -473,7 +473,7 @@ export default function LordStanleyFinkArticle({
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
-            function gtag(){window.dataLayer.push(arguments);}
+            function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
             gtag('config', 'AW-18429441939');
@@ -493,7 +493,7 @@ export default function LordStanleyFinkArticle({
         }}
         bookmarkCount={0}
         showBookmarksOnly={false}
-        setShowBookmarksOnly={() => {}}
+        setShowBookmarksOnly={() => { }}
       />
 
       <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -661,10 +661,10 @@ export default function LordStanleyFinkArticle({
                         <span>
                           {comment.createdAt
                             ? new Date(comment.createdAt).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
                             : comment.date}
                         </span>
                       </div>
@@ -724,11 +724,10 @@ export default function LordStanleyFinkArticle({
                   <button
                     type="submit"
                     disabled={isSubmittingComment}
-                    className={`text-white text-xs font-bold py-2.5 px-5 rounded transition font-sans ${
-                      isSubmittingComment
-                        ? "bg-zinc-400 cursor-not-allowed"
-                        : "bg-zinc-900 cursor-pointer hover:bg-zinc-800"
-                    }`}
+                    className={`text-white text-xs font-bold py-2.5 px-5 rounded transition font-sans ${isSubmittingComment
+                      ? "bg-zinc-400 cursor-not-allowed"
+                      : "bg-zinc-900 cursor-pointer hover:bg-zinc-800"
+                      }`}
                   >
                     {isSubmittingComment ? "Submitting..." : "Submit Comment"}
                   </button>
