@@ -472,11 +472,11 @@ export default function LordStanleyFinkArticle({
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
+          window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-            gtag('config', 'AW-18429441939');
+  gtag('config', 'AW-18429441939');
           `,
         }}
       />

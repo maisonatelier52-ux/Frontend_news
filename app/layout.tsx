@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Lora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { connectToDatabase } from "@/lib/db";
@@ -178,7 +179,24 @@ export default async function RootLayout({
           <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
         )}
       </head>
+
       <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-zinc-200">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18429441939"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-tag-gtag-fink"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'AW-18429441939');
+            `,
+          }}
+        />
         <VisitorTracker />
         {children}
       </body>
