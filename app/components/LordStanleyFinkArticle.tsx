@@ -463,23 +463,7 @@ export default function LordStanleyFinkArticle({
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 flex flex-col font-sans">
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=AW-18429441939"
-        strategy="afterInteractive"
-      />
-      <Script
-        id="google-tag-gtag-fink"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-          window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'AW-18429441939');
-          `,
-        }}
-      />
 
       {/* ── Site Header ─────────────────────────────────────────────── */}
       <Header

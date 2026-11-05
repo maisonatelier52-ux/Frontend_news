@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono, Lora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { connectToDatabase } from "@/lib/db";
@@ -175,19 +174,12 @@ export default async function RootLayout({
     >
       <head>
         <meta name="google-site-verification" content="klX7f41wve989en-klVooKQV43w1S3OPTrTW79cJhqc" />
-        {themeStyles && (
-          <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
-        )}
-      </head>
-
-      <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-zinc-200">
-        <Script
+        {/* Google tag (gtag.js) */}
+        <script
+          async
           src="https://www.googletagmanager.com/gtag/js?id=AW-18429441939"
-          strategy="afterInteractive"
         />
-        <Script
-          id="google-tag-gtag-fink"
-          strategy="afterInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -197,6 +189,12 @@ export default async function RootLayout({
             `,
           }}
         />
+        {themeStyles && (
+          <style dangerouslySetInnerHTML={{ __html: themeStyles }} />
+        )}
+      </head>
+
+      <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-zinc-200">
         <VisitorTracker />
         {children}
       </body>
