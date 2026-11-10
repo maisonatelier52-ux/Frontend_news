@@ -8,8 +8,10 @@ import mongoose from 'mongoose';
 let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null, lastFailedAt: 0 };
 }
+
+const RETRY_COOLDOWN_MS = 30 * 1000;
 
 export async function connectToDatabase() {
   const MONGODB_URI = process.env.MONGODB_URI;
@@ -22,18 +24,24 @@ export async function connectToDatabase() {
     return cached.conn;
   }
 
+  if (cached.lastFailedAt && Date.now() - cached.lastFailedAt < RETRY_COOLDOWN_MS) {
+    throw new Error('MongoDB connection in cooldown after recent failure');
+  }
+
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
       tls: true,
       tlsAllowInvalidCertificates: true,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 3000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
+      cached.lastFailedAt = 0;
       return mongooseInstance;
     }).catch((err) => {
       cached.promise = null;
+      cached.lastFailedAt = Date.now();
       throw err;
     });
   }
@@ -43,6 +51,7 @@ export async function connectToDatabase() {
   } catch (e) {
     cached.promise = null;
     cached.conn = null;
+    cached.lastFailedAt = Date.now();
     throw e;
   }
 
@@ -167,9 +176,9 @@ async function seedDatabase() {
       const defaultLayout = {
         templateName: 'default',
         sections: [
-          { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#dc2626', textColor: '#ffffff', customText: '' } },
-          { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#f8fafc', textColor: '#64748b' } },
-          { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { logoType: 'text', alignment: 'center', logoSize: '48px', taglineText: 'Truth, Clarity, and Perspective • Independent Journalism', taglineSize: '12px', taglineColor: '#71717a', bgColor: '#ffffff', logoColor: '#000000', logoImage: '' } },
+          { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#09090b', textColor: '#ffffff', customText: '' } },
+          { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#ffffff', textColor: '#52525b', showLocation: false } },
+          { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { logoType: 'text', alignment: 'center', logoSize: '54px', taglineText: 'Truth, Clarity, and Perspective • Independent Journalism', taglineSize: '12px', taglineColor: '#71717a', bgColor: '#ffffff', logoColor: '#000000', logoImage: '' } },
           { id: 'category-nav', title: 'Categories Navigation', isVisible: true, categorySource: 'All', order: 3, limit: 1, designStyle: 'default', colorTheme: 'indigo', settings: { bgColor: '#ffffff', alignment: 'center', activeLinkDesign: 'underline', searchPlacement: 'right', searchPlaceholder: 'Search articles...', searchBorderColor: '#e4e4e7', searchBorderThickness: '1px' } },
           { id: 'first-hero', title: 'Main Hero Story', isVisible: true, categorySource: 'All', order: 4, limit: 5, designStyle: 'hero-split', colorTheme: 'indigo', settings: {} }
         ]

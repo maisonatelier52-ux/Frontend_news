@@ -111,7 +111,20 @@ export async function fetchCategoryArticles(categoryName: string) {
       };
     });
 
-    const result = JSON.parse(JSON.stringify(mapped));
+    const staticMatches = NEWS_ARTICLES.filter(
+      (a) => a.category.toLowerCase() === categoryName.toLowerCase()
+    );
+    const existingSlugs = new Set(mapped.map((m: any) => (m.slug || '').toLowerCase()));
+    const existingTitles = new Set(mapped.map((m: any) => (m.title || '').toLowerCase().trim()));
+    const staticExtras = staticMatches.filter((s: any) => {
+      const sSlug = (s.slug || '').toLowerCase();
+      const sTitle = (s.title || '').toLowerCase().trim();
+      if (existingSlugs.has(sSlug) || existingTitles.has(sTitle)) return false;
+      if (s.alternateSlugs?.some((alt: string) => existingSlugs.has(alt.toLowerCase()))) return false;
+      return true;
+    });
+
+    const result = JSON.parse(JSON.stringify([...mapped, ...staticExtras]));
     setCached(cacheKey, result);
     return result;
   } catch (error) {

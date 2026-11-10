@@ -72,7 +72,7 @@ export default function Header({
     "Investigation",
   ];
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
-  const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>([]);
+  const [layoutSections, setLayoutSections] = useState<HeaderLayoutSection[]>(overrideSections || []);
   const [headerAds, setHeaderAds] = useState<any[]>([]);
   const [closedAdIds, setClosedAdIds] = useState<string[]>([]);
 
@@ -165,7 +165,7 @@ export default function Header({
       : `${dateBorderThickness}px solid ${dateBorderCol}`;
 
     const showDate = sec.settings?.showDate !== false;
-    const showLocation = sec.settings?.showLocation !== false;
+    const showLocation = sec.settings?.showLocation === true;
     const customLocationText = stringSetting(sec.settings, 'customLocationText', 'Washington, D.C.');
     const customExtraText = stringSetting(sec.settings, 'customExtraText', '');
     const extraTextPlacement = stringSetting(sec.settings, 'extraTextPlacement', 'right');
@@ -455,9 +455,10 @@ export default function Header({
   };
 
   const headerIds = ["breaking-news", "date-section", "domain-header", "category-nav"];
+  const effectiveSections = overrideSections && overrideSections.length > 0 ? overrideSections : layoutSections;
   
-  const sortedHeaderSections: HeaderLayoutSection[] = layoutSections.length > 0
-    ? layoutSections.filter((s) => headerIds.includes(s.id) && s.isVisible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
+  const sortedHeaderSections: HeaderLayoutSection[] = effectiveSections.length > 0
+    ? effectiveSections.filter((s) => headerIds.includes(s.id) && s.isVisible !== false).sort((a, b) => (a.order || 0) - (b.order || 0))
     : [
         { id: "breaking-news", order: 0 },
         { id: "date-section", order: 1 },

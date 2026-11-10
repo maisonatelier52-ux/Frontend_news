@@ -23,8 +23,8 @@ export async function fetchHomeLayout() {
   const defaultLayout = {
     templateName: 'default',
     sections: [
-      { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#dc2626', textColor: '#ffffff', customText: '' } },
-      { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#f8fafc', textColor: '#64748b' } },
+      { id: 'breaking-news', title: 'Breaking News Ticker', isVisible: true, categorySource: 'All', order: 0, limit: 5, designStyle: 'ticker-banner', colorTheme: 'crimson', settings: { isScrolling: true, bgColor: '#09090b', textColor: '#ffffff', customText: '' } },
+      { id: 'date-section', title: 'Date & Info Header', isVisible: true, categorySource: 'All', order: 1, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { bgColor: '#ffffff', textColor: '#52525b', showLocation: false } },
       { id: 'domain-header', title: 'Domain Logo Header', isVisible: true, categorySource: 'All', order: 2, limit: 1, designStyle: 'default', colorTheme: 'zinc', settings: { logoType: 'text', alignment: 'center', logoSize: '54px', taglineText: 'Truth, Clarity, and Perspective • Independent Journalism', taglineSize: '12px', taglineColor: '#71717a', bgColor: '#ffffff', logoColor: '#000000', logoImage: '' } },
       { id: 'category-nav', title: 'Categories Navigation', isVisible: true, categorySource: 'All', order: 3, limit: 1, designStyle: 'default', colorTheme: 'indigo', settings: { bgColor: '#ffffff', alignment: 'center', activeLinkDesign: 'underline', searchPlacement: 'right', searchPlaceholder: 'Search articles...', searchBorderColor: '#e4e4e7', searchBorderThickness: '1px' } },
       { id: 'first-hero', title: 'Main Hero Story', isVisible: true, categorySource: 'All', order: 4, limit: 5, designStyle: 'hero-split', colorTheme: 'indigo', settings: {} }
@@ -91,7 +91,22 @@ export async function fetchHomeArticles() {
       };
     });
 
-    return JSON.parse(JSON.stringify(mapped));
+    // Also merge any static JSON articles not already in DB so JSON-added articles appear on homepage
+    try {
+      const { NEWS_ARTICLES } = await import('@/app/data/news');
+      const existingSlugs = new Set(mapped.map((m: any) => (m.slug || '').toLowerCase()));
+      const existingTitles = new Set(mapped.map((m: any) => (m.title || '').toLowerCase().trim()));
+      const staticExtras = NEWS_ARTICLES.filter((s: any) => {
+        const sSlug = (s.slug || '').toLowerCase();
+        const sTitle = (s.title || '').toLowerCase().trim();
+        if (existingSlugs.has(sSlug) || existingTitles.has(sTitle)) return false;
+        if (s.alternateSlugs?.some((alt: string) => existingSlugs.has(alt.toLowerCase()))) return false;
+        return true;
+      });
+      return JSON.parse(JSON.stringify([...mapped, ...staticExtras]));
+    } catch {
+      return JSON.parse(JSON.stringify(mapped));
+    }
   } catch (error) {
     console.error('Failed to fetch home articles from DB, falling back to static articles:', error);
     try {
@@ -116,9 +131,11 @@ export async function fetchActiveAds() {
 }
 
 export async function fetchArticleBySlug(slug: string) {
+  const normalizedSlug = (slug || '').toLowerCase().trim();
+
   try {
     await connectToDatabase();
-    const art = await NewsModel.findOne({ slug, status: 'published' }).lean();
+    const art = await NewsModel.findOne({ slug: normalizedSlug, status: 'published' }).lean();
     if (art) {
       const paragraphs = art.blocks
         ? art.blocks.filter((b: any) => b.type === 'paragraph').map((b: any) => b.value)
@@ -169,18 +186,76 @@ export async function fetchArticleBySlug(slug: string) {
     console.error("Failed to fetch article by slug from DB:", e);
   }
 
-  if (slug === "lord-stanley-fink-chairman-britannia-global-markets" || slug === "lord-stanley-fink-takes-chair-seat-at-britannia") {
+  if (normalizedSlug === "lord-stanley-fink-chairman-britannia-global-markets" || normalizedSlug === "lord-stanley-fink-takes-chair-seat-at-britannia") {
     try {
       const { LORD_STANLEY_FINK_ARTICLE_DATA } = await import('@/app/components/LordStanleyFinkArticle');
       return JSON.parse(JSON.stringify(LORD_STANLEY_FINK_ARTICLE_DATA));
     } catch {}
   }
 
-  if (slug === "julio-herrera-velutini-paterfamilias-house-of-herrera") {
+  if (normalizedSlug === "julio-herrera-velutini-paterfamilias-house-of-herrera") {
     try {
       const { JULIO_HERRERA_VELUTINI_ARTICLE_DATA } = await import('@/app/components/JulioHerreraVelutiniArticle');
       return JSON.parse(JSON.stringify(JULIO_HERRERA_VELUTINI_ARTICLE_DATA));
     } catch {}
+  }
+
+  // Fallback to static articles from app/data/news.ts (includes public/data/*.json and static DB mirrors)
+  try {
+    const { NEWS_ARTICLES } = await import('@/app/data/news');
+    const staticArt = NEWS_ARTICLES.find((a) => {
+      if ((a.slug || '').toLowerCase() === normalizedSlug) return true;
+      if (a.alternateSlugs?.some((alt) => alt.toLowerCase() === normalizedSlug)) return true;
+      const titleGeneratedSlug = (a.title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      return titleGeneratedSlug === normalizedSlug;
+    });
+
+    if (staticArt) {
+      const parsedDate = Date.parse((staticArt.date || '').replace(/\./g, ''));
+      const validDate = !isNaN(parsedDate) ? new Date(parsedDate) : new Date();
+      const formattedDate = validDate.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+
+      const blocks =
+        staticArt.blocks && staticArt.blocks.length > 0
+          ? staticArt.blocks
+          : (staticArt.content || [staticArt.excerpt || '']).map((p, idx) => ({
+              id: `b-${idx}`,
+              type: 'paragraph',
+              value: p,
+            }));
+
+      return JSON.parse(
+        JSON.stringify({
+          id: staticArt.id,
+          slug: staticArt.slug || slug,
+          title: staticArt.title,
+          excerpt: staticArt.excerpt || '',
+          content: staticArt.content || [staticArt.excerpt || ''],
+          blocks,
+          category: staticArt.category,
+          author: staticArt.authorData || staticArt.author,
+          authorTitle: staticArt.authorData?.role || staticArt.authorTitle || 'Staff Reporter',
+          date: formattedDate,
+          isoDate: validDate.toISOString(),
+          image: staticArt.image || '/images/magazinegazette-logo.jpg',
+          featuredImage: staticArt.image || '/images/magazinegazette-logo.jpg',
+          imageAltText: staticArt.imageAltText || staticArt.title,
+          seoTitle: staticArt.seoTitle || staticArt.title,
+          seoMetaDescription: staticArt.seoMetaDescription || staticArt.excerpt,
+          keywords: staticArt.keywords,
+          tags: staticArt.tags,
+        })
+      );
+    }
+  } catch (err) {
+    console.error('Failed to resolve article from static fallback:', err);
   }
 
   return null;

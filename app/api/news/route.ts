@@ -44,8 +44,32 @@ export async function GET(request: Request) {
     const news = await NewsModel.find(query).sort({ date: -1 });
     return NextResponse.json(news);
   } catch (error: any) {
-    console.error('Fetch news error:', error);
-    return NextResponse.json({ error: 'Failed to fetch news articles' }, { status: 500 });
+    console.error('Fetch news error, falling back to static NEWS_ARTICLES:', error);
+    try {
+      const { NEWS_ARTICLES } = await import('@/app/data/news');
+      const fallback = NEWS_ARTICLES.map((a) => ({
+        _id: a.id,
+        slug: a.slug,
+        title: a.title,
+        excerpt: a.excerpt,
+        blocks: a.blocks || (a.content || []).map((p, idx) => ({ id: `b-${idx}`, type: 'paragraph', value: p })),
+        category: a.category,
+        author: a.author,
+        date: a.date,
+        readTime: a.readTime,
+        featuredImage: a.image,
+        status: 'published',
+        options: {
+          featuredArticle: a.isLead || false,
+          breakingNews: a.isBreaking || false,
+          editorsPick: a.isTrending || false,
+          allowComments: true,
+        },
+      }));
+      return NextResponse.json(fallback);
+    } catch {
+      return NextResponse.json([], { status: 200 });
+    }
   }
 }
 
