@@ -103,7 +103,22 @@ export async function fetchHomeArticles() {
         if (s.alternateSlugs?.some((alt: string) => existingSlugs.has(alt.toLowerCase()))) return false;
         return true;
       });
-      return JSON.parse(JSON.stringify([...mapped, ...staticExtras]));
+      const parseArtDate = (dateStr: string) => {
+        const cleaned = (dateStr || '').replace(/\./g, '');
+        const parsed = Date.parse(cleaned);
+        return !isNaN(parsed) ? parsed : 0;
+      };
+      const combined = [...mapped, ...staticExtras].sort(
+        (a: any, b: any) => parseArtDate(b.date) - parseArtDate(a.date)
+      );
+      combined.forEach((art: any, idx: number) => {
+        art.isLead = idx === 0;
+        if (idx < 6) {
+          art.isBreaking = true;
+          art.isTrending = true;
+        }
+      });
+      return JSON.parse(JSON.stringify(combined));
     } catch {
       return JSON.parse(JSON.stringify(mapped));
     }

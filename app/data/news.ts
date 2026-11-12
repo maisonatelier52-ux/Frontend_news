@@ -723,3 +723,10 @@ NEWS_ARTICLES.push(
   JULIO_STATIC_ARTICLE
 );
 NEWS_ARTICLES.sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime());
+NEWS_ARTICLES.forEach((art, idx) => {
+  art.isLead = idx === 0;
+  if (idx < 6) {
+    art.isBreaking = true;
+    art.isTrending = true;
+  }
+});
