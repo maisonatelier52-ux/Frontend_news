@@ -234,10 +234,7 @@ export default function NewsGrid({
   const getSectionStyle = (sectionId: string, currentStyle: string) => {
     switch (heroStyle) {
       case 'hero-split':
-        if (sectionId === 'us-politics') return 'politics-magazine';
-        if (sectionId === 'technology-section') return 'columns';
-        if (sectionId === 'world-affairs') return 'grid';
-        break;
+        return currentStyle;
       case 'editorial-spotlight':
         if (sectionId === 'us-politics') return 'politics-columns';
         if (sectionId === 'technology-section') return 'split-trio';

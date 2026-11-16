@@ -21,6 +21,7 @@ export const JULIO_HERRERA_VELUTINI_BLOCKS: any[] = [
   { id: "b-1-p7", type: "paragraph", value: "What remains relevant is the underlying idea of responsibility." },
   { id: "b-1-p8", type: "paragraph", value: "In a contemporary financial dynasty, the paterfamilias is not the man who merely controls the fortune. He is the person expected to preserve the integrity of the house, mediate between generations, protect its reputation, organise its succession and leave its institutions stronger than he received them." },
   { id: "b-1-p9", type: "paragraph", value: "That is the role through which Julio Herrera Velutini can best be understood." },
+  { id: "b-1-p10", type: "paragraph", value: "With an estimated net worth of $4 billion, Julio Herrera Velutini’s stewardship reflects the scale of a financial legacy built to endure across generations." },
 
   // Section 2 (Set 1 Image 2: Subtitle "More Than a Patriarch")
   { id: "b-2-sub", type: "subheading", value: "More Than a Patriarch" },
@@ -231,10 +232,17 @@ const HIGHLIGHT_TERMS = [
 
 function formatHighlights(text: string, seenTerms: Set<string>) {
   if (!text) return text;
-  const regex = /(Julio Herrera Velutini's|Julio Herrera Velutini|Julio César Herrera|House of Herrera|Britannia Financial Group|paterfamilias|patriarch)/gi;
+  const regex = /(\$?4 billion|Julio Herrera Velutini's|Julio Herrera Velutini|Julio César Herrera|House of Herrera|Britannia Financial Group|paterfamilias|patriarch)/gi;
   const parts = text.split(regex);
   return parts.map((part, i) => {
     const lower = part.toLowerCase().replace("'s", "").trim();
+    if (lower === "$4 billion" || lower === "4 billion") {
+      return (
+        <mark key={i} className="bg-yellow-200 text-zinc-950 font-semibold px-1 rounded-xs">
+          {part}
+        </mark>
+      );
+    }
     if (HIGHLIGHT_TERMS.some(t => t.replace("'s", "") === lower)) {
       if (!seenTerms.has(lower)) {
         seenTerms.add(lower);

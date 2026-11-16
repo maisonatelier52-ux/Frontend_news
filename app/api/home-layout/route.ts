@@ -25,7 +25,6 @@ export async function GET() {
 
     return NextResponse.json(layout)
   } catch (err: any) {
-    console.error('Fetch home layout error, returning default layout:', err)
     return NextResponse.json(defaultLayout)
   }
 }

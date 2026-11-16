@@ -48,7 +48,6 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     };
   } catch (error) {
-    console.error("Failed to generate home page metadata:", error);
     return {
       title: "Magazine Gazette | Latest Breaking News, Politics, Finance, Tech & World News",
       description: "Read independent, in-depth journalism on breaking news, politics, finance, business, technology, world affairs, and lifestyle stories on Magazine Gazette.",

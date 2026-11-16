@@ -42,7 +42,6 @@ export async function fetchHomeLayout() {
     const sortedSections = [...(layout.sections || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
     return JSON.parse(JSON.stringify(sortedSections));
   } catch (error) {
-    console.error('Failed to fetch home layout from DB, returning default:', error);
     return defaultLayout.sections;
   }
 }
@@ -123,7 +122,6 @@ export async function fetchHomeArticles() {
       return JSON.parse(JSON.stringify(mapped));
     }
   } catch (error) {
-    console.error('Failed to fetch home articles from DB, falling back to static articles:', error);
     try {
       const { NEWS_ARTICLES } = await import('@/app/data/news');
       return JSON.parse(JSON.stringify(NEWS_ARTICLES));
@@ -140,7 +138,6 @@ export async function fetchActiveAds() {
     const activeAds = ads.filter((ad: any) => ad.status === 'active');
     return JSON.parse(JSON.stringify(activeAds));
   } catch (error) {
-    console.error('Failed to fetch active ads from DB:', error);
     return [];
   }
 }
