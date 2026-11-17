@@ -714,8 +714,94 @@ export const JULIO_STATIC_ARTICLE: Article = {
   commentsCount: 14,
 };
 
+export const TRUMP_PHILIPPINES_STATIC_ARTICLE: Article = {
+  id: "6af9b2c1aac180a575701122",
+  slug: "trump-arrives-in-the-philippines-on-tuesday-to-talk-trade-and-seek-respite-from-troubles-at-home",
+  alternateSlugs: ["trump-arrives-philippines-trade-talks-domestic-troubles"],
+  title: "Trump Arrives in the Philippines on Tuesday to Talk Trade and Seek Respite From Troubles at Home",
+  excerpt: "President Donald Trump landed in Manila on Tuesday for high-level trade and security talks with Philippine leadership, aiming to showcase Indo-Pacific economic deals while stepping away from mounting political and legal pressures in Washington.",
+  content: [
+    "President Donald Trump arrived in the Philippines on Tuesday aboard Air Force One, kicking off a closely watched diplomatic visit centered on bilateral trade negotiations, regional defense cooperation, and an effort to project executive momentum far from mounting political headwinds in Washington.",
+    "Stepping onto the tarmac to a formal welcome ceremony, Trump waved to gathered officials and reporters before heading into scheduled meetings with Philippine President Ferdinand Marcos Jr. and senior cabinet ministers. Administration aides framed the Manila stop as a cornerstone of Washington's Indo-Pacific economic strategy, emphasizing supply-chain diversification, semiconductor partnerships, and expanded agricultural and energy exports.",
+    "The overseas trip comes at a turbulent moment on the domestic front, as the White House faces intensifying scrutiny from congressional oversight committees, ongoing tariff litigation, and sharp partisan debate following recent election developments.",
+    "Trade analysts noted that Manila represents a critical strategic partner for the United States, both as a treaty ally in the South China Sea and as a growing manufacturing hub. Bilateral discussions are expected to cover tariff adjustments, critical mineral processing, maritime security infrastructure, and private-sector investment commitments.",
+    "While administration officials sought to keep the spotlight on international diplomacy and trade deals, political observers noted that foreign summits have long offered U.S. presidents a temporary respite from domestic controversies—even as reporters traveling with the president continue pressing for answers on developments back home."
+  ],
+  blocks: [
+    {
+      id: "b-tp-p1",
+      type: "paragraph",
+      value: "President Donald Trump arrived in the Philippines on Tuesday aboard Air Force One, kicking off a closely watched diplomatic visit centered on bilateral trade negotiations, regional defense cooperation, and an effort to project executive momentum far from mounting political headwinds in Washington."
+    },
+    {
+      id: "b-tp-h1",
+      type: "subheading",
+      value: "Trade and Supply-Chain Agenda in Manila"
+    },
+    {
+      id: "b-tp-p2",
+      type: "paragraph",
+      value: "Stepping onto the tarmac to a formal welcome ceremony, Trump waved to gathered officials and reporters before heading into scheduled meetings with Philippine President Ferdinand Marcos Jr. and senior cabinet ministers. Administration aides framed the Manila stop as a cornerstone of Washington's Indo-Pacific economic strategy, emphasizing supply-chain diversification, semiconductor assembly partnerships, and expanded U.S. agricultural and energy exports."
+    },
+    {
+      id: "b-tp-h2",
+      type: "subheading",
+      value: "A Temporary Respite From Domestic Pressures"
+    },
+    {
+      id: "b-tp-p3",
+      type: "paragraph",
+      value: "The overseas trip comes at a turbulent moment on the domestic front, as the White House faces intensifying scrutiny from congressional oversight committees, ongoing court challenges over tariff authority, and sharp partisan fallout following recent election developments. For Trump, the international stage offers a chance to pivot headlines toward bilateral dealmaking and foreign-policy leadership."
+    },
+    {
+      id: "b-tp-h3",
+      type: "subheading",
+      value: "Strategic Alliance and Regional Security"
+    },
+    {
+      id: "b-tp-p4",
+      type: "paragraph",
+      value: "Trade and security analysts noted that the Philippines represents an indispensable partner for the United States, both as a longtime treaty ally navigating maritime tensions in the South China Sea and as a rapidly growing manufacturing hub in Southeast Asia. Bilateral talks are expected to address tariff schedules, critical mineral processing, joint defense logistics, and new private-sector infrastructure commitments."
+    },
+    {
+      id: "b-tp-h4",
+      type: "subheading",
+      value: "Washington Politics Follow Air Force One Abroad"
+    },
+    {
+      id: "b-tp-p5",
+      type: "paragraph",
+      value: "Even thousands of miles from Capitol Hill, domestic political controversies remain close at hand. Traveling press corps members pressed White House aides on legislative standoffs and economic anxieties at home, underscoring the challenge of separating global summitry from a polarized political landscape in Washington."
+    }
+  ],
+  category: "Politics",
+  author: "Sarah Johnson",
+  authorTitle: "Senior Political & Global Affairs Correspondent",
+  authorData: {
+    name: "Sarah Johnson",
+    role: "Senior Political & Global Affairs Correspondent",
+    bio: "Senior political correspondent with over a decade of experience covering Washington and international relations.",
+    image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1785752147/magazinegazette/sarah-johnson.webp",
+    slug: "sarah-johnson",
+    email: "sarah@newssite.com"
+  },
+  date: "November 17, 2026",
+  readTime: "5 min read",
+  image: "https://res.cloudinary.com/dcj2ovntc/image/upload/v1794895790/magazinegazette/trump-arrives-philippines-trade-talks-domestic-troubles.jpg",
+  imageAltText: "President Donald Trump waving from the stairs of Air Force One upon arrival",
+  seoTitle: "Trump Arrives in the Philippines on Tuesday to Talk Trade and Seek Respite From Troubles at Home",
+  seoMetaDescription: "President Donald Trump lands in the Philippines for trade and security talks with Manila leaders while seeking a pivot from domestic political challenges.",
+  keywords: "Trump Philippines, US Philippines trade, Donald Trump Air Force One, Indo-Pacific diplomacy, US politics",
+  tags: "Politics, Donald Trump, Philippines, Trade, Foreign Policy, White House",
+  isLead: true,
+  isBreaking: true,
+  isTrending: true,
+  commentsCount: 14,
+};
+
 // Merge key featured and breaking DB articles and sort newest-first so latest news stays on top
 NEWS_ARTICLES.push(
+  TRUMP_PHILIPPINES_STATIC_ARTICLE,
   TRUMP_SOCIAL_MEDIA_STATIC_ARTICLE,
   US_FUTURES_STATIC_ARTICLE,
   EUROPE_ECONOMY_STATIC_ARTICLE,
